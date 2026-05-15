@@ -1,18 +1,18 @@
 require('dotenv').config();
 require('express-async-errors');
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { startAllCronJobs } = require('./utils/cronJobs');
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 // Route imports
 const authRoutes = require('./routes/auth');
 const tenantConfigRoutes = require('./routes/tenantConfig');
+const superAdminRoutes = require('./routes/superAdmin');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,21 +32,18 @@ const allowedOrigins = process.env.NODE_ENV === 'development'
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-
     const allowed = allowedOrigins.some((pattern) => {
       if (pattern instanceof RegExp) return pattern.test(origin);
       return pattern === origin;
     });
-
     if (allowed) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: Origin ${origin} not allowed`));
     }
   },
-  credentials: true, // allow cookies (refresh token)
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -54,6 +51,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// ─── Global Rate Limiter ──────────────────────────────────────────────────────
+// Applied to all /api/* routes — 100 req / 15 min / IP
+app.use('/api', generalLimiter);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -68,6 +69,7 @@ app.get('/api/health', (req, res) => {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/tenant', tenantConfigRoutes);
+app.use('/api/superadmin', superAdminRoutes);
 
 // Catch-all 404 for unknown routes
 app.use((req, res) => {

@@ -13,6 +13,11 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import SuperAdminLoginPage from './pages/superadmin/SuperAdminLoginPage';
 import SuperAdminDashboardPage from './pages/superadmin/SuperAdminDashboardPage';
 
+// Placeholder pages for Phase 15 routes
+import SuperAdminTenantsPlaceholder from './pages/superadmin/placeholders/SuperAdminTenantsPlaceholder';
+import SuperAdminPricingPlaceholder from './pages/superadmin/placeholders/SuperAdminPricingPlaceholder';
+import SuperAdminAuditPlaceholder from './pages/superadmin/placeholders/SuperAdminAuditPlaceholder';
+
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
   <div style={{
@@ -30,16 +35,48 @@ const LoadingScreen = () => (
 );
 
 // ─── Route Guards ─────────────────────────────────────────────────────────────
-const ProtectedRoute = ({ children, redirectTo }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+
+/**
+ * Protects a route by role.
+ * - If loading: show spinner
+ * - If not authenticated: redirect to login
+ * - If wrong role: redirect to appropriate login
+ */
+const ProtectedRoute = ({ children, redirectTo, requiredRole }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
   if (isLoading) return <LoadingScreen />;
-  return isAuthenticated ? children : <Navigate to={redirectTo} replace />;
+
+  if (!isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  // Role check — if a specific role is required
+  if (requiredRole && user?.role !== requiredRole) {
+    // Wrong role: send to the correct login for what they tried to access
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return children;
 };
 
-const PublicOnlyRoute = ({ children, redirectTo }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+/**
+ * Redirects already-authenticated users away from login pages.
+ * Role-aware: super admin goes to super admin dashboard, tenant goes to tenant dashboard.
+ */
+const PublicOnlyRoute = ({ children, redirectTo, requiredRole }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
   if (isLoading) return <LoadingScreen />;
-  return !isAuthenticated ? children : <Navigate to={redirectTo} replace />;
+
+  if (isAuthenticated) {
+    // If same role as what this route guards, redirect to its dashboard
+    if (!requiredRole || user?.role === requiredRole) {
+      return <Navigate to={redirectTo} replace />;
+    }
+  }
+
+  return children;
 };
 
 // ─── Super Admin Panel ────────────────────────────────────────────────────────
@@ -48,7 +85,7 @@ const SuperAdminPanel = () => (
     <Route
       path="/superadmin/login"
       element={
-        <PublicOnlyRoute redirectTo="/superadmin/dashboard">
+        <PublicOnlyRoute redirectTo="/superadmin/dashboard" requiredRole="superadmin">
           <SuperAdminLoginPage />
         </PublicOnlyRoute>
       }
@@ -56,8 +93,33 @@ const SuperAdminPanel = () => (
     <Route
       path="/superadmin/dashboard"
       element={
-        <ProtectedRoute redirectTo="/superadmin/login">
+        <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
           <SuperAdminDashboardPage />
+        </ProtectedRoute>
+      }
+    />
+    {/* Phase 15 placeholder routes */}
+    <Route
+      path="/superadmin/tenants"
+      element={
+        <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
+          <SuperAdminTenantsPlaceholder />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/superadmin/pricing"
+      element={
+        <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
+          <SuperAdminPricingPlaceholder />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/superadmin/audit"
+      element={
+        <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
+          <SuperAdminAuditPlaceholder />
         </ProtectedRoute>
       }
     />
@@ -72,7 +134,7 @@ const TenantAdminPanel = () => (
     <Route
       path="login"
       element={
-        <PublicOnlyRoute redirectTo="dashboard">
+        <PublicOnlyRoute redirectTo="dashboard" requiredRole="tenant_admin">
           <AdminLoginPage />
         </PublicOnlyRoute>
       }
@@ -80,7 +142,7 @@ const TenantAdminPanel = () => (
     <Route
       path="dashboard"
       element={
-        <ProtectedRoute redirectTo="login">
+        <ProtectedRoute redirectTo="login" requiredRole="tenant_admin">
           <AdminDashboardPage />
         </ProtectedRoute>
       }
@@ -93,8 +155,10 @@ const TenantAdminPanel = () => (
 // ─── Tenant Public Site ───────────────────────────────────────────────────────
 const TenantPublicSite = () => {
   const { tenant, isLoading } = useTenant();
+
   if (isLoading) return <LoadingScreen />;
   if (tenant?.unavailable) return <UnavailablePage />;
+
   return (
     <Routes>
       <Route index element={<HomePage />} />
