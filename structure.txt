@@ -1,0 +1,104 @@
+ARTSPACE
+│
+├── backend
+│   ├── .env
+│   ├── package-lock.json
+│   ├── package.json
+│   │
+│   ├── node_modules
+│   │
+│   └── src
+│       │   
+│       ├── server.js
+│       │
+│       ├── config
+│       │   ├── cloudinary.js
+│       │   └── db.js
+│       │
+│       ├── controllers
+│       │
+│       ├── middleware
+│       │   ├── auth.js
+│       │   ├── errorHandler.js
+│       │   └── tenantResolver.js
+│       │
+│       ├── models
+│       │   ├── AuditLog.js
+│       │   ├── BlogPost.js
+│       │   ├── Category.js
+│       │   ├── PaymentRecord.js
+│       │   ├── Product.js
+│       │   ├── Query.js
+│       │   ├── QuizQuestion.js
+│       │   ├── Slider.js
+│       │   ├── SubscriptionPricing.js
+│       │   ├── SuperAdmin.js
+│       │   ├── Task.js
+│       │   ├── TrialBlacklist.js
+│       │   └── Tenant.js
+│       │
+│       ├── routes
+│       │   ├── auth.js
+│       │   └── tenantConfig.js
+│       │
+│       └── utils
+│           ├── cronJobs.js
+│           ├── emailUtils.js
+│           ├── seed.js
+│           ├── helpers.js
+│           └── jwtUtils.js
+│
+├── frontend
+│   ├── .env
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── vite.config.js
+│   │
+│   ├── node_modules
+│   │
+│   ├── public
+│   │
+│   └── src
+│       ├── App.jsx
+│       ├── index.css
+│       ├── main.jsx
+│       │
+│       ├── api
+│       │   ├── tokenStore.js
+│       │   └── axiosInstance.js
+│       │
+│       ├── components
+│       │   ├── common
+│       │   ├── public
+│       │   ├── admin
+│       │   └── superadmin
+│       │
+│       ├── config
+│       │   └── businessTypeLabels.js
+│       │
+│       ├── context
+│       │   ├── AuthContext.jsx
+│       │   └── TenantContext.jsx
+│       │
+│       ├── hooks
+│       │
+│       ├── pages
+│       │   ├── admin
+│       │   │   ├── AdminDashboardPage.jsx
+│       │   │   └── AdminLoginPage.jsx
+│       │   │
+│       │   ├── public
+│       │   │   ├── HomePage.jsx
+│       │   │   ├── ShopPage.jsx
+│       │   │   └── UnavailablePage.jsx
+│       │   │
+│       │   └── superadmin
+│       │       ├── SuperAdminDashboardPage.jsx
+│       │       └── SuperAdminLoginPage.jsx
+│       │
+│       └── utils
+│           └── subdomainUtils.js
+│
+├── .gitignore
+└── structure.txt
