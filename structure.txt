@@ -1,29 +1,31 @@
 ARTSPACE
 │
-├── backend
+├── backend/
 │   ├── .env
 │   ├── package-lock.json
 │   ├── package.json
 │   │
-│   ├── node_modules
+│   ├── node_modules/
 │   │
-│   └── src
+│   └── src/
 │       │   
 │       ├── server.js
 │       │
-│       ├── config
+│       ├── config/
 │       │   ├── cloudinary.js
 │       │   └── db.js
 │       │
-│       ├── controllers
+│       ├── controllers/
+│       │   ├── superAdminAuth.controller.js
+│       │   ├── tenantAuth.controller.js
 │       │
-│       ├── middleware
+│       ├── middleware/
 │       │   ├── auth.js
 │       │   ├── errorHandler.js
 │       │   ├── rateLimiter.js
 │       │   └── tenantResolver.js
 │       │
-│       ├── models
+│       ├── models/
 │       │   ├── AuditLog.js
 │       │   ├── BlogPost.js
 │       │   ├── Category.js
@@ -38,78 +40,88 @@ ARTSPACE
 │       │   ├── TrialBlacklist.js
 │       │   └── Tenant.js
 │       │
-│       ├── routes
+│       ├── routes/
 │       │   ├── auth.js
 │       │   ├── superAdmin.js
+│       │   ├── tenantAuth.js
 │       │   └── tenantConfig.js
 │       │
-│       └── utils
+│       └── utils/
 │           ├── cronJobs.js
 │           ├── emailUtils.js
 │           ├── seed.js
 │           ├── helpers.js
 │           └── jwtUtils.js
 │
-├── frontend
+├── frontend/
 │   ├── .env
 │   ├── index.html
 │   ├── package-lock.json
 │   ├── package.json
+│   ├── postcss.congig.js
+│   ├── tailwind.config.js
 │   ├── vite.config.js
 │   │
-│   ├── node_modules
+│   ├── node_modules/
 │   │
 │   ├── public
 │   │
-│   └── src
+│   └── src/
 │       ├── App.jsx
 │       ├── index.css
 │       ├── main.jsx
 │       │
-│       ├── api
+│       ├── api/
 │       │   ├── tokenStore.js
 │       │   └── axiosInstance.js
 │       │
-│       ├── components
-│       │   ├── common
-│       │   ├── public
-│       │   ├── admin
-│       │   └── superadmin
+│       ├── components/
+│       │   ├── common/
+│       │   ├── public/
+│       │   ├── admin/
+│       │   └── superadmin/
 │       │       ├── SuperAdminSidebar.jsx
 │       │
-│       ├── config
+│       ├── config/
 │       │   └── businessTypeLabels.js
 │       │
-│       ├── context
+│       ├── context/
 │       │   ├── AuthContext.jsx
 │       │   └── TenantContext.jsx
 │       │
-│       ├── hooks
-│       │   └── useSuperAdminAuth.js
+│       ├── hooks/
+│       │   ├── useSuperAdminAuth.js
+│       │   ├── useTenantAuth.js
 │       │
-│       ├── layouts
+│       ├── layouts/
 │       │   ├── SuperAdminLayout.jsx
 │       │
-│       ├── pages
-│       │   ├── admin
+│       ├── pages/
+│       │   ├── admin/
 │       │   │   ├── AdminDashboardPage.jsx
-│       │   │   └── AdminLoginPage.jsx
+│       │   │   ├── ForgotPasswordPage.jsx
+│       │   │   ├── ResetPasswordPage.jsx
+│       │   │   ├── TenantLoginPage.jsx
 │       │   │
-│       │   ├── public
+│       │   ├── public/
 │       │   │   ├── HomePage.jsx
+│       │   │   ├── PlatformLandingPage.jsx
 │       │   │   ├── ShopPage.jsx
 │       │   │   └── UnavailablePage.jsx
 │       │   │
-│       │   └── superadmin
-│       │       ├── placeholders
-│       │       │    ├── SuperAdminTenantsPlaceholder.jsx
-│       │       │    ├── SuperAdminPricingPlaceholder.jsx
-│       │       │    ├── SuperAdminAuditPlaceholder.jsx
-│       │       │
-│       │       ├── SuperAdminDashboardPage.jsx
-│       │       └── SuperAdminLoginPage.jsx
-│       │
-│       └── utils
+│       │   ├── superadmin/
+│       │   │   ├── placeholders/
+│       │   │   │    ├── SuperAdminTenantsPlaceholder.jsx
+│       │   │   │    ├── SuperAdminPricingPlaceholder.jsx
+│       │   │   │    ├── SuperAdminAuditPlaceholder.jsx
+│       │   │   │
+│       │   │   ├── SuperAdminDashboardPage.jsx
+│       │   │   └── SuperAdminLoginPage.jsx
+│       │   │
+│       │   ├── tenant/
+│       │   │   ├── SignupPage.jsx
+│       │   
+│       └── utils/
 │           └── subdomainUtils.js
 │
 ├── .gitignore
