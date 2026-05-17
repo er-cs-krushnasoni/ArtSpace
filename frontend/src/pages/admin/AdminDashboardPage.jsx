@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 import SubscriptionPage from './SubscriptionPage';
 import ExpiredPage from './ExpiredPage';
 import PausedPage from './PausedPage';
+import WebsiteSettingsPage from './WebsiteSettingsPage';
 import toast from 'react-hot-toast';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
   const NAV_ITEMS = [
     { label: 'Dashboard', icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
     { label: 'Subscription', icon: CreditCard, to: `/s/${slug}/admin/dashboard/subscription` },
+    { label: 'Website Settings', icon: Settings, to: `/s/${slug}/admin/dashboard/settings` },
   ];
 
   return (
@@ -32,7 +34,6 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
         `}
         style={{ background: 'var(--color-sidebar, #0f1117)' }}
       >
-        {/* Logo area */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/5">
           <div>
             <p className="text-white font-semibold text-sm leading-tight truncate max-w-[160px]">
@@ -47,7 +48,6 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
           </button>
         </div>
 
-        {/* Nav — absolute paths to prevent appending */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV_ITEMS.map(({ label, icon: Icon, to }) => (
             <NavLink
@@ -61,10 +61,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
               }
               style={({ isActive }) =>
                 isActive
-                  ? {
-                      background: 'var(--color-sidebar-active)',
-                      color: 'var(--color-sidebar-active-text)',
-                    }
+                  ? { background: 'var(--color-sidebar-active)', color: 'var(--color-sidebar-active-text)' }
                   : { color: 'var(--color-sidebar-text)' }
               }
             >
@@ -74,7 +71,6 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
           ))}
         </nav>
 
-        {/* Logout */}
         <div className="px-3 py-4 border-t border-white/5">
           <button
             onClick={onLogout}
@@ -124,27 +120,16 @@ export default function AdminDashboardPage() {
     try {
       const res = await api.get('/subscription/status');
       const tenantStatus = res.data?.status;
-
-      if (tenantStatus === 'expired') {
-        setAccountStatus('expired');
-      } else if (tenantStatus === 'paused') {
-        setAccountStatus('paused');
-      } else {
-        setAccountStatus('ok');
-      }
+      if (tenantStatus === 'expired') setAccountStatus('expired');
+      else if (tenantStatus === 'paused') setAccountStatus('paused');
+      else setAccountStatus('ok');
     } catch (err) {
       const code = err?.response?.data?.code;
       const httpStatus = err?.response?.status;
-
-      if (code === 'SUBSCRIPTION_EXPIRED') {
-        setAccountStatus('expired');
-      } else if (code === 'ACCOUNT_PAUSED') {
-        setAccountStatus('paused');
-      } else if (httpStatus === 401) {
-        setAccountStatus('unauthenticated');
-      } else {
-        setAccountStatus('ok');
-      }
+      if (code === 'SUBSCRIPTION_EXPIRED') setAccountStatus('expired');
+      else if (code === 'ACCOUNT_PAUSED') setAccountStatus('paused');
+      else if (httpStatus === 401) setAccountStatus('unauthenticated');
+      else setAccountStatus('ok');
     }
   };
 
@@ -161,7 +146,6 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
-
   if (accountStatus === 'unauthenticated') {
     navigate(`/s/${slug}/admin/login`, { replace: true });
     return null;
@@ -178,9 +162,7 @@ export default function AdminDashboardPage() {
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
       />
-
       <div className="lg:ml-60 min-h-screen flex flex-col">
-        {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
           <button
             onClick={() => setMobileOpen(true)}
@@ -192,12 +174,12 @@ export default function AdminDashboardPage() {
             {user?.businessName || 'Admin'}
           </span>
         </header>
-
         <main className="flex-1">
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
             <Route path="home" element={<DashboardHome />} />
             <Route path="subscription" element={<SubscriptionPage />} />
+            <Route path="settings" element={<WebsiteSettingsPage />} />
             <Route path="*" element={<Navigate to="home" replace />} />
           </Routes>
         </main>

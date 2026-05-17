@@ -19,6 +19,7 @@ ARTSPACE
 │       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── tenantAuth.controller.js
+│       │   ├── tenantConfig.controller.js
 │       │
 │       ├── middleware/
 │       │   ├── auth.js
@@ -48,7 +49,8 @@ ARTSPACE
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tenantAuth.js
-│       │   └── tenantConfig.js
+│       │   ├── tenantConfig.js
+│       │   ├── tenantSettings.js
 │       │
 │       └── utils/
 │           ├── cronJobs.js
@@ -83,6 +85,15 @@ ARTSPACE
 │       │   ├── common/
 │       │   ├── public/
 │       │   ├── admin/
+│       │   │   ├── settings/
+│       │   │   │   ├── BrandingSection.jsx
+│       │   │   │   ├── GeneralSettingsSection.jsx
+│       │   │   │   ├── SliderSection.jsx
+│       │   │   │   ├── SlugSection.jsx
+│       │   │   │   ├── TogglesSection.jsx
+│       │   │   │   ├── TutorialVideoSection.jsx
+│       │   │   │ 
+│       │   │
 │       │   └── superadmin/
 │       │       ├── SuperAdminSidebar.jsx
 │       │
@@ -94,6 +105,7 @@ ARTSPACE
 │       │   └── TenantContext.jsx
 │       │
 │       ├── hooks/
+│       │   ├── useCloudinaryUpload.js
 │       │   ├── useSuperAdminAuth.js
 │       │   ├── useTenantAuth.js
 │       │
@@ -109,6 +121,7 @@ ARTSPACE
 │       │   │   ├── ResetPasswordPage.jsx
 │       │   │   ├── SubscriptionPage.jsx
 │       │   │   ├── TenantLoginPage.jsx
+│       │   │   ├── WebsiteSettingsPage.jsx
 │       │   │
 │       │   ├── public/
 │       │   │   ├── HomePage.jsx

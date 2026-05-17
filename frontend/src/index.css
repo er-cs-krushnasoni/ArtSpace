@@ -13,6 +13,9 @@
   --color-sidebar-text: #8b8fa8;
   --color-sidebar-active: rgba(139,92,246,0.18);
   --color-sidebar-active-text: #c4b5fd;
+
+  --tenant-primary: #8b5cf6;
+  --tenant-accent: #ec4899;
 }
 
 /* ─── Reset ─── */

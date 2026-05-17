@@ -14,28 +14,29 @@ export const TenantProvider = ({ children }) => {
   useEffect(() => {
     const slug = getTenantSlug();
     if (!slug) {
-      // No tenant slug (super admin domain or root) — skip fetch
       setIsLoading(false);
       return;
     }
 
     const fetchTenantConfig = async () => {
       try {
-const { data } = await api.get('/tenant/config', {
-  headers: { 'x-tenant-slug': slug }
-});
+        const { data } = await api.get('/tenant/config', {
+          headers: { 'x-tenant-slug': slug },
+        });
+
         setTenant(data);
         setLabels(getLabels(data.businessType || 'generic'));
 
-        // Apply tenant colors as CSS variables
+        // Apply tenant brand colors as CSS variables on public site
+        // Use --tenant-primary and --tenant-accent (not --color-primary)
+        // so platform admin dashboard colors stay unaffected
         if (data.primaryColor) {
-          document.documentElement.style.setProperty('--color-primary', data.primaryColor);
+          document.documentElement.style.setProperty('--tenant-primary', data.primaryColor);
         }
         if (data.accentColor) {
-          document.documentElement.style.setProperty('--color-accent', data.accentColor);
+          document.documentElement.style.setProperty('--tenant-accent', data.accentColor);
         }
 
-        // Set page title to business name
         if (data.businessName) {
           document.title = data.businessName;
         }
