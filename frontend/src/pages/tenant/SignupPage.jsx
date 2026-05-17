@@ -29,6 +29,7 @@ const PLANS = [
   { value: '3m', label: '3 Months', duration: '90 days', price: 'Paid' },
   { value: '6m', label: '6 Months', duration: '180 days', price: 'Paid' },
   { value: '12m', label: '12 Months', duration: '365 days', price: 'Paid' },
+  { value: 'custom', label: 'Custom Days', duration: 'You choose', price: 'Custom' },
 ];
 
 // Slug availability indicator
@@ -63,12 +64,14 @@ export default function SignupPage() {
     mobile: '',
     password: '',
     plan: 'trial',
+    customDays: '',
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [slugStatus, setSlugStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'reserved' | 'invalid'
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [pricing, setPricing] = useState({});
   const debounceRef = useRef(null);
 
   // Real-time slug check
@@ -110,6 +113,12 @@ export default function SignupPage() {
     }
   };
 
+  useEffect(() => {
+  api.get('/subscription/pricing')
+    .then((res) => setPricing(res.data.pricing || {}))
+    .catch(() => {});
+}, []);
+
   useEffect(() => () => clearTimeout(debounceRef.current), []);
 
   const validate = () => {
@@ -144,6 +153,7 @@ export default function SignupPage() {
         mobile: form.mobile,
         password: form.password,
         plan: form.plan,
+        ...(form.plan === 'custom' && { customDays: parseInt(form.customDays, 10) }),
       });
 
       const { accessToken, user } = res.data;
@@ -345,16 +355,46 @@ export default function SignupPage() {
                         Recommended
                       </span>
                     )}
-                    <span className={`text-sm font-semibold ${plan.price === 'Free' ? 'text-green-600' : 'text-gray-500'}`}>
-                      {plan.price === 'Paid' ? 'Pricing TBD' : plan.price}
+                    <span className={`text-sm font-semibold ${
+                      plan.price === 'Free' ? 'text-green-600' :
+                      plan.price === 'Custom' ? 'text-violet-600' : 'text-gray-800'
+                    }`}>
+                      {plan.price === 'Free'
+                        ? 'Free'
+                        : plan.price === 'Custom'
+                        ? `₹${pricing['custom_daily'] ?? '—'}/day`
+                        : pricing[plan.value]
+                        ? `₹${pricing[plan.value]}`
+                        : '—'}
                     </span>
                   </div>
                 </button>
               ))}
             </div>
+            {form.plan === 'custom' && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    name="customDays"
+                    value={form.customDays}
+                    onChange={(e) => setForm((p) => ({ ...p, customDays: e.target.value.replace(/[^0-9]/g, '') }))}
+                    placeholder="Enter number of days"
+                    className="flex-1 px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <span className="text-sm text-gray-400 whitespace-nowrap">days</span>
+                </div>
+                {form.customDays && parseInt(form.customDays, 10) > 0 && pricing['custom_daily'] && (
+                  <p className="text-xs text-violet-600 font-medium bg-violet-50 px-3 py-2 rounded-lg">
+                    {form.customDays} days × ₹{pricing['custom_daily']}/day = ₹{parseInt(form.customDays, 10) * pricing['custom_daily']}
+                  </p>
+                )}
+              </div>
+            )}
             {form.plan !== 'trial' && (
               <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                Paid plan pricing will be confirmed before payment. You'll be redirected to checkout next.
+                You'll complete payment via Razorpay after clicking "Create My Shop".
               </p>
             )}
           </div>
@@ -362,7 +402,11 @@ export default function SignupPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={isLoading || (form.slug.length >= 3 && slugStatus !== 'available')}
+            disabled={
+              isLoading ||
+              (form.slug.length >= 3 && slugStatus !== 'available') ||
+              (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1))
+            }
             className="w-full py-3 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors mt-2"
           >
             {isLoading ? 'Creating your shop…' : 'Create My Shop →'}

@@ -14,6 +14,7 @@ const authRoutes = require('./routes/auth');
 const tenantConfigRoutes = require('./routes/tenantConfig');
 const superAdminRoutes = require('./routes/superAdmin');
 const tenantAuthRoutes = require('./routes/tenantAuth');
+const subscriptionRoutes = require('./routes/subscription');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +71,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tenant', tenantConfigRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/tenantauth', tenantAuthRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Catch-all 404
 app.use((req, res) => {

@@ -18,8 +18,10 @@ const PLAN_DURATIONS = {
   '12m': 365,
 };
 
-const calcExpiry = (plan) => {
-  const days = PLAN_DURATIONS[plan] ?? 30;
+const calcExpiry = (plan, customDays) => {
+  const days = plan === 'custom'
+    ? (parseInt(customDays, 10) || 1)
+    : (PLAN_DURATIONS[plan] ?? 30);
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date;
@@ -73,7 +75,7 @@ const signup = async (req, res) => {
     });
   }
 
-  const { businessName, slug, businessType, ownerName, email, mobile, password, plan } = req.body;
+  const { businessName, slug, businessType, ownerName, email, mobile, password, plan, customDays } = req.body;
   const normalizedSlug = slug.toLowerCase().trim();
   const normalizedEmail = email.toLowerCase().trim();
 
@@ -89,6 +91,17 @@ const signup = async (req, res) => {
   const emailTaken = await Tenant.findOne({ email: normalizedEmail });
   if (emailTaken) {
     return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+  }
+
+    // Custom plan requires customDays
+  if (plan === 'custom') {
+    const days = parseInt(customDays, 10);
+    if (!days || days < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Custom plan requires a valid number of days (minimum 1).',
+      });
+    }
   }
 
   if (plan === 'trial') {
@@ -110,7 +123,7 @@ const signup = async (req, res) => {
   }
 
   const now = new Date();
-  const planExpiryDate = calcExpiry(plan);
+const planExpiryDate = calcExpiry(plan, customDays);
 
   // Pass raw password — model pre-save hook hashes it
   const tenant = await Tenant.create({

@@ -16,6 +16,7 @@ ARTSPACE
 │       │   └── db.js
 │       │
 │       ├── controllers/
+│       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── tenantAuth.controller.js
 │       │
@@ -23,6 +24,8 @@ ARTSPACE
 │       │   ├── auth.js
 │       │   ├── errorHandler.js
 │       │   ├── rateLimiter.js
+│       │   ├── requireActiveSubscription.js
+│       │   ├── requireTrialProductLimit.js
 │       │   └── tenantResolver.js
 │       │
 │       ├── models/
@@ -42,6 +45,7 @@ ARTSPACE
 │       │
 │       ├── routes/
 │       │   ├── auth.js
+│       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tenantAuth.js
 │       │   └── tenantConfig.js
@@ -99,8 +103,11 @@ ARTSPACE
 │       ├── pages/
 │       │   ├── admin/
 │       │   │   ├── AdminDashboardPage.jsx
+│       │   │   ├── ExpiredPage.jsx
 │       │   │   ├── ForgotPasswordPage.jsx
+│       │   │   ├── PausedPage.jsx
 │       │   │   ├── ResetPasswordPage.jsx
+│       │   │   ├── SubscriptionPage.jsx
 │       │   │   ├── TenantLoginPage.jsx
 │       │   │
 │       │   ├── public/

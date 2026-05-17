@@ -92,16 +92,10 @@ const TenantAdminPanel = ({ slug }) => (
         </PublicOnlyRoute>
       }
     />
+    <Route path="forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="reset-password" element={<ResetPasswordPage />} />
     <Route
-      path="forgot-password"
-      element={<ForgotPasswordPage />}
-    />
-    <Route
-      path="reset-password"
-      element={<ResetPasswordPage />}
-    />
-    <Route
-      path="dashboard"
+      path="dashboard/*"
       element={
         <ProtectedRoute redirectTo={`/s/${slug}/admin/login`} requiredRole="tenant_admin">
           <AdminDashboardPage />

@@ -42,6 +42,11 @@ const paymentRecordSchema = new mongoose.Schema(
       required: true,
       enum: ['1m', '3m', '6m', '12m', 'custom'],
     },
+    // Populated only when plan = 'custom' — stores days purchased
+    daysCount: {
+      type: Number,
+      default: null,
+    },
     status: {
       type: String,
       enum: ['pending', 'verified', 'failed'],

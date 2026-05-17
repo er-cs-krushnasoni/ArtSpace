@@ -95,22 +95,6 @@ const authenticateTenantAdmin = async (req, res, next) => {
         });
       }
 
-      if (tenant.status === 'expired') {
-        return res.status(403).json({
-          success: false,
-          message: 'Subscription expired. Please renew to continue.',
-          code: 'SUBSCRIPTION_EXPIRED',
-        });
-      }
-
-      if (tenant.status === 'paused') {
-        return res.status(403).json({
-          success: false,
-          message: 'Your account is temporarily paused.',
-          code: 'ACCOUNT_PAUSED',
-        });
-      }
-
       if (tenant.status === 'pending_manual') {
         return res.status(403).json({
           success: false,
@@ -118,6 +102,12 @@ const authenticateTenantAdmin = async (req, res, next) => {
           code: 'PENDING_MANUAL',
         });
       }
+
+      // expired and paused are allowed through authenticateTenantAdmin
+      // so tenants can reach GET /subscription/status and payment routes.
+      // requireActiveSubscription middleware blocks write routes for these statuses.
+      // The frontend reads the status from GET /subscription/status and shows
+      // ExpiredPage or PausedPage accordingly.
 
       req.tenant = tenant;
       next();
@@ -191,8 +181,8 @@ const refreshTokenHandler = async (req, res, next) => {
 
     // Step 4: Check tenant status if tenant admin
     if (decoded.role === 'tenant_admin') {
-      if (['inactive', 'expired', 'paused', 'pending_manual'].includes(user.status)) {
-        // Clear the refresh token cookie since session is no longer valid
+      // inactive and pending_manual — full block, clear session
+      if (['inactive', 'pending_manual'].includes(user.status)) {
         res.clearCookie('refreshToken');
         return res.status(403).json({
           success: false,
@@ -200,6 +190,9 @@ const refreshTokenHandler = async (req, res, next) => {
           code: `ACCOUNT_${user.status.toUpperCase()}`,
         });
       }
+      // expired and paused — still issue tokens so tenant can reach
+      // the subscription/payment routes to renew
+      // The subscription middleware handles blocking other routes
     }
 
     // Step 5: Rotate refresh token — issue new pair
