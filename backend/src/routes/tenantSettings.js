@@ -8,7 +8,6 @@ const {
   updateToggles,
   getUploadSignature,
   updateLogo,
-  updatePwaIcon,
   updateTutorialVideo,
   updateSlug,
   checkSlugAvailability,
@@ -32,7 +31,6 @@ router.post('/upload-signature', getUploadSignature);
 
 // Asset updates
 router.put('/logo', updateLogo);
-router.put('/pwa-icon', updatePwaIcon);
 router.put('/tutorial-video', updateTutorialVideo);
 
 // Slug

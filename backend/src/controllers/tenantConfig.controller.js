@@ -136,40 +136,19 @@ const updateLogo = async (req, res) => {
     await deleteFromCloudinary(tenant.websiteConfig.logoPublicId, 'image');
   }
 
+  // Logo also serves as PWA icon — no separate upload needed
   await Tenant.findByIdAndUpdate(req.user.tenantId, {
     $set: {
       'websiteConfig.logo': logoUrl,
       'websiteConfig.logoPublicId': logoPublicId,
+      'websiteConfig.pwaIcon': logoUrl,
+      'websiteConfig.pwaIconPublicId': logoPublicId,
     },
   });
 
   res.json({ success: true, message: 'Logo updated successfully', data: { logoUrl } });
 };
 
-// ─── PUT /api/tenant/settings/pwa-icon ───────────────────────────────────────
-
-const updatePwaIcon = async (req, res) => {
-  const { pwaIconUrl, pwaIconPublicId } = req.body;
-  if (!pwaIconUrl || !pwaIconPublicId) {
-    return res.status(400).json({ success: false, message: 'pwaIconUrl and pwaIconPublicId are required' });
-  }
-
-  const tenant = await Tenant.findById(req.user.tenantId).select('websiteConfig').lean();
-  if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
-
-  if (tenant.websiteConfig?.pwaIconPublicId) {
-    await deleteFromCloudinary(tenant.websiteConfig.pwaIconPublicId, 'image');
-  }
-
-  await Tenant.findByIdAndUpdate(req.user.tenantId, {
-    $set: {
-      'websiteConfig.pwaIcon': pwaIconUrl,
-      'websiteConfig.pwaIconPublicId': pwaIconPublicId,
-    },
-  });
-
-  res.json({ success: true, message: 'PWA icon updated successfully', data: { pwaIconUrl } });
-};
 
 // ─── PUT /api/tenant/settings/tutorial-video ──────────────────────────────────
 
@@ -381,7 +360,6 @@ module.exports = {
   updateToggles,
   getUploadSignature,
   updateLogo,
-  updatePwaIcon,
   updateTutorialVideo,
   updateSlug,
   checkSlugAvailability,
