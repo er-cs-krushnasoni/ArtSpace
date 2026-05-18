@@ -21,6 +21,29 @@ function SlideModal({ slide, onClose, onSaved }) {
     linkId: slide?.linkId || '',
   });
   const [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loadingLinks, setLoadingLinks] = useState(false);
+
+  // Fetch products + categories when modal opens (needed for link dropdowns)
+  useEffect(() => {
+    const fetchLinkData = async () => {
+      setLoadingLinks(true);
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          api.get('/tenant/products'),
+          api.get('/tenant/categories'),
+        ]);
+        setProducts((prodRes.data.data || []).filter((p) => p.isActive));
+        setCategories(catRes.data.data || []);
+      } catch {
+        // Non-blocking — dropdowns will just be empty
+      } finally {
+        setLoadingLinks(false);
+      }
+    };
+    fetchLinkData();
+  }, []);
 
   const handleImageFile = async (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) { toast.error('JPEG, PNG, or WebP only'); return; }
@@ -69,7 +92,9 @@ function SlideModal({ slide, onClose, onSaved }) {
         <div className="space-y-4">
           {/* Image upload */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Slide Image <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              Slide Image <span className="text-red-500">*</span>
+            </label>
             <div
               onClick={() => fileRef.current?.click()}
               className="w-full h-36 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-violet-400 transition-all overflow-hidden bg-gray-50"
@@ -118,19 +143,49 @@ function SlideModal({ slide, onClose, onSaved }) {
             </select>
           </div>
 
-          {/* Link ID — shown when product or category */}
-          {form.linkType !== 'none' && (
+          {/* Link ID — real dropdowns */}
+          {form.linkType === 'product' && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                {form.linkType === 'product' ? 'Product ID' : 'Category'} (optional)
-              </label>
-              <input
-                type="text"
-                value={form.linkId}
-                onChange={(e) => setForm((f) => ({ ...f, linkId: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                placeholder="Will be populated in Phase 6/7"
-              />
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Select Product</label>
+              {loadingLinks ? (
+                <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+              ) : (
+                <select
+                  value={form.linkId}
+                  onChange={(e) => setForm((f) => ({ ...f, linkId: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+                >
+                  <option value="">— No specific product —</option>
+                  {products.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name} — ₹{p.deliveryPrice} delivery
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
+          {form.linkType === 'category' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Select Category</label>
+              {loadingLinks ? (
+                <div className="h-10 bg-gray-100 rounded-pulse" />
+              ) : (
+                <select
+                  value={form.linkId}
+                  onChange={(e) => setForm((f) => ({ ...f, linkId: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+                >
+                  <option value="">— No specific category —</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.groupName}
+                      {c.values.length > 0 ? ` (${c.values.slice(0, 3).join(', ')}${c.values.length > 3 ? '…' : ''})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
         </div>
@@ -203,13 +258,12 @@ export default function SliderSection({ sliderEnabled }) {
     const [moved] = reordered.splice(from, 1);
     reordered.splice(to, 0, moved);
     setSlides(reordered);
-
     try {
       await api.put('/tenant/settings/sliders/reorder', {
         orderedIds: reordered.map((s) => s._id),
       });
     } catch {
-      fetchSlides(); // revert on failure
+      fetchSlides();
       toast.error('Failed to reorder');
     }
   };
@@ -251,18 +305,15 @@ export default function SliderSection({ sliderEnabled }) {
           <div className="space-y-3">
             {slides.map((slide, idx) => (
               <div key={slide._id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg">
-                {/* Thumbnail */}
                 <div className="w-14 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                   <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{slide.title || 'Untitled slide'}</p>
-                  <p className="text-xs text-gray-400 capitalize">{slide.linkType === 'none' ? 'No link' : `→ ${slide.linkType}`}</p>
+                  <p className="text-xs text-gray-400 capitalize">
+                    {slide.linkType === 'none' ? 'No link' : `→ ${slide.linkType}`}
+                  </p>
                 </div>
-
-                {/* Actions */}
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => idx > 0 && handleReorder(idx, idx - 1)}

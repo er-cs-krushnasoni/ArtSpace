@@ -16,6 +16,8 @@ ARTSPACE
 │       │   └── db.js
 │       │
 │       ├── controllers/
+│       │   ├── category.controller.js
+│       │   ├── product.controller.js
 │       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── tenantAuth.controller.js
@@ -46,6 +48,8 @@ ARTSPACE
 │       │
 │       ├── routes/
 │       │   ├── auth.js
+│       │   ├── category.js
+│       │   ├── product.js
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tenantAuth.js
@@ -93,6 +97,14 @@ ARTSPACE
 │       │   │   │   ├── TogglesSection.jsx
 │       │   │   │   ├── TutorialVideoSection.jsx
 │       │   │   │ 
+│       │   │   ├── categories/
+│       │   │   │   ├── CategoryManager.jsx
+│       │   │   │ 
+│       │   │   ├── products/
+│       │   │   │   ├── DiscountModal.jsx
+│       │   │   │   ├── ProductCard.jsx
+│       │   │   │   ├── ProductFormModal.jsx
+│       │   │   │ 
 │       │   │
 │       │   └── superadmin/
 │       │       ├── SuperAdminSidebar.jsx
@@ -115,9 +127,11 @@ ARTSPACE
 │       ├── pages/
 │       │   ├── admin/
 │       │   │   ├── AdminDashboardPage.jsx
+│       │   │   ├── CategoriesPage.jsx
 │       │   │   ├── ExpiredPage.jsx
 │       │   │   ├── ForgotPasswordPage.jsx
 │       │   │   ├── PausedPage.jsx
+│       │   │   ├── ProductsPage.jsx
 │       │   │   ├── ResetPasswordPage.jsx
 │       │   │   ├── SubscriptionPage.jsx
 │       │   │   ├── TenantLoginPage.jsx

@@ -21,11 +21,12 @@ const productSchema = new mongoose.Schema(
         publicId: { type: String },
       },
     ],
-    deliveryPrice: { type: Number, required: true },
-    appointmentPrice: { type: Number, required: true },
+    deliveryPrice: { type: Number, default: 0 },
+    appointmentPrice: { type: Number, default: 0 },
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+description: { type: String, default: '' },
     isActive: { type: Boolean, default: true },
-    discount: { type: discountSchema, default: () => ({}) },
+        discount: { type: discountSchema, default: () => ({}) },
   },
   { timestamps: true }
 );

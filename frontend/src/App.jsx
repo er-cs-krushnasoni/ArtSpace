@@ -1,9 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { isSuperAdminPath, getTenantSlug } from './utils/subdomainUtils';
-
 // Pages
 import PlatformLandingPage from './pages/public/PlatformLandingPage';
 import SignupPage from './pages/tenant/SignupPage';
@@ -45,6 +44,29 @@ const ProtectedRoute = ({ children, redirectTo, requiredRole }) => {
   return children;
 };
 
+/**
+ * ProtectedTenantRoute — same as ProtectedRoute but also verifies that the
+ * authenticated tenant's slug matches the slug in the URL.
+ * Prevents tenant A from accessing tenant B's dashboard with their own JWT.
+ */
+const ProtectedTenantRoute = ({ children, slug }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+
+  // Not logged in at all → go to this slug's login page
+  if (!isAuthenticated || user?.role !== 'tenant_admin') {
+    return <Navigate to={`/s/${slug}/admin/login`} replace />;
+  }
+
+  // Logged in as a DIFFERENT tenant → go to their own login, not the other slug's
+  if (user?.slug !== slug) {
+    return <Navigate to={`/s/${slug}/admin/login`} replace />;
+  }
+
+  return children;
+};
+
 const PublicOnlyRoute = ({ children, redirectTo, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <LoadingScreen />;
@@ -82,30 +104,39 @@ const SuperAdminPanel = () => (
 );
 
 // ─── Tenant Admin Panel ───────────────────────────────────────────────────────
-const TenantAdminPanel = ({ slug }) => (
-  <Routes>
-    <Route
-      path="login"
-      element={
-        <PublicOnlyRoute redirectTo={`/s/${slug}/admin/dashboard`} requiredRole="tenant_admin">
-          <TenantLoginPage />
-        </PublicOnlyRoute>
-      }
-    />
-    <Route path="forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="reset-password" element={<ResetPasswordPage />} />
-    <Route
-      path="dashboard/*"
-      element={
-        <ProtectedRoute redirectTo={`/s/${slug}/admin/login`} requiredRole="tenant_admin">
-          <AdminDashboardPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route index element={<Navigate to="dashboard" replace />} />
-    <Route path="*" element={<Navigate to={`/s/${slug}/admin/login`} replace />} />
-  </Routes>
-);
+const TenantAdminPanel = ({ slug }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+
+  return (
+    <Routes>
+      <Route
+        path="login"
+        element={
+          // If logged in as THIS slug's tenant → redirect to their dashboard
+          // If logged in as a DIFFERENT tenant → show login page (don't redirect to wrong dashboard)
+          // If not logged in → show login page
+          isAuthenticated && user?.role === 'tenant_admin' && user?.slug === slug
+            ? <Navigate to={`/s/${slug}/admin/dashboard`} replace />
+            : <TenantLoginPage />
+        }
+      />
+      <Route path="forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route
+        path="dashboard/*"
+        element={
+          <ProtectedTenantRoute slug={slug}>
+            <AdminDashboardPage />
+          </ProtectedTenantRoute>
+        }
+      />
+      <Route index element={<Navigate to="dashboard" replace />} />
+      <Route path="*" element={<Navigate to={`/s/${slug}/admin/login`} replace />} />
+    </Routes>
+  );
+};
 
 // ─── Tenant Public Site ───────────────────────────────────────────────────────
 const TenantPublicSite = () => {

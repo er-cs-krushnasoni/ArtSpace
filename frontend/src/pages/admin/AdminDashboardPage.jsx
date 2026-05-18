@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X, Package, Tag } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 import SubscriptionPage from './SubscriptionPage';
 import ExpiredPage from './ExpiredPage';
 import PausedPage from './PausedPage';
 import WebsiteSettingsPage from './WebsiteSettingsPage';
+import ProductsPage from './ProductsPage';
+import CategoriesPage from './CategoriesPage';
 import toast from 'react-hot-toast';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => {
   const NAV_ITEMS = [
     { label: 'Dashboard', icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
+    { label: 'Products', icon: Package, to: `/s/${slug}/admin/dashboard/products` },
+    { label: 'Categories', icon: Tag, to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Subscription', icon: CreditCard, to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings, to: `/s/${slug}/admin/dashboard/settings` },
   ];
@@ -47,7 +51,6 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
             <X className="w-4 h-4" />
           </button>
         </div>
-
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV_ITEMS.map(({ label, icon: Icon, to }) => (
             <NavLink
@@ -70,7 +73,6 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
             </NavLink>
           ))}
         </nav>
-
         <div className="px-3 py-4 border-t border-white/5">
           <button
             onClick={onLogout}
@@ -94,7 +96,7 @@ const DashboardHome = () => (
       <p className="text-sm text-gray-500 mt-0.5">Welcome back. More features coming in upcoming phases.</p>
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {["Unread Queries", "Today's Appointments", "Today's Deliveries"].map((label) => (
+      {['Unread Queries', "Today's Appointments", "Today's Deliveries"].map((label) => (
         <div key={label} className="bg-gray-50 rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1">{label}</p>
           <p className="text-2xl font-semibold text-gray-900">—</p>
@@ -111,6 +113,14 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const [accountStatus, setAccountStatus] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Safety net: if the JWT slug doesn't match the URL slug, redirect to login
+  // This handles edge cases where ProtectedTenantRoute hasn't caught it yet
+  useEffect(() => {
+    if (user && user.slug !== slug) {
+      navigate(`/s/${slug}/admin/login`, { replace: true });
+    }
+  }, [user, slug, navigate]);
 
   useEffect(() => {
     checkStatus();
@@ -178,6 +188,8 @@ export default function AdminDashboardPage() {
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
             <Route path="home" element={<DashboardHome />} />
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
             <Route path="settings" element={<WebsiteSettingsPage />} />
             <Route path="*" element={<Navigate to="home" replace />} />
