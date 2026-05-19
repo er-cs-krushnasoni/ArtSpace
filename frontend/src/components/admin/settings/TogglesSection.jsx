@@ -23,6 +23,7 @@ function Toggle({ checked, onChange, disabled }) {
 }
 
 const TOGGLES = [
+  { key: 'shopVisible', label: 'Public Shop Visible', desc: 'When off, your shop shows "temporarily unavailable" to customers' },
   { key: 'sliderEnabled', label: 'Hero Slider', desc: 'Show image slideshow at top of public site' },
   { key: 'quizEnabled', label: 'Style Quiz', desc: 'Let customers take a quiz to find products' },
   { key: 'blogEnabled', label: 'Blog', desc: 'Publish articles visible on your public site' },
@@ -33,6 +34,7 @@ const TOGGLES = [
 export default function TogglesSection({ initialData, onSaved }) {
   const cfg = initialData?.websiteConfig || {};
   const [toggles, setToggles] = useState({
+    shopVisible: cfg.shopVisible !== false, // default true
     sliderEnabled: cfg.sliderEnabled ?? false,
     quizEnabled: cfg.quizEnabled ?? false,
     blogEnabled: cfg.blogEnabled ?? false,

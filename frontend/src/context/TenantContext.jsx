@@ -1,15 +1,18 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axiosInstance';
 import { getLabels } from '../config/businessTypeLabels';
 import { getTenantSlug } from '../utils/subdomainUtils';
 
 const TenantContext = createContext(null);
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const TenantProvider = ({ children }) => {
   const [tenant, setTenant] = useState(null);
   const [labels, setLabels] = useState(getLabels('generic'));
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUnavailable, setIsUnavailable] = useState(false);
+  const [isSetupIncomplete, setIsSetupIncomplete] = useState(false);
 
   useEffect(() => {
     const slug = getTenantSlug();
@@ -20,29 +23,37 @@ export const TenantProvider = ({ children }) => {
 
     const fetchTenantConfig = async () => {
       try {
-        const { data } = await api.get('/tenant/config', {
-          headers: { 'x-tenant-slug': slug },
-        });
+        const res = await fetch(`${API_BASE}/public/${slug}/config`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Shop not found');
+          } else {
+            setError('Failed to load store configuration');
+          }
+          return;
+        }
+
+        const json = await res.json();
+        const data = json.data;
 
         setTenant(data);
         setLabels(getLabels(data.businessType || 'generic'));
+        setIsUnavailable(!!data.unavailable);
+        setIsSetupIncomplete(!!data.setupIncomplete);
 
-        // Apply tenant brand colors as CSS variables on public site
-        // Use --tenant-primary and --tenant-accent (not --color-primary)
-        // so platform admin dashboard colors stay unaffected
-        if (data.primaryColor) {
-          document.documentElement.style.setProperty('--tenant-primary', data.primaryColor);
+        // Apply tenant brand colors
+        if (data.websiteConfig?.primaryColor) {
+          document.documentElement.style.setProperty('--tenant-primary', data.websiteConfig.primaryColor);
         }
-        if (data.accentColor) {
-          document.documentElement.style.setProperty('--tenant-accent', data.accentColor);
+        if (data.websiteConfig?.accentColor) {
+          document.documentElement.style.setProperty('--tenant-accent', data.websiteConfig.accentColor);
         }
-
         if (data.businessName) {
           document.title = data.businessName;
         }
       } catch (err) {
         console.error('Failed to load tenant config:', err);
-        setError(err.response?.data?.message || 'Failed to load store configuration');
+        setError('Failed to load store configuration');
       } finally {
         setIsLoading(false);
       }
@@ -52,7 +63,7 @@ export const TenantProvider = ({ children }) => {
   }, []);
 
   return (
-    <TenantContext.Provider value={{ tenant, labels, isLoading, error }}>
+    <TenantContext.Provider value={{ tenant, labels, isLoading, error, isUnavailable, isSetupIncomplete }}>
       {children}
     </TenantContext.Provider>
   );

@@ -18,6 +18,7 @@ const tenantAuthRoutes = require('./routes/tenantAuth');
 const subscriptionRoutes = require('./routes/subscription');
 const categoryRoutes = require('./routes/category');
 const productRoutes = require('./routes/product');
+const publicShopRoutes = require('./routes/publicShop')
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use('/api/tenantauth', tenantAuthRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/tenant/categories', categoryRoutes);
 app.use('/api/tenant/products', productRoutes);
+app.use('/api/public', publicShopRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });

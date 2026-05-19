@@ -18,6 +18,7 @@ import SuperAdminDashboardPage from './pages/superadmin/SuperAdminDashboardPage'
 import SuperAdminTenantsPlaceholder from './pages/superadmin/placeholders/SuperAdminTenantsPlaceholder';
 import SuperAdminPricingPlaceholder from './pages/superadmin/placeholders/SuperAdminPricingPlaceholder';
 import SuperAdminAuditPlaceholder from './pages/superadmin/placeholders/SuperAdminAuditPlaceholder';
+import SetupIncompletePage from './pages/public/SetupIncompletePage';
 
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
@@ -140,9 +141,9 @@ const TenantAdminPanel = ({ slug }) => {
 
 // ─── Tenant Public Site ───────────────────────────────────────────────────────
 const TenantPublicSite = () => {
-  const { tenant, isLoading } = useTenant();
+  const { tenant, isLoading, isUnavailable } = useTenant();
   if (isLoading) return <LoadingScreen />;
-  if (tenant?.unavailable) return <UnavailablePage />;
+  if (isUnavailable) return <UnavailablePage />;
   return (
     <Routes>
       <Route index element={<HomePage />} />

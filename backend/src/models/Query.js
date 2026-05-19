@@ -14,7 +14,8 @@ const querySchema = new mongoose.Schema(
     address: { type: String },
     instagram: { type: String },
     preferredDate: { type: Date },
-    orderType: { type: String, enum: ['delivery', 'appointment', null] },
+orderType: { type: String, enum: ['delivery', 'pickup', 'at_home', 'at_shop', null] },
+createdBy: { type: String, enum: ['customer', 'admin'], default: 'customer' },
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     // Prices locked at submission time
     lockedDeliveryPrice: { type: Number },

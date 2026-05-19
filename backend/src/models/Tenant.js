@@ -25,6 +25,7 @@ const websiteConfigSchema = new mongoose.Schema({
   blogEnabled: { type: Boolean, default: false },
   deliveryEnabled: { type: Boolean, default: true },
   appointmentEnabled: { type: Boolean, default: true },
+  shopVisible: { type: Boolean, default: true },
   tutorialVideoUrl: { type: String, default: null },
   tutorialVideoPublicId: { type: String, default: null },
   appName: { type: String, default: '' },

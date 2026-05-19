@@ -10,6 +10,8 @@ import WebsiteSettingsPage from './WebsiteSettingsPage';
 import ProductsPage from './ProductsPage';
 import CategoriesPage from './CategoriesPage';
 import toast from 'react-hot-toast';
+import { AlertTriangle } from 'lucide-react'; // already has other lucide imports, just add AlertTriangle
+import { useTenant } from '../../context/TenantContext';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => {
@@ -89,22 +91,50 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
 };
 
 // ─── Dashboard Home ───────────────────────────────────────────────────────────
-const DashboardHome = () => (
-  <div className="p-6">
-    <div className="mb-6">
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-      <p className="text-sm text-gray-500 mt-0.5">Welcome back. More features coming in upcoming phases.</p>
-    </div>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {['Unread Queries', "Today's Appointments", "Today's Deliveries"].map((label) => (
-        <div key={label} className="bg-gray-50 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1">{label}</p>
-          <p className="text-2xl font-semibold text-gray-900">—</p>
+const DashboardHome = () => {
+  const { tenant } = useTenant();
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const showSetupBanner = tenant && !tenant.websiteConfig?.logo;
+
+  return (
+    <div className="p-6">
+      {/* Setup incomplete banner */}
+      {showSetupBanner && (
+        <div className="mb-5 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-900">Complete your shop setup</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Upload a logo and fill in your shop details to give customers a great first impression.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate(`/s/${slug}/admin/dashboard/settings`)}
+            className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-amber-500 hover:bg-amber-600 transition-colors"
+          >
+            Complete Setup
+          </button>
         </div>
-      ))}
+      )}
+
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Welcome back. More features coming in upcoming phases.</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {['Unread Queries', "Today's Appointments", "Today's Deliveries"].map((label) => (
+          <div key={label} className="bg-gray-50 rounded-xl p-4">
+            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <p className="text-2xl font-semibold text-gray-900">—</p>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {

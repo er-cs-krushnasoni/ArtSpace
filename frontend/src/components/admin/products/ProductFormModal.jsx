@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, Plus, ImageIcon, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Plus, Loader2, Truck, CalendarClock } from 'lucide-react';
 import useCloudinaryUpload from '../../../hooks/useCloudinaryUpload';
 import api from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
@@ -17,7 +17,6 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
     const remaining = MAX_PHOTOS - photos.length;
     const toUpload = Array.from(files).slice(0, remaining);
     if (toUpload.length === 0) return;
-
     setUploading(true);
     try {
       const results = [];
@@ -41,10 +40,7 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
     }
   };
 
-  const removePhoto = (idx) => {
-    const updated = photos.filter((_, i) => i !== idx);
-    onChange(updated);
-  };
+  const removePhoto = (idx) => onChange(photos.filter((_, i) => i !== idx));
 
   return (
     <div>
@@ -53,7 +49,10 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
       </label>
       <div className="flex flex-wrap gap-2">
         {photos.map((photo, idx) => (
-          <div key={photo.publicId} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
+          <div
+            key={photo.publicId}
+            className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group"
+          >
             <img src={photo.url} alt="" className="w-full h-full object-cover" />
             <button
               type="button"
@@ -64,7 +63,6 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
             </button>
           </div>
         ))}
-
         {photos.length < MAX_PHOTOS && (
           <button
             type="button"
@@ -82,7 +80,6 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
             )}
           </button>
         )}
-
         <input
           ref={fileRef}
           type="file"
@@ -96,15 +93,11 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
   );
 }
 
-// ─── Category Multi-Select ────────────────────────────────────────────────────
+// ─── Category Select ──────────────────────────────────────────────────────────
 function CategorySelect({ allCategories, selected, onChange }) {
-  // selected = array of category _id strings
   const toggle = (catId) => {
-    if (selected.includes(catId)) {
-      onChange(selected.filter((id) => id !== catId));
-    } else {
-      onChange([...selected, catId]);
-    }
+    if (selected.includes(catId)) onChange(selected.filter((id) => id !== catId));
+    else onChange([...selected, catId]);
   };
 
   if (allCategories.length === 0) {
@@ -116,99 +109,231 @@ function CategorySelect({ allCategories, selected, onChange }) {
   }
 
   return (
-    <div className="space-y-3">
-      {allCategories.map((group) => (
-        <div key={group._id}>
-          <p className="text-xs font-medium text-gray-500 mb-1.5">{group.groupName}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {group.values.map((val) => {
-              // We use groupId:value as a virtual key but store groupId in categories
-              // Actually categories[] stores Category ObjectIds (group level)
-              const isSelected = selected.includes(group._id);
-              return null; // handled below
-            })}
-          </div>
+    <div className="flex flex-wrap gap-2">
+      {allCategories.map((group) => {
+        const isSelected = selected.includes(group._id);
+        return (
+          <button
+            key={group._id}
+            type="button"
+            onClick={() => toggle(group._id)}
+            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition-all"
+            style={
+              isSelected
+                ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
+            }
+          >
+            {group.groupName}
+            {group.values.length > 0 && (
+              <span className="ml-1.5 text-xs opacity-60">
+                ({group.values.slice(0, 2).join(', ')}
+                {group.values.length > 2 ? '…' : ''})
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Service Toggle Row ───────────────────────────────────────────────────────
+function ServicePriceRow({ icon: Icon, label, enabled, onToggle, price, onPriceChange, disabled }) {
+  return (
+    <div
+      className={`rounded-xl border transition-all duration-200 ${
+        enabled ? 'border-violet-200 bg-violet-50/40' : 'border-gray-200 bg-gray-50/60'
+      }`}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <Icon
+            className={`w-4 h-4 transition-colors ${enabled ? 'text-violet-500' : 'text-gray-400'}`}
+          />
+          <span
+            className={`text-sm font-medium transition-colors ${
+              enabled ? 'text-gray-800' : 'text-gray-400'
+            }`}
+          >
+            {label}
+          </span>
+          {enabled ? (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-violet-500 bg-violet-100 rounded-full px-2 py-0.5">
+              On
+            </span>
+          ) : (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 bg-gray-200 rounded-full px-2 py-0.5">
+              Off
+            </span>
+          )}
         </div>
-      ))}
-      {/* Group-level selection */}
-      <div className="flex flex-wrap gap-2">
-        {allCategories.map((group) => {
-          const isSelected = selected.includes(group._id);
-          return (
-            <button
-              key={group._id}
-              type="button"
-              onClick={() => toggle(group._id)}
-              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition-all"
-              style={
-                isSelected
-                  ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
-                  : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
-              }
-            >
-              {group.groupName}
-              {group.values.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-60">
-                  ({group.values.slice(0, 2).join(', ')}{group.values.length > 2 ? '…' : ''})
-                </span>
-              )}
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          disabled={disabled}
+          onClick={onToggle}
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50 ${
+            enabled ? 'bg-violet-500 border-violet-500' : 'bg-gray-200 border-gray-200'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              enabled ? 'translate-x-5' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
       </div>
+
+      {enabled && (
+        <div className="px-4 pb-3 pt-0">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium select-none">
+              ₹
+            </span>
+            <input
+              type="number"
+              min="0"
+              value={price}
+              onChange={(e) => onPriceChange(e.target.value)}
+              placeholder="0 for free"
+              className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 bg-white"
+            />
+          </div>
+          {price === '' && (
+            <p className="text-[11px] text-amber-600 mt-1.5 flex items-center gap-1">
+              <span>⚠</span> Enter a price (use 0 if free)
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
-export default function ProductFormModal({ product, allCategories, deliveryEnabled = true, appointmentEnabled = true, onClose, onSaved }) {
-      const isEdit = Boolean(product?._id);
+export default function ProductFormModal({
+  product,
+  allCategories,
+  deliveryEnabled = true,
+  appointmentEnabled = true,
+  onClose,
+  onSaved,
+}) {
+  const isEdit = Boolean(product?._id);
+
+  // Toggles are only shown when BOTH services are enabled at shop level.
+  // If only one is enabled, no choice to make — just show that price input.
+  const showToggles = deliveryEnabled && appointmentEnabled;
+
+  // ── Toggle initial state ───────────────────────────────────────────────────
+  // The ONLY source of truth for whether a service is offered on a product is
+  // product.deliveryPrice / product.appointmentPrice being non-null.
+  // We do NOT check discount.originalDeliveryPrice — that field defaults to 0
+  // in mongoose even when no discount ever existed, which would falsely flip
+  // a disabled service back to ON.
+  const [deliveryOn, setDeliveryOn] = useState(() => {
+    if (!showToggles) return true;
+    if (!product) return true;
+    return product.deliveryPrice !== null && product.deliveryPrice !== undefined;
+  });
+
+  const [appointmentOn, setAppointmentOn] = useState(() => {
+    if (!showToggles) return true;
+    if (!product) return true;
+    return product.appointmentPrice !== null && product.appointmentPrice !== undefined;
+  });
+
+  // ── Price initial value ────────────────────────────────────────────────────
+  // When a discount is active, show the ORIGINAL price (before discount) so
+  // the admin edits the base price and the discount re-applies on top.
+  const getInitialPrice = (priceField, originalField) => {
+    if (!product) return '';
+    const val =
+      product.discount?.isActive && product.discount[originalField] != null
+        ? product.discount[originalField]
+        : product[priceField];
+    if (val === null || val === undefined) return '';
+    return val.toString();
+  };
 
   const [photos, setPhotos] = useState(
     product?.photos?.map((p) => ({ url: p.url, publicId: p.publicId })) || []
   );
   const [name, setName] = useState(product?.name || '');
   const [nameVisible, setNameVisible] = useState(product?.nameVisible !== false);
-// Always use original prices when discount is active — never show/edit discounted price
-  const originalDeliveryPrice = product?.discount?.isActive
-    ? product.discount.originalDeliveryPrice
-    : product?.deliveryPrice;
-  const originalAppointmentPrice = product?.discount?.isActive
-    ? product.discount.originalAppointmentPrice
-    : product?.appointmentPrice;
-
-  const [deliveryPrice, setDeliveryPrice] = useState(originalDeliveryPrice?.toString() || '');
-  const [appointmentPrice, setAppointmentPrice] = useState(originalAppointmentPrice?.toString() || '');
+  const [deliveryPrice, setDeliveryPrice] = useState(
+    getInitialPrice('deliveryPrice', 'originalDeliveryPrice')
+  );
+  const [appointmentPrice, setAppointmentPrice] = useState(
+    getInitialPrice('appointmentPrice', 'originalAppointmentPrice')
+  );
+  const [description, setDescription] = useState(product?.description || '');
   const [selectedCats, setSelectedCats] = useState(
     product?.categories?.map((c) => (typeof c === 'object' ? c._id : c)) || []
   );
-const [description, setDescription] = useState(product?.description || '');
   const [isActive, setIsActive] = useState(product?.isActive !== false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const handleDeliveryToggle = () => {
+    const next = !deliveryOn;
+    setDeliveryOn(next);
+    if (!next) setDeliveryPrice(''); // clear so stale value can't sneak through as 0
+  };
+
+  const handleAppointmentToggle = () => {
+    const next = !appointmentOn;
+    setAppointmentOn(next);
+    if (!next) setAppointmentPrice('');
+  };
+
   const handleSave = async () => {
-    if (!name.trim()) { toast.error('Product name is required'); return; }
-if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { toast.error('Enter a valid delivery price'); return; }
-    if (appointmentEnabled && (appointmentPrice === '' || Number(appointmentPrice) < 0)) { toast.error('Enter a valid appointment price'); return; }
+    if (!name.trim()) {
+      toast.error('Product name is required');
+      return;
+    }
+
+    // If toggles are hidden (only one shop service), that service is always offered.
+    const offerDelivery = deliveryEnabled && (showToggles ? deliveryOn : true);
+    const offerAppointment = appointmentEnabled && (showToggles ? appointmentOn : true);
+
+    if (!offerDelivery && !offerAppointment) {
+      toast.error('At least one service (delivery or appointment) must be enabled');
+      return;
+    }
+    if (offerDelivery && deliveryPrice === '') {
+      toast.error('Enter a delivery price (use 0 if free)');
+      return;
+    }
+    if (offerAppointment && appointmentPrice === '') {
+      toast.error('Enter an appointment price (use 0 if free)');
+      return;
+    }
+    if (offerDelivery && Number(deliveryPrice) < 0) {
+      toast.error('Delivery price cannot be negative');
+      return;
+    }
+    if (offerAppointment && Number(appointmentPrice) < 0) {
+      toast.error('Appointment price cannot be negative');
+      return;
+    }
 
     setSaving(true);
     try {
-      // If product has active discount, we update the original prices
-      // Backend stores current (discounted) prices — we need to recalculate
-      const baseDeliveryPrice = deliveryEnabled ? Number(deliveryPrice) : 0;
-      const baseAppointmentPrice = appointmentEnabled ? Number(appointmentPrice) : 0;
-
       const payload = {
-        name: name.trim(),
-        nameVisible,
-        description,
-        deliveryPrice: baseDeliveryPrice,
-        appointmentPrice: baseAppointmentPrice,
-        categories: selectedCats,
-        isActive,
-        photos,
-      };
+  name: name.trim(),
+  nameVisible,
+  description,
+  deliveryEnabled: offerDelivery,        // ← add this
+  appointmentEnabled: offerAppointment,  // ← add this
+  deliveryPrice: offerDelivery ? Number(deliveryPrice) : null,
+  appointmentPrice: offerAppointment ? Number(appointmentPrice) : null,
+  categories: selectedCats,
+  isActive,
+  photos,
+};
 
       let res;
       if (isEdit) {
@@ -221,11 +346,10 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
       toast.success(isEdit ? 'Product updated' : 'Product created');
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to save product';
       if (err.response?.data?.code === 'TRIAL_PRODUCT_LIMIT') {
-        toast.error('Trial limit reached (10 products). Please upgrade to add more.');
+        toast.error('Trial limit reached (10 products). Upgrade to add more.');
       } else {
-        toast.error(msg);
+        toast.error(err.response?.data?.message || 'Failed to save product');
       }
     } finally {
       setSaving(false);
@@ -236,6 +360,7 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-base font-semibold text-gray-900">
@@ -248,6 +373,7 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+
           {/* Photos */}
           <PhotoUploader
             photos={photos}
@@ -279,46 +405,93 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
             </label>
           </div>
 
-         
           {/* Pricing */}
           {(deliveryEnabled || appointmentEnabled) && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">
-                Pricing <span className="text-red-500">*</span>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                {showToggles ? 'Services & Pricing' : 'Pricing'}
               </label>
-              <div className={`grid gap-3 ${deliveryEnabled && appointmentEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {product?.discount?.isActive && (
-                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 col-span-2">
-                  Showing original prices — discount is active. Saving will keep the discount applied on top of these prices.
-                </p>
+
+              {showToggles ? (
+                <>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Toggle off any service this product doesn't support. Enter 0 if the service is free.
+                  </p>
+                  {product?.discount?.isActive && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+                      Showing original prices — discount is active and will re-apply on top of these.
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    <ServicePriceRow
+                      icon={Truck}
+                      label="Delivery"
+                      enabled={deliveryOn}
+                      onToggle={handleDeliveryToggle}
+                      price={deliveryPrice}
+                      onPriceChange={setDeliveryPrice}
+                      disabled={saving}
+                    />
+                    <ServicePriceRow
+                      icon={CalendarClock}
+                      label="Appointment"
+                      enabled={appointmentOn}
+                      onToggle={handleAppointmentToggle}
+                      price={appointmentPrice}
+                      onPriceChange={setAppointmentPrice}
+                      disabled={saving}
+                    />
+                  </div>
+                  {!deliveryOn && !appointmentOn && (
+                    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                      <span>⚠</span> At least one service must be enabled.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Enter 0 if this product is free.
+                  </p>
+                  {product?.discount?.isActive && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+                      Showing original prices — discount is active and will re-apply on top of these.
+                    </p>
+                  )}
+                  {deliveryEnabled && (
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Delivery Price (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={deliveryPrice}
+                        onChange={(e) => setDeliveryPrice(e.target.value)}
+                        placeholder="0 for free"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+                      />
+                      {deliveryPrice === '' && (
+                        <p className="text-[11px] text-amber-600 mt-1.5">⚠ Enter a price (use 0 if free)</p>
+                      )}
+                    </div>
+                  )}
+                  {appointmentEnabled && (
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Appointment Price (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={appointmentPrice}
+                        onChange={(e) => setAppointmentPrice(e.target.value)}
+                        placeholder="0 for free"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+                      />
+                      {appointmentPrice === '' && (
+                        <p className="text-[11px] text-amber-600 mt-1.5">⚠ Enter a price (use 0 if free)</p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
-              {deliveryEnabled && (
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Delivery Price (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={deliveryPrice}
-                      onChange={(e) => setDeliveryPrice(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                    />
-                  </div>
-                )}
-                {appointmentEnabled && (
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Appointment Price (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={appointmentPrice}
-                      onChange={(e) => setAppointmentPrice(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -371,6 +544,7 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
               ))}
             </div>
           </div>
+
         </div>
 
         {/* Footer */}
@@ -390,6 +564,7 @@ if (deliveryEnabled && (deliveryPrice === '' || Number(deliveryPrice) < 0)) { to
             {saving ? 'Saving…' : uploading ? 'Uploading…' : isEdit ? 'Update Product' : 'Add Product'}
           </button>
         </div>
+
       </div>
     </div>
   );

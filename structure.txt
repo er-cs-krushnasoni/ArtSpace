@@ -18,6 +18,7 @@ ARTSPACE
 │       ├── controllers/
 │       │   ├── category.controller.js
 │       │   ├── product.controller.js
+│       │   ├── publicShop.controller.js
 │       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── tenantAuth.controller.js
@@ -50,6 +51,7 @@ ARTSPACE
 │       │   ├── auth.js
 │       │   ├── category.js
 │       │   ├── product.js
+│       │   ├── publicShop.js
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tenantAuth.js
@@ -88,6 +90,12 @@ ARTSPACE
 │       ├── components/
 │       │   ├── common/
 │       │   ├── public/
+│       │   │   ├── HeroSlider.jsx
+│       │   │   ├── ProductCard.jsx
+│       │   │   ├── ProductDetailModal.jsx
+│       │   │   ├── ProductGrid.jsx
+│       │   │   ├── ShopHeader.jsx
+│       │   │   
 │       │   ├── admin/
 │       │   │   ├── settings/
 │       │   │   │   ├── BrandingSection.jsx
@@ -140,6 +148,7 @@ ARTSPACE
 │       │   ├── public/
 │       │   │   ├── HomePage.jsx
 │       │   │   ├── PlatformLandingPage.jsx
+│       │   │   ├── SetupIncompletePage.jsx
 │       │   │   ├── ShopPage.jsx
 │       │   │   └── UnavailablePage.jsx
 │       │   │
