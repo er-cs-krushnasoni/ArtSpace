@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Menu, X, MessageCircle, MapPin } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
@@ -21,14 +21,18 @@ const ShopHeader = () => {
   const businessName = tenant?.businessName || '';
 
   const navLinks = [
-    { label: 'Home', to: '/s/' + slug },
-    { label: labels.shop || 'Shop', to: '/s/' + slug + '/shop' },
-    ...(config.quizEnabled ? [{ label: labels.quiz_name || 'Style Quiz', to: '/s/' + slug + '/quiz' }] : []),
-    ...(config.blogEnabled ? [{ label: 'Blog', to: '/s/' + slug + '/blog' }] : []),
+    { label: 'Home', to: `/s/${slug}` },
+    { label: labels.shop || 'Shop', to: `/s/${slug}/shop` },
+    { label: labels.custom_order || 'Custom Order', to: `/s/${slug}/custom-order` },
+    ...(config.appointmentEnabled
+      ? [{ label: labels.book_appointment || 'Book Appointment', to: `/s/${slug}/appointment` }]
+      : []),
+    ...(config.quizEnabled ? [{ label: labels.quiz_name || 'Style Quiz', to: `/s/${slug}/quiz` }] : []),
+    ...(config.blogEnabled ? [{ label: 'Blog', to: `/s/${slug}/blog` }] : []),
   ];
 
   const isActive = (to) => {
-    if (to === '/s/' + slug) return location.pathname === '/s/' + slug;
+    if (to === `/s/${slug}`) return location.pathname === `/s/${slug}`;
     return location.pathname.startsWith(to);
   };
 
@@ -45,11 +49,8 @@ const ShopHeader = () => {
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Top bar */}
-<div className="flex items-center justify-between h-[72px] gap-3">
-            {/* Logo + Name */}
-          {/* Logo + Name */}
-          <Link to={'/s/' + slug} className="flex items-center gap-3 min-w-0 flex-shrink-0">
+        <div className="flex items-center justify-between h-[72px] gap-3">
+          <Link to={`/s/${slug}`} className="flex items-center gap-3 min-w-0 flex-shrink-0">
             {config.logo && (
               <img
                 src={config.logo}
@@ -64,26 +65,22 @@ const ShopHeader = () => {
               {businessName}
             </span>
           </Link>
-
-          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 whitespace-nowrap"
                 style={activeStyle(link.to)}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
-
-          {/* Desktop social */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            {config.whatsapp && (
-              <a
-                href={'https://wa.me/' + config.whatsapp}
+            {config.whatsapp && (<a
+              
+                href={`https://wa.me/${config.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white transition-opacity hover:opacity-90"
@@ -93,9 +90,9 @@ const ShopHeader = () => {
                 WhatsApp
               </a>
             )}
-            {config.instagram && (
-              <a
-                href={'https://instagram.com/' + config.instagram}
+            {config.instagram && (<a
+              
+                href={`https://instagram.com/${config.instagram}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white transition-opacity hover:opacity-90"
@@ -106,12 +103,10 @@ const ShopHeader = () => {
               </a>
             )}
           </div>
-
-          {/* Mobile: social icon buttons + hamburger */}
           <div className="md:hidden flex items-center gap-1.5 flex-shrink-0">
-            {config.whatsapp && (
-              <a
-                href={'https://wa.me/' + config.whatsapp}
+            {config.whatsapp && (<a
+              
+                href={`https://wa.me/${config.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-8 h-8 rounded-full text-white flex-shrink-0"
@@ -121,9 +116,9 @@ const ShopHeader = () => {
                 <MessageCircle size={15} />
               </a>
             )}
-            {config.instagram && (
-              <a
-                href={'https://instagram.com/' + config.instagram}
+            {config.instagram && (<a
+              
+                href={`https://instagram.com/${config.instagram}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-8 h-8 rounded-full text-white flex-shrink-0"
@@ -142,8 +137,6 @@ const ShopHeader = () => {
             </button>
           </div>
         </div>
-
-        {/* Address bar */}
         {config.address && (
           <div className="flex items-center gap-1.5 pb-2 -mt-1">
             <MapPin size={12} className="text-gray-400 flex-shrink-0" />
@@ -151,8 +144,6 @@ const ShopHeader = () => {
           </div>
         )}
       </div>
-
-      {/* Mobile dropdown — nav links only */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4">
           <nav className="flex flex-col gap-1 pt-3">

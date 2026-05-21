@@ -18,7 +18,8 @@ const tenantAuthRoutes = require('./routes/tenantAuth');
 const subscriptionRoutes = require('./routes/subscription');
 const categoryRoutes = require('./routes/category');
 const productRoutes = require('./routes/product');
-const publicShopRoutes = require('./routes/publicShop')
+const publicShopRoutes = require('./routes/publicShop');
+const { publicRouter: queryPublicRouter, tenantRouter: queryTenantRouter } = require('./routes/query');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -68,9 +69,14 @@ app.use('/api/tenant/categories', categoryRoutes);
 app.use('/api/tenant/products', productRoutes);
 app.use('/api/public', publicShopRoutes);
 
+// Query routes
+app.use('/api/public', queryPublicRouter);       // /api/public/:slug/queries + /api/public/:slug/upload-signature
+app.use('/api/tenant/queries', queryTenantRouter); // /api/tenant/queries
+
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
 });
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {

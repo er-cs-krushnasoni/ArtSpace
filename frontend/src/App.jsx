@@ -3,11 +3,14 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { isSuperAdminPath, getTenantSlug } from './utils/subdomainUtils';
+
 // Pages
 import PlatformLandingPage from './pages/public/PlatformLandingPage';
 import SignupPage from './pages/tenant/SignupPage';
 import HomePage from './pages/public/HomePage';
 import ShopPage from './pages/public/ShopPage';
+import CustomOrderPage from './pages/public/CustomOrderPage';
+import AppointmentPage from './pages/public/AppointmentPage';
 import UnavailablePage from './pages/public/UnavailablePage';
 import TenantLoginPage from './pages/admin/TenantLoginPage';
 import ForgotPasswordPage from './pages/admin/ForgotPasswordPage';
@@ -45,26 +48,15 @@ const ProtectedRoute = ({ children, redirectTo, requiredRole }) => {
   return children;
 };
 
-/**
- * ProtectedTenantRoute — same as ProtectedRoute but also verifies that the
- * authenticated tenant's slug matches the slug in the URL.
- * Prevents tenant A from accessing tenant B's dashboard with their own JWT.
- */
 const ProtectedTenantRoute = ({ children, slug }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
-
   if (isLoading) return <LoadingScreen />;
-
-  // Not logged in at all → go to this slug's login page
   if (!isAuthenticated || user?.role !== 'tenant_admin') {
     return <Navigate to={`/s/${slug}/admin/login`} replace />;
   }
-
-  // Logged in as a DIFFERENT tenant → go to their own login, not the other slug's
   if (user?.slug !== slug) {
     return <Navigate to={`/s/${slug}/admin/login`} replace />;
   }
-
   return children;
 };
 
@@ -107,17 +99,12 @@ const SuperAdminPanel = () => (
 // ─── Tenant Admin Panel ───────────────────────────────────────────────────────
 const TenantAdminPanel = ({ slug }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
-
   if (isLoading) return <LoadingScreen />;
-
   return (
     <Routes>
       <Route
         path="login"
         element={
-          // If logged in as THIS slug's tenant → redirect to their dashboard
-          // If logged in as a DIFFERENT tenant → show login page (don't redirect to wrong dashboard)
-          // If not logged in → show login page
           isAuthenticated && user?.role === 'tenant_admin' && user?.slug === slug
             ? <Navigate to={`/s/${slug}/admin/dashboard`} replace />
             : <TenantLoginPage />
@@ -148,6 +135,8 @@ const TenantPublicSite = () => {
     <Routes>
       <Route index element={<HomePage />} />
       <Route path="shop" element={<ShopPage />} />
+      <Route path="custom-order" element={<CustomOrderPage />} />
+      <Route path="appointment" element={<AppointmentPage />} />
       <Route path="*" element={<Navigate to="" replace />} />
     </Routes>
   );
@@ -171,7 +160,6 @@ const AppRouter = () => {
     );
   }
 
-  // Platform root routes
   return (
     <Routes>
       <Route path="/" element={<PlatformLandingPage />} />

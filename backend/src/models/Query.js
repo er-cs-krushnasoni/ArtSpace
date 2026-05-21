@@ -14,15 +14,15 @@ const querySchema = new mongoose.Schema(
     address: { type: String },
     instagram: { type: String },
     preferredDate: { type: Date },
-orderType: { type: String, enum: ['delivery', 'pickup', 'at_home', 'at_shop', null] },
-createdBy: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+    preferredTime: { type: String, default: null }, // e.g. "14:30" — stored as HH:mm string
+    orderType: { type: String, enum: ['delivery', 'pickup', 'at_home', 'at_shop', null] },
+    createdBy: { type: String, enum: ['customer', 'admin'], default: 'customer' },
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-    // Prices locked at submission time
     lockedDeliveryPrice: { type: Number },
     lockedAppointmentPrice: { type: Number },
     customPrice: { type: Number },
-    referenceImages: [{ type: String }],       // Cloudinary URLs
-    descriptionImages: [{ type: String }],     // Cloudinary URLs
+    referenceImages: [{ type: String }],
+    descriptionImages: [{ type: String }],
     descriptionText: { type: String },
     status: {
       type: String,

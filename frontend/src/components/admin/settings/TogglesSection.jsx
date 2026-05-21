@@ -22,7 +22,7 @@ function Toggle({ checked, onChange, disabled }) {
   );
 }
 
-const TOGGLES = [
+const BASE_TOGGLES = [
   { key: 'shopVisible', label: 'Public Shop Visible', desc: 'When off, your shop shows "temporarily unavailable" to customers' },
   { key: 'sliderEnabled', label: 'Hero Slider', desc: 'Show image slideshow at top of public site' },
   { key: 'quizEnabled', label: 'Style Quiz', desc: 'Let customers take a quiz to find products' },
@@ -34,12 +34,13 @@ const TOGGLES = [
 export default function TogglesSection({ initialData, onSaved }) {
   const cfg = initialData?.websiteConfig || {};
   const [toggles, setToggles] = useState({
-    shopVisible: cfg.shopVisible !== false, // default true
+    shopVisible: cfg.shopVisible !== false,
     sliderEnabled: cfg.sliderEnabled ?? false,
     quizEnabled: cfg.quizEnabled ?? false,
     blogEnabled: cfg.blogEnabled ?? false,
     deliveryEnabled: cfg.deliveryEnabled ?? true,
     appointmentEnabled: cfg.appointmentEnabled ?? true,
+    appointmentAtHome: cfg.appointmentAtHome ?? true,
   });
   const [saving, setSaving] = useState(null);
 
@@ -47,12 +48,10 @@ export default function TogglesSection({ initialData, onSaved }) {
     const optimistic = { ...toggles, [key]: value };
     setToggles(optimistic);
     setSaving(key);
-
     try {
       await api.put('/tenant/settings/toggles', { [key]: value });
       onSaved?.(optimistic);
     } catch (err) {
-      // Revert on failure
       setToggles({ ...toggles });
       toast.error(err.response?.data?.message || 'Failed to update setting');
     } finally {
@@ -64,19 +63,36 @@ export default function TogglesSection({ initialData, onSaved }) {
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-base font-semibold text-gray-900 mb-1">Site Sections</h2>
       <p className="text-xs text-gray-400 mb-5">Changes save instantly</p>
-
       <div className="space-y-4">
-        {TOGGLES.map(({ key, label, desc }) => (
-          <div key={key} className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-800">{label}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+        {BASE_TOGGLES.map(({ key, label, desc }) => (
+          <div key={key}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-800">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+              </div>
+              <Toggle
+                checked={toggles[key]}
+                onChange={(val) => handleToggle(key, val)}
+                disabled={saving === key}
+              />
             </div>
-            <Toggle
-              checked={toggles[key]}
-              onChange={(val) => handleToggle(key, val)}
-              disabled={saving === key}
-            />
+            {/* Sub-toggle: At Home service — only shown when appointmentEnabled is on */}
+            {key === 'appointmentEnabled' && toggles.appointmentEnabled && (
+              <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-100 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Home Service (Artist Visits Customer)</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    When on, customers see "At Home" option. When off, only "At Shop" is shown.
+                  </p>
+                </div>
+                <Toggle
+                  checked={toggles.appointmentAtHome}
+                  onChange={(val) => handleToggle('appointmentAtHome', val)}
+                  disabled={saving === 'appointmentAtHome'}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>

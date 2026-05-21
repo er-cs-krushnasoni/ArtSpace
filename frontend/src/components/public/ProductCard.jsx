@@ -1,14 +1,8 @@
 import { ShoppingBag } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 
-// Determines which price options this product actually offers
-// null price = not offered for this product (regardless of global toggle)
-// 0 = free
 export const getEffectivePrices = (product) => {
   const { discount } = product;
-
-  // Use original prices as base — deliveryPrice/appointmentPrice in DB are
-  // already discounted when discount is active, so read from originalXxxPrice
   const baseDelivery = discount?.isActive
     ? discount.originalDeliveryPrice
     : product.deliveryPrice;
@@ -16,8 +10,15 @@ export const getEffectivePrices = (product) => {
     ? discount.originalAppointmentPrice
     : product.appointmentPrice;
 
-  const offersDelivery = baseDelivery !== null && baseDelivery !== undefined;
-  const offersAppointment = baseAppointment !== null && baseAppointment !== undefined;
+  // Use the product-level enabled flags as the authoritative gate
+  const offersDelivery =
+    !!product.deliveryEnabled &&
+    baseDelivery !== null &&
+    baseDelivery !== undefined;
+  const offersAppointment =
+    !!product.appointmentEnabled &&
+    baseAppointment !== null &&
+    baseAppointment !== undefined;
 
   if (!discount?.isActive) {
     return {
@@ -74,7 +75,7 @@ const ProductCard = ({ product, onClick }) => {
 
   // A price row is shown only if:
   // 1. Global toggle is enabled AND
-  // 2. This product actually has a price set for that option
+  // 2. This product actually offers that option
   const showDelivery = !!config.deliveryEnabled && prices.offersDelivery;
   const showAppointment = !!config.appointmentEnabled && prices.offersAppointment;
 
@@ -99,14 +100,12 @@ const ProductCard = ({ product, onClick }) => {
             <ShoppingBag size={40} className="text-gray-200" />
           </div>
         )}
-
         {/* Discount badge */}
         {prices.hasDiscount && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
             {prices.discountLabel}
           </span>
         )}
-
         {/* Hover Order Now overlay — desktop */}
         <div className="absolute bottom-0 inset-x-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
@@ -130,6 +129,13 @@ const ProductCard = ({ product, onClick }) => {
           </p>
         )}
 
+        {/* Description snippet */}
+        {product.description && (
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+            {product.description}
+          </p>
+        )}
+
         <PriceRow
           label="Delivery"
           original={prices.originalDelivery}
@@ -145,7 +151,7 @@ const ProductCard = ({ product, onClick }) => {
           show={showAppointment}
         />
 
-        {/* Mobile Order Now — single button, no duplicate */}
+        {/* Mobile Order Now */}
         <button
           className="sm:hidden w-full py-2 rounded-full text-white text-xs font-semibold mt-1"
           style={{ background: 'var(--tenant-primary)' }}

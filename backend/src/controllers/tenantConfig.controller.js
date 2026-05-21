@@ -71,13 +71,14 @@ const updateGeneral = async (req, res) => {
 // ─── PUT /api/tenant/settings/toggles ────────────────────────────────────────
 
 const updateToggles = async (req, res) => {
-  const { sliderEnabled, quizEnabled, blogEnabled, deliveryEnabled, appointmentEnabled, shopVisible } = req.body;
+  const { sliderEnabled, quizEnabled, blogEnabled, deliveryEnabled, appointmentEnabled, appointmentAtHome, shopVisible } = req.body;
   const update = {};
   if (typeof sliderEnabled === 'boolean') update['websiteConfig.sliderEnabled'] = sliderEnabled;
   if (typeof quizEnabled === 'boolean') update['websiteConfig.quizEnabled'] = quizEnabled;
   if (typeof blogEnabled === 'boolean') update['websiteConfig.blogEnabled'] = blogEnabled;
   if (typeof deliveryEnabled === 'boolean') update['websiteConfig.deliveryEnabled'] = deliveryEnabled;
   if (typeof appointmentEnabled === 'boolean') update['websiteConfig.appointmentEnabled'] = appointmentEnabled;
+  if (typeof appointmentAtHome === 'boolean') update['websiteConfig.appointmentAtHome'] = appointmentAtHome;
   if (typeof shopVisible === 'boolean') update['websiteConfig.shopVisible'] = shopVisible;
   await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: update });
   res.json({ success: true, message: 'Toggles updated' });

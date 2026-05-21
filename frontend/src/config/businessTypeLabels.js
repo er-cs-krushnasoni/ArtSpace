@@ -7,7 +7,7 @@ export const BUSINESS_TYPE_LABELS = {
     quiz_name: 'Nail Style Quiz',
     custom_order: 'Custom Nail Design',
     shop: 'Nail Shop',
-    book_appointment: 'Book Nail Appointment',
+    book_appointment: 'Book Custom Nail Appointment',
   },
   mehendi: {
     product: 'Mehendi Design',

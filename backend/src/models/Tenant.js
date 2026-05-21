@@ -6,7 +6,7 @@ const subscriptionHistorySchema = new mongoose.Schema({
   startDate: { type: Date },
   expiryDate: { type: Date },
   paidAmount: { type: Number },
-  paymentMethod: { type: String }, // 'razorpay' | 'manual'
+  paymentMethod: { type: String },
   razorpayOrderId: { type: String },
   note: { type: String },
   createdAt: { type: Date, default: Date.now },
@@ -25,6 +25,9 @@ const websiteConfigSchema = new mongoose.Schema({
   blogEnabled: { type: Boolean, default: false },
   deliveryEnabled: { type: Boolean, default: true },
   appointmentEnabled: { type: Boolean, default: true },
+  // When true: customers see "At Home" option on appointment page (artist visits them)
+  // When false: only "At Shop" shown (customer comes to shop)
+  appointmentAtHome: { type: Boolean, default: true },
   shopVisible: { type: Boolean, default: true },
   tutorialVideoUrl: { type: String, default: null },
   tutorialVideoPublicId: { type: String, default: null },
@@ -79,15 +82,11 @@ const tenantSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
-
-    // Status — no 'pending' (all signups auto-approved)
-    // 'pending_manual' only for super admin cash bypass Option A flow
     status: {
       type: String,
       enum: ['active', 'inactive', 'paused', 'expired', 'pending_manual'],
       default: 'active',
     },
-
     plan: {
       type: String,
       enum: ['trial', '1m', '3m', '6m', '12m', 'custom'],
@@ -97,35 +96,24 @@ const tenantSchema = new mongoose.Schema(
     planExpiryDate: { type: Date },
     pausedAt: { type: Date },
     pausedDays: { type: Number, default: 0 },
-
-    // Password reset
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
-
-    // Refresh token stored as bcrypt hash — raw token only in httpOnly cookie
     refreshTokenHash: { type: String, select: false },
-
-    // Website config
     websiteConfig: { type: websiteConfigSchema, default: () => ({}) },
-
-    // Subscription history
     subscriptionHistory: [subscriptionHistorySchema],
   },
   { timestamps: true }
 );
 
-// Hash password before saving
 tenantSchema.pre('save', async function () {
   if (!this.isModified('passwordHash')) return;
   this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
 });
 
-// Compare plain password against stored hash
 tenantSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// Check if subscription is currently active
 tenantSchema.methods.isSubscriptionActive = function () {
   return (
     this.status === 'active' &&
@@ -134,7 +122,6 @@ tenantSchema.methods.isSubscriptionActive = function () {
   );
 };
 
-// Virtual: days remaining on subscription
 tenantSchema.virtual('daysRemaining').get(function () {
   if (!this.planExpiryDate) return 0;
   const diff = new Date(this.planExpiryDate) - new Date();

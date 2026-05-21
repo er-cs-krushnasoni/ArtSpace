@@ -19,6 +19,7 @@ ARTSPACE
 │       │   ├── category.controller.js
 │       │   ├── product.controller.js
 │       │   ├── publicShop.controller.js
+│       │   ├── query.controller.js
 │       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── tenantAuth.controller.js
@@ -52,6 +53,7 @@ ARTSPACE
 │       │   ├── category.js
 │       │   ├── product.js
 │       │   ├── publicShop.js
+│       │   ├── query.js
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tenantAuth.js
@@ -90,7 +92,12 @@ ARTSPACE
 │       ├── components/
 │       │   ├── common/
 │       │   ├── public/
+│       │   │   ├── CountryCodeDropdown.jsx
+│       │   │   ├── DuplicateDialog.jsx
 │       │   │   ├── HeroSlider.jsx
+│       │   │   ├── ImageUploadArea.jsx
+│       │   │   ├── OrderConfirmation.jsx
+│       │   │   ├── OrderFormModal.jsx
 │       │   │   ├── ProductCard.jsx
 │       │   │   ├── ProductDetailModal.jsx
 │       │   │   ├── ProductGrid.jsx
@@ -126,6 +133,7 @@ ARTSPACE
 │       │
 │       ├── hooks/
 │       │   ├── useCloudinaryUpload.js
+│       │   ├── usePublicCloudinaryUpload.js
 │       │   ├── useSuperAdminAuth.js
 │       │   ├── useTenantAuth.js
 │       │
@@ -146,6 +154,8 @@ ARTSPACE
 │       │   │   ├── WebsiteSettingsPage.jsx
 │       │   │
 │       │   ├── public/
+│       │   │   ├── AppointmentPage.jsx
+│       │   │   ├── CustomOrderPage.jsx
 │       │   │   ├── HomePage.jsx
 │       │   │   ├── PlatformLandingPage.jsx
 │       │   │   ├── SetupIncompletePage.jsx

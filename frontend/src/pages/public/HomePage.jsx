@@ -168,9 +168,9 @@ const HomePage = () => {
             >
               {labels.products || 'Our Products'}
             </h2>
-            {config.address && (
+            {/* {config.address && (
               <p className="text-sm text-gray-500 mt-1">{config.address}</p>
-            )}
+            )} */}
           </div>
           {products.length > 8 && (
             <Link
