@@ -17,6 +17,7 @@ ARTSPACE
 │       │
 │       ├── controllers/
 │       │   ├── category.controller.js
+│       │   ├── inbox.controller.js
 │       │   ├── product.controller.js
 │       │   ├── publicShop.controller.js
 │       │   ├── query.controller.js
@@ -51,6 +52,7 @@ ARTSPACE
 │       ├── routes/
 │       │   ├── auth.js
 │       │   ├── category.js
+│       │   ├── inbox.js
 │       │   ├── product.js
 │       │   ├── publicShop.js
 │       │   ├── query.js
@@ -120,6 +122,10 @@ ARTSPACE
 │       │   │   │   ├── ProductCard.jsx
 │       │   │   │   ├── ProductFormModal.jsx
 │       │   │   │ 
+│       │   │   ├── inbox/
+│       │   │   │   ├── ConfirmOrderModal.jsx
+│       │   │   │   ├── ManualQueryModal.jsx
+│       │   │   │   ├── QueryCard.jsx
 │       │   │
 │       │   └── superadmin/
 │       │       ├── SuperAdminSidebar.jsx
@@ -146,6 +152,7 @@ ARTSPACE
 │       │   │   ├── CategoriesPage.jsx
 │       │   │   ├── ExpiredPage.jsx
 │       │   │   ├── ForgotPasswordPage.jsx
+│       │   │   ├── InboxPage.jsx
 │       │   │   ├── PausedPage.jsx
 │       │   │   ├── ProductsPage.jsx
 │       │   │   ├── ResetPasswordPage.jsx

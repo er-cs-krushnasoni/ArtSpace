@@ -86,7 +86,7 @@ const updateToggles = async (req, res) => {
 
 // ─── POST /api/tenant/settings/upload-signature ───────────────────────────────
 
-const ALLOWED_UPLOAD_TYPES = ['logo', 'pwa_icon', 'slider_image', 'tutorial_video', 'product_photo'];
+const ALLOWED_UPLOAD_TYPES = ['logo', 'pwa_icon', 'slider_image', 'tutorial_video', 'product_photo', 'query_image'];
 const getUploadSignature = async (req, res) => {
   const { uploadType } = req.body;
 

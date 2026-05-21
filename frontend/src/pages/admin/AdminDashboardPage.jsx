@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X, Package, Tag } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X, Package, Tag, Inbox } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 import SubscriptionPage from './SubscriptionPage';
@@ -9,14 +9,16 @@ import PausedPage from './PausedPage';
 import WebsiteSettingsPage from './WebsiteSettingsPage';
 import ProductsPage from './ProductsPage';
 import CategoriesPage from './CategoriesPage';
+import InboxPage from './InboxPage';
 import toast from 'react-hot-toast';
-import { AlertTriangle } from 'lucide-react'; // already has other lucide imports, just add AlertTriangle
+import { AlertTriangle } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => {
+const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount }) => {
   const NAV_ITEMS = [
     { label: 'Dashboard', icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
+    { label: 'Inbox', icon: Inbox, to: `/s/${slug}/admin/dashboard/inbox`, badge: unreadCount },
     { label: 'Products', icon: Package, to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories', icon: Tag, to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Subscription', icon: CreditCard, to: `/s/${slug}/admin/dashboard/subscription` },
@@ -53,8 +55,9 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
             <X className="w-4 h-4" />
           </button>
         </div>
+
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ label, icon: Icon, to }) => (
+          {NAV_ITEMS.map(({ label, icon: Icon, to, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -71,10 +74,16 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
               }
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
+              <span className="flex-1">{label}</span>
+              {badge > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-violet-500">
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
+
         <div className="px-3 py-4 border-t border-white/5">
           <button
             onClick={onLogout}
@@ -91,7 +100,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose }) => 
 };
 
 // ─── Dashboard Home ───────────────────────────────────────────────────────────
-const DashboardHome = () => {
+const DashboardHome = ({ unreadCount, unreadLoading }) => {
   const { tenant } = useTenant();
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -99,7 +108,6 @@ const DashboardHome = () => {
 
   return (
     <div className="p-6">
-      {/* Setup incomplete banner */}
       {showSetupBanner && (
         <div className="mb-5 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
           <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -122,10 +130,22 @@ const DashboardHome = () => {
 
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Welcome back. More features coming in upcoming phases.</p>
+        <p className="text-sm text-gray-500 mt-0.5">Welcome back.</p>
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {['Unread Queries', "Today's Appointments", "Today's Deliveries"].map((label) => (
+        <div
+          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+          onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
+        >
+          <p className="text-xs text-gray-500 mb-1">Unread Queries</p>
+          {unreadLoading ? (
+            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>
+          )}
+        </div>
+        {["Today's Appointments", "Today's Deliveries"].map((label) => (
           <div key={label} className="bg-gray-50 rounded-xl p-4">
             <p className="text-xs text-gray-500 mb-1">{label}</p>
             <p className="text-2xl font-semibold text-gray-900">—</p>
@@ -143,9 +163,9 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const [accountStatus, setAccountStatus] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadLoading, setUnreadLoading] = useState(true);
 
-  // Safety net: if the JWT slug doesn't match the URL slug, redirect to login
-  // This handles edge cases where ProtectedTenantRoute hasn't caught it yet
   useEffect(() => {
     if (user && user.slug !== slug) {
       navigate(`/s/${slug}/admin/login`, { replace: true });
@@ -155,6 +175,24 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     checkStatus();
   }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await api.get('/tenant/inbox');
+      const all = res.data.data || [];
+      setUnreadCount(all.filter((q) => q.status === 'unread').length);
+    } catch {
+      // non-critical
+    } finally {
+      setUnreadLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (accountStatus === 'ok') {
+      fetchUnreadCount();
+    }
+  }, [accountStatus, fetchUnreadCount]);
 
   const checkStatus = async () => {
     try {
@@ -186,10 +224,12 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
+
   if (accountStatus === 'unauthenticated') {
     navigate(`/s/${slug}/admin/login`, { replace: true });
     return null;
   }
+
   if (accountStatus === 'expired') return <ExpiredPage slug={slug} />;
   if (accountStatus === 'paused') return <PausedPage slug={slug} />;
 
@@ -201,7 +241,9 @@ export default function AdminDashboardPage() {
         onLogout={handleLogout}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        unreadCount={unreadCount}
       />
+
       <div className="lg:ml-60 min-h-screen flex flex-col">
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
           <button
@@ -214,10 +256,15 @@ export default function AdminDashboardPage() {
             {user?.businessName || 'Admin'}
           </span>
         </header>
+
         <main className="flex-1">
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
-            <Route path="home" element={<DashboardHome />} />
+            <Route
+              path="home"
+              element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} />}
+            />
+            <Route path="inbox" element={<InboxPage />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
