@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Phone, MessageCircle, ExternalLink, MapPin, Calendar, Trash2, CheckCheck, BookmarkPlus, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import AdminProductPreviewModal from '../common/AdminProductPreviewModal';
 
 const TYPE_BADGE = {
   SHOP_ORDER: { label: 'Shop Order', className: 'bg-violet-100 text-violet-800' },
@@ -76,9 +77,9 @@ const LockedPrice = ({ query }) => {
   return null;
 };
 
-export default function QueryCard({ query, onMarkSeen, onReplyLater, onDelete, onConfirm }) {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
+export default function QueryCard({ query, onMarkSeen, onReplyLater, onMarkUnread, onDelete, onConfirm }) {
+const [showDeleteConfirm,  setShowDeleteConfirm]  = useState(false);
+const [showProductPreview, setShowProductPreview] = useState(false);
   const {
     _id, type, status, createdBy, createdAt,
     customerName, mobile, countryCode, instagram,
@@ -124,18 +125,22 @@ export default function QueryCard({ query, onMarkSeen, onReplyLater, onDelete, o
       </div>
 
       {product && (
-        <div className="flex items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
-          {productThumb && (
-            <img src={productThumb} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-          )}
-          <div className="min-w-0 flex-1">
-            {productName && (
-              <p className="text-xs font-medium text-gray-800 truncate">{productName}</p>
-            )}
-            <LockedPrice query={query} />
-          </div>
-        </div>
+  <button
+    onClick={() => setShowProductPreview(true)}
+    className="w-full flex items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg hover:bg-violet-50 transition-colors text-left"
+  >
+    {productThumb && (
+      <img src={productThumb} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+    )}
+    <div className="min-w-0 flex-1">
+      {productName && (
+        <p className="text-xs font-medium text-gray-800 truncate">{productName}</p>
       )}
+      <LockedPrice query={query} />
+    </div>
+    <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
+  </button>
+)}
 
       {!product && type === 'SHOP_ORDER' && (
         <div className="mb-2">
@@ -180,82 +185,87 @@ export default function QueryCard({ query, onMarkSeen, onReplyLater, onDelete, o
       )}
 
       <div className="border-t border-gray-100 pt-3 mt-1">
-        {showDeleteConfirm ? (
-          <DeleteConfirm
-            onConfirm={() => { setShowDeleteConfirm(false); onDelete(_id); }}
-            onCancel={() => setShowDeleteConfirm(false)}
-          />
-        ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 mr-1">
-              <a
-                href={`tel:${fullMobile}`}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-              >
-                <Phone className="w-3 h-3" />
-                Call
-              </a>
-              <a
-                href={`https://wa.me/${whatsappNum}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
-              >
-                <MessageCircle className="w-3 h-3" />
-                WhatsApp
-              </a>
-              {instagram && (
-                <a
-                  href={`https://instagram.com/${instagram.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-pink-50 text-pink-700 hover:bg-pink-100 transition-colors"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Instagram
-                </a>
-              )}
-            </div>
-
-            <div className="flex-1" />
-
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {status === 'unread' && (
-                <button
-                  onClick={() => onReplyLater(_id)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  <BookmarkPlus className="w-3 h-3" />
-                  Reply Later
-                </button>
-              )}
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 className="w-3 h-3" />
-                Delete
-              </button>
-              <button
-                onClick={() => onMarkSeen(_id)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-              >
-                <CheckCheck className="w-3 h-3" />
-                Mark as Seen
-              </button>
-              <button
-                onClick={() => onConfirm(query)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all duration-200 hover:opacity-90"
-                style={{ background: 'var(--color-primary)' }}
-              >
-                Confirm Order
-                <ChevronRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
+  {showDeleteConfirm ? (
+    <DeleteConfirm
+      onConfirm={() => { setShowDeleteConfirm(false); onDelete(_id); }}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
+  ) : (
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Contact buttons */}
+      <div className="flex items-center gap-1.5 mr-1">
+        <a href={`tel:${fullMobile}`}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+          <Phone className="w-3 h-3" />Call
+        </a>
+        <a href={`https://wa.me/${whatsappNum}`} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
+          <MessageCircle className="w-3 h-3" />WhatsApp
+        </a>
+        {instagram && (
+          <a href={`https://instagram.com/${instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-pink-50 text-pink-700 hover:bg-pink-100 transition-colors">
+            <ExternalLink className="w-3 h-3" />Instagram
+          </a>
         )}
       </div>
+      <div className="flex-1" />
+      {/* Status actions */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Unread: can reply later or mark seen */}
+        {status === 'unread' && (
+          <button onClick={() => onReplyLater(_id)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <BookmarkPlus className="w-3 h-3" />Reply Later
+          </button>
+        )}
+        {/* Reply Later: can move back to unread */}
+        {status === 'reply_later' && (
+          <button onClick={() => onMarkUnread(_id)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <BookmarkPlus className="w-3 h-3" />Move to Unread
+          </button>
+        )}
+        {/* Seen: can move back to unread or reply later */}
+        {status === 'seen' && (
+          <>
+            <button onClick={() => onMarkUnread(_id)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              Move to Unread
+            </button>
+            <button onClick={() => onReplyLater(_id)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              <BookmarkPlus className="w-3 h-3" />Reply Later
+            </button>
+          </>
+        )}
+        <button onClick={() => setShowDeleteConfirm(true)}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
+          <Trash2 className="w-3 h-3" />Delete
+        </button>
+        {/* Mark as seen — only for unread and reply_later */}
+        {(status === 'unread' || status === 'reply_later') && (
+          <button onClick={() => onMarkSeen(_id)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>
+            <CheckCheck className="w-3 h-3" />Mark as Seen
+          </button>
+        )}
+        <button onClick={() => onConfirm(query)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all duration-200 hover:opacity-90"
+          style={{ background: 'var(--color-primary)' }}>
+          Confirm Order<ChevronRight className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  )}
+      </div>
+      {showProductPreview && product && (
+  <AdminProductPreviewModal
+    product={product}
+    onClose={() => setShowProductPreview(false)}
+  />
+)}
     </div>
   );
 }

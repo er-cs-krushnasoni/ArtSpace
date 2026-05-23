@@ -23,6 +23,7 @@ ARTSPACE
 │       │   ├── query.controller.js
 │       │   ├── subscription.controller.js
 │       │   ├── superAdminAuth.controller.js
+│       │   ├── task.controller.js
 │       │   ├── tenantAuth.controller.js
 │       │   ├── tenantConfig.controller.js
 │       │
@@ -58,6 +59,7 @@ ARTSPACE
 │       │   ├── query.js
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
+│       │   ├── tasks.js
 │       │   ├── tenantAuth.js
 │       │   ├── tenantConfig.js
 │       │   ├── tenantSettings.js
@@ -126,6 +128,15 @@ ARTSPACE
 │       │   │   │   ├── ConfirmOrderModal.jsx
 │       │   │   │   ├── ManualQueryModal.jsx
 │       │   │   │   ├── QueryCard.jsx
+│       │   │   │
+│       │   │   ├── tasks/
+│       │   │   │   ├── PaymentPanel.jsx
+│       │   │   │   ├── RescheduleModal.jsx
+│       │   │   │   ├── StatusTransitionButtons.jsx
+│       │   │   │   ├── TaskCard.jsx
+│       │   │   │
+│       │   │   ├── common/
+│       │   │   │   ├── AdminProductPreviewModal.jsx
 │       │   │
 │       │   └── superadmin/
 │       │       ├── SuperAdminSidebar.jsx
@@ -158,6 +169,7 @@ ARTSPACE
 │       │   │   ├── ResetPasswordPage.jsx
 │       │   │   ├── SubscriptionPage.jsx
 │       │   │   ├── TenantLoginPage.jsx
+│       │   │   ├── TodoCalendarPage.jsx
 │       │   │   ├── WebsiteSettingsPage.jsx
 │       │   │
 │       │   ├── public/

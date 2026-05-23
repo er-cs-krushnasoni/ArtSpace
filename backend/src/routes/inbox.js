@@ -8,6 +8,7 @@ const {
   markAsReplyLater,
   deleteQuery,
   confirmOrder,
+  markAsUnread
 } = require('../controllers/inbox.controller');
 
 // All inbox routes require auth + active subscription
@@ -18,5 +19,6 @@ router.patch('/:queryId/seen', markAsSeen);
 router.patch('/:queryId/reply-later', markAsReplyLater);
 router.delete('/:queryId', deleteQuery);
 router.post('/:queryId/confirm', confirmOrder);
+router.patch('/:queryId/unread', markAsUnread);
 
 module.exports = router;

@@ -77,25 +77,24 @@ const deleteStaleQueries = cron.schedule('5 * * * *', async () => {
   }
 });
 
-// ─── JOB 3: Auto-delete history tasks after 24hrs ────────────────────────────
-const deleteOldHistory = cron.schedule('10 * * * *', async () => {
+// ─── JOB 3: Auto-delete cancelled tasks after 48hrs ───────────────────────────
+const deleteCancelledTasks = cron.schedule('10 * * * *', async () => {
   loadModels();
-  const now = new Date();
-  const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  console.log(`[CRON] ${now.toISOString()} — Running history task cleanup`);
+  const now    = new Date();
+  const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  console.log(`[CRON] ${now.toISOString()} — Running cancelled task cleanup`);
   try {
-    const oldTasks = await Task.find({
-      movedToHistoryAt: { $lt: cutoff, $ne: null },
+    const stale = await Task.find({
+      taskStatus:  'cancelled',
+      cancelledAt: { $lt: cutoff, $ne: null },
     });
-    for (const task of oldTasks) {
-      await cleanupTaskAssets(task);
+    for (const task of stale) {
       await task.deleteOne();
     }
-    if (oldTasks.length > 0) {
-      console.log(`[CRON] Deleted ${oldTasks.length} old history task(s)`);
-    }
+    if (stale.length > 0)
+      console.log(`[CRON] Deleted ${stale.length} cancelled task(s)`);
   } catch (error) {
-    console.error('[CRON] History task cleanup error:', error.message);
+    console.error('[CRON] Cancelled task cleanup error:', error.message);
   }
 });
 
@@ -170,12 +169,34 @@ const purgeExpiredTrials = cron.schedule('0 2 * * *', async () => {
   }
 });
 
+// ─── JOB 6: Auto-delete completed tasks after 7 days ─────────────────────────
+const deleteCompletedTasks = cron.schedule('20 * * * *', async () => {
+  loadModels();
+  const now    = new Date();
+  const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  console.log(`[CRON] ${now.toISOString()} — Running completed task cleanup`);
+  try {
+    const stale = await Task.find({
+      taskStatus:  'completed',
+      completedAt: { $lt: cutoff, $ne: null },
+    });
+    for (const task of stale) {
+      await task.deleteOne();
+    }
+    if (stale.length > 0)
+      console.log(`[CRON] Deleted ${stale.length} completed task(s)`);
+  } catch (error) {
+    console.error('[CRON] Completed task cleanup error:', error.message);
+  }
+});
+
 const startAllCronJobs = () => {
   console.log('⏰ Cron jobs initialized:');
   console.log('   • [0 * * * *]  Subscription expiry check');
   console.log('   • [5 * * * *]  Stale query cleanup (24hr after seen)');
-  console.log('   • [10 * * * *] History task cleanup (24hr)');
+  console.log('   • [10 * * * *] Cancelled task cleanup (48hr)');
   console.log('   • [15 * * * *] Expired discount revert');
+  console.log('   • [20 * * * *] Completed task cleanup (7 days)');
   console.log('   • [0 2 * * *]  Expired trial data purge');
 };
 
@@ -183,7 +204,8 @@ module.exports = {
   startAllCronJobs,
   expireSubscriptions,
   deleteStaleQueries,
-  deleteOldHistory,
+  deleteCancelledTasks,
   revertExpiredDiscounts,
+  deleteCompletedTasks,
   purgeExpiredTrials,
 };

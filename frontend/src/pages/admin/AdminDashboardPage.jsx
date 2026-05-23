@@ -1,37 +1,40 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, Settings, LogOut, Menu, X, Package, Tag, Inbox } from 'lucide-react';
+import {
+  LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
+  Package, Tag, Inbox, CalendarCheck,
+} from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
-import SubscriptionPage from './SubscriptionPage';
-import ExpiredPage from './ExpiredPage';
-import PausedPage from './PausedPage';
+import SubscriptionPage    from './SubscriptionPage';
+import ExpiredPage         from './ExpiredPage';
+import PausedPage          from './PausedPage';
 import WebsiteSettingsPage from './WebsiteSettingsPage';
-import ProductsPage from './ProductsPage';
-import CategoriesPage from './CategoriesPage';
-import InboxPage from './InboxPage';
+import ProductsPage        from './ProductsPage';
+import CategoriesPage      from './CategoriesPage';
+import InboxPage           from './InboxPage';
+import TodoCalendarPage    from './TodoCalendarPage';
 import toast from 'react-hot-toast';
-import { AlertTriangle } from 'lucide-react';
-import { useTenant } from '../../context/TenantContext';
+import { AlertTriangle }   from 'lucide-react';
+import { useTenant }       from '../../context/TenantContext';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
+
 const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount }) => {
   const NAV_ITEMS = [
-    { label: 'Dashboard', icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
-    { label: 'Inbox', icon: Inbox, to: `/s/${slug}/admin/dashboard/inbox`, badge: unreadCount },
-    { label: 'Products', icon: Package, to: `/s/${slug}/admin/dashboard/products` },
-    { label: 'Categories', icon: Tag, to: `/s/${slug}/admin/dashboard/categories` },
-    { label: 'Subscription', icon: CreditCard, to: `/s/${slug}/admin/dashboard/subscription` },
-    { label: 'Website Settings', icon: Settings, to: `/s/${slug}/admin/dashboard/settings` },
+    { label: 'Dashboard',        icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
+    { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,    badge: unreadCount },
+    { label: 'Tasks',         icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
+    { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
+    { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
+    { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
+    { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
   ];
 
   return (
     <>
       {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={onClose} />
       )}
       <aside
         className={`
@@ -100,10 +103,12 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
 };
 
 // ─── Dashboard Home ───────────────────────────────────────────────────────────
-const DashboardHome = ({ unreadCount, unreadLoading }) => {
+
+const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading }) => {
   const { tenant } = useTenant();
-  const { slug } = useParams();
-  const navigate = useNavigate();
+  const { slug }   = useParams();
+  const navigate   = useNavigate();
+
   const showSetupBanner = tenant && !tenant.websiteConfig?.logo;
 
   return (
@@ -134,6 +139,7 @@ const DashboardHome = ({ unreadCount, unreadLoading }) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Unread queries */}
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
@@ -145,69 +151,104 @@ const DashboardHome = ({ unreadCount, unreadLoading }) => {
             <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>
           )}
         </div>
-        {["Today's Appointments", "Today's Deliveries"].map((label) => (
-          <div key={label} className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className="text-2xl font-semibold text-gray-900">—</p>
-          </div>
-        ))}
+
+        {/* Today's appointments */}
+        <div
+          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+          onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
+        >
+          <p className="text-xs text-gray-500 mb-1">Today's Appointments</p>
+          {taskLoading ? (
+            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-semibold text-gray-900">
+              {taskSummary.todayAppointments ?? 0}
+            </p>
+          )}
+        </div>
+
+        {/* Today's deliveries */}
+        <div
+          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+          onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
+        >
+          <p className="text-xs text-gray-500 mb-1">Today's Deliveries</p>
+          {taskLoading ? (
+            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-semibold text-gray-900">
+              {taskSummary.todayDeliveries ?? 0}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function AdminDashboardPage() {
-  const { slug } = useParams();
+  const { slug }     = useParams();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
+
   const [accountStatus, setAccountStatus] = useState(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [unreadCount,   setUnreadCount]   = useState(0);
   const [unreadLoading, setUnreadLoading] = useState(true);
+  const [taskSummary,   setTaskSummary]   = useState({});
+  const [taskLoading,   setTaskLoading]   = useState(true);
 
   useEffect(() => {
-    if (user && user.slug !== slug) {
+    if (user && user.slug !== slug)
       navigate(`/s/${slug}/admin/login`, { replace: true });
-    }
   }, [user, slug, navigate]);
 
-  useEffect(() => {
-    checkStatus();
-  }, []);
+  useEffect(() => { checkStatus(); }, []);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get('/tenant/inbox');
       const all = res.data.data || [];
       setUnreadCount(all.filter((q) => q.status === 'unread').length);
-    } catch {
-      // non-critical
-    } finally {
-      setUnreadLoading(false);
-    }
+    } catch { /* non-critical */ }
+    finally   { setUnreadLoading(false); }
+  }, []);
+
+  const fetchTaskSummary = useCallback(async () => {
+    try {
+      const res = await api.get('/tenant/tasks');
+      setTaskSummary(res.data.summary || {});
+    } catch { /* non-critical */ }
+    finally   { setTaskLoading(false); }
   }, []);
 
   useEffect(() => {
-    if (accountStatus === 'ok') {
-      fetchUnreadCount();
-    }
-  }, [accountStatus, fetchUnreadCount]);
+  if (accountStatus === 'ok') {
+    fetchUnreadCount();
+    fetchTaskSummary();
+
+    // Poll every 30 seconds for unread count
+    const interval = setInterval(fetchUnreadCount, 30_000);
+    return () => clearInterval(interval);
+  }
+}, [accountStatus, fetchUnreadCount, fetchTaskSummary]);
 
   const checkStatus = async () => {
     try {
       const res = await api.get('/subscription/status');
-      const tenantStatus = res.data?.status;
-      if (tenantStatus === 'expired') setAccountStatus('expired');
-      else if (tenantStatus === 'paused') setAccountStatus('paused');
+      const s   = res.data?.status;
+      if (s === 'expired') setAccountStatus('expired');
+      else if (s === 'paused') setAccountStatus('paused');
       else setAccountStatus('ok');
     } catch (err) {
-      const code = err?.response?.data?.code;
+      const code       = err?.response?.data?.code;
       const httpStatus = err?.response?.status;
-      if (code === 'SUBSCRIPTION_EXPIRED') setAccountStatus('expired');
-      else if (code === 'ACCOUNT_PAUSED') setAccountStatus('paused');
-      else if (httpStatus === 401) setAccountStatus('unauthenticated');
-      else setAccountStatus('ok');
+      if (code === 'SUBSCRIPTION_EXPIRED')    setAccountStatus('expired');
+      else if (code === 'ACCOUNT_PAUSED')     setAccountStatus('paused');
+      else if (httpStatus === 401)            setAccountStatus('unauthenticated');
+      else                                    setAccountStatus('ok');
     }
   };
 
@@ -231,7 +272,7 @@ export default function AdminDashboardPage() {
   }
 
   if (accountStatus === 'expired') return <ExpiredPage slug={slug} />;
-  if (accountStatus === 'paused') return <PausedPage slug={slug} />;
+  if (accountStatus === 'paused')  return <PausedPage  slug={slug} />;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -246,10 +287,7 @@ export default function AdminDashboardPage() {
 
       <div className="lg:ml-60 min-h-screen flex flex-col">
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <button onClick={() => setMobileOpen(true)} className="text-gray-500 hover:text-gray-700">
             <Menu className="w-5 h-5" />
           </button>
           <span className="text-sm font-semibold text-gray-900 truncate">
@@ -262,14 +300,22 @@ export default function AdminDashboardPage() {
             <Route index element={<Navigate to="home" replace />} />
             <Route
               path="home"
-              element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} />}
+              element={
+                <DashboardHome
+                  unreadCount={unreadCount}
+                  unreadLoading={unreadLoading}
+                  taskSummary={taskSummary}
+                  taskLoading={taskLoading}
+                />
+              }
             />
-            <Route path="inbox" element={<InboxPage />} />
-            <Route path="products" element={<ProductsPage />} />
+            <Route path="inbox"      element={<InboxPage />} />
+            <Route path="calendar"   element={<TodoCalendarPage />} />
+            <Route path="products"   element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
-            <Route path="settings" element={<WebsiteSettingsPage />} />
-            <Route path="*" element={<Navigate to="home" replace />} />
+            <Route path="settings"   element={<WebsiteSettingsPage />} />
+            <Route path="*"          element={<Navigate to="home" replace />} />
           </Routes>
         </main>
       </div>

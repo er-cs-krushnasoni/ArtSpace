@@ -66,8 +66,10 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
   );
   const [preferredTime, setPreferredTime] = useState(query.preferredTime || '');
   const [descriptionText, setDescriptionText] = useState(query.descriptionText || '');
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
+const [scheduledDate, setScheduledDate] = useState(
+  query.preferredDate ? new Date(query.preferredDate).toISOString().split('T')[0] : ''
+);
+const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
   const [finalPrice, setFinalPrice] = useState(defaultPrice);
   const [loading, setLoading] = useState(false);
 
@@ -218,7 +220,7 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
             )}
 
             {/* Preferred date + time */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* <div className="grid grid-cols-2 gap-3">
               <Field label="Preferred Date">
                 <input
                   type="date"
@@ -235,7 +237,7 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
                   className={inputClass}
                 />
               </Field>
-            </div>
+            </div> */}
 
             {/* Description */}
             <Field label="Description">
