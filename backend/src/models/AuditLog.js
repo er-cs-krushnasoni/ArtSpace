@@ -23,6 +23,7 @@ const auditLogSchema = new mongoose.Schema(
         'TENANT_ACTIVATED',
         'TENANT_PAUSED',
         'TENANT_UNPAUSED',
+        'TENANT_DELETED',
         'PASSWORD_RESET_BY_ADMIN',
       ],
     },

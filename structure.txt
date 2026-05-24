@@ -22,6 +22,7 @@ ARTSPACE
 │       │   ├── publicShop.controller.js
 │       │   ├── query.controller.js
 │       │   ├── subscription.controller.js
+│       │   ├── superAdmin.controller.js
 │       │   ├── superAdminAuth.controller.js
 │       │   ├── task.controller.js
 │       │   ├── tenantAuth.controller.js
@@ -139,7 +140,14 @@ ARTSPACE
 │       │   │   │   ├── AdminProductPreviewModal.jsx
 │       │   │
 │       │   └── superadmin/
+│       │       ├── AdjustDaysModal.jsx
+│       │       ├── BypassPaymentModal.jsx
+│       │       ├── ChangePlanModal.jsx
+│       │       ├── ChangeSlugModal.jsx
+│       │       ├── ConfirmDialog.jsx
+│       │       ├── CreateTenantModal.jsx
 │       │       ├── SuperAdminSidebar.jsx
+│       │       ├── TenantDetailDrawer.jsx
 │       │
 │       ├── config/
 │       │   └── businessTypeLabels.js
@@ -187,8 +195,11 @@ ARTSPACE
 │       │   │   │    ├── SuperAdminPricingPlaceholder.jsx
 │       │   │   │    ├── SuperAdminAuditPlaceholder.jsx
 │       │   │   │
+│       │   │   ├── SuperAdminAuditPage.jsx
 │       │   │   ├── SuperAdminDashboardPage.jsx
-│       │   │   └── SuperAdminLoginPage.jsx
+│       │   │   ├── SuperAdminLoginPage.jsx
+│       │   │   ├── SuperAdminPricingPage.jsx
+│       │   │   ├── SuperAdminTenantsPage.jsx
 │       │   │
 │       │   ├── tenant/
 │       │   │   ├── SignupPage.jsx

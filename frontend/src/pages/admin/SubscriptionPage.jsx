@@ -34,6 +34,7 @@ const loadRazorpay = () =>
 export default function SubscriptionPage({ onPaymentSuccess }) {  const { user } = useAuth();
   const [status, setStatus] = useState(null);
   const [pricing, setPricing] = useState({});
+  const [planEnabled, setPlanEnabled] = useState({});
   const [selectedPlan, setSelectedPlan] = useState('1m');
   const [customDays, setCustomDays] = useState('');
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
@@ -60,6 +61,7 @@ export default function SubscriptionPage({ onPaymentSuccess }) {  const { user }
     try {
       const res = await api.get('/subscription/pricing');
       setPricing(res.data.pricing || {});
+      setPlanEnabled(res.data.enabled || {});
     } catch {
       // silent
     } finally {
@@ -248,7 +250,10 @@ handler: async (response) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 mb-4">
-            {PLAN_OPTIONS.map((plan) => (
+            {PLAN_OPTIONS.filter(plan => {
+              const key = plan.key === 'custom' ? 'custom_daily' : plan.key;
+              return planEnabled[key] !== false;
+            }).map((plan) => (
               <button
                 key={plan.key}
                 onClick={() => {

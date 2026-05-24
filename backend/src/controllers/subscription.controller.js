@@ -25,14 +25,13 @@ const DEFAULT_PRICES = {
 // ─── Super Admin: Get all plan prices ────────────────────────────────────────
 const getPricing = async (req, res) => {
   const records = await SubscriptionPricing.find({});
-
-  // Merge DB records with defaults so all plans always appear
   const pricing = { ...DEFAULT_PRICES };
+  const enabled = { '1m': true, '3m': true, '6m': true, '12m': true, custom_daily: true };
   records.forEach((r) => {
     pricing[r.plan] = r.price;
+    enabled[r.plan] = r.isEnabled !== false; // default true if not set
   });
-
-  res.json({ success: true, pricing });
+  res.json({ success: true, pricing, enabled });
 };
 
 // ─── Super Admin: Update a plan price ────────────────────────────────────────
@@ -79,7 +78,12 @@ const createOrder = async (req, res) => {
   if (!validPlans.includes(plan)) {
     return res.status(400).json({ success: false, message: 'Invalid plan selected.' });
   }
-
+  // Block purchase if plan is disabled by Super Admin
+  const planKey = plan === 'custom' ? 'custom_daily' : plan;
+  const pricingCheck = await SubscriptionPricing.findOne({ plan: planKey });
+  if (pricingCheck && pricingCheck.isEnabled === false) {
+    return res.status(403).json({ success: false, message: 'This plan is currently unavailable.' });
+  }
   // Custom Days validation
   if (plan === 'custom') {
     const days = parseInt(customDays, 10);

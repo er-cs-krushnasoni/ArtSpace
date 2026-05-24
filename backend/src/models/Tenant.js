@@ -107,6 +107,8 @@ const tenantSchema = new mongoose.Schema(
 
 tenantSchema.pre('save', async function () {
   if (!this.isModified('passwordHash')) return;
+  // Skip if already a bcrypt hash (Super Admin creates tenant with pre-hashed value)
+  if (this.passwordHash.startsWith('$2')) return;
   this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
 });
 

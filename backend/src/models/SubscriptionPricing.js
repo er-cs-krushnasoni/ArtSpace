@@ -15,6 +15,7 @@ const subscriptionPricingSchema = new mongoose.Schema(
     },
     label: { type: String }, // e.g. "1 Month", "3 Months"
     durationDays: { type: Number }, // for standard plans
+    isEnabled: { type: Boolean, default: true },
     updatedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

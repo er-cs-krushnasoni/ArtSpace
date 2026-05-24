@@ -18,9 +18,9 @@ import ResetPasswordPage from './pages/admin/ResetPasswordPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import SuperAdminLoginPage from './pages/superadmin/SuperAdminLoginPage';
 import SuperAdminDashboardPage from './pages/superadmin/SuperAdminDashboardPage';
-import SuperAdminTenantsPlaceholder from './pages/superadmin/placeholders/SuperAdminTenantsPlaceholder';
-import SuperAdminPricingPlaceholder from './pages/superadmin/placeholders/SuperAdminPricingPlaceholder';
-import SuperAdminAuditPlaceholder from './pages/superadmin/placeholders/SuperAdminAuditPlaceholder';
+import SuperAdminTenantsPage from './pages/superadmin/SuperAdminTenantsPage';
+import SuperAdminPricingPage from './pages/superadmin/SuperAdminPricingPage';
+import SuperAdminAuditPage from './pages/superadmin/SuperAdminAuditPage';
 import SetupIncompletePage from './pages/public/SetupIncompletePage';
 
 // ─── Loading Screen ───────────────────────────────────────────────────────────
@@ -88,9 +88,9 @@ const SuperAdminPanel = () => (
         </ProtectedRoute>
       }
     />
-    <Route path="/superadmin/tenants" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminTenantsPlaceholder /></ProtectedRoute>} />
-    <Route path="/superadmin/pricing" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminPricingPlaceholder /></ProtectedRoute>} />
-    <Route path="/superadmin/audit" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminAuditPlaceholder /></ProtectedRoute>} />
+    <Route path="/superadmin/tenants" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminTenantsPage /></ProtectedRoute>} />
+<Route path="/superadmin/pricing" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminPricingPage /></ProtectedRoute>} />
+<Route path="/superadmin/audit" element={<ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin"><SuperAdminAuditPage /></ProtectedRoute>} />
     <Route path="/superadmin" element={<Navigate to="/superadmin/login" replace />} />
     <Route path="*" element={<Navigate to="/superadmin/login" replace />} />
   </Routes>
