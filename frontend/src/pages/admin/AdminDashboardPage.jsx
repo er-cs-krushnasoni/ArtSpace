@@ -17,6 +17,8 @@ import TodoCalendarPage    from './TodoCalendarPage';
 import toast from 'react-hot-toast';
 import { AlertTriangle }   from 'lucide-react';
 import { useTenant }       from '../../context/TenantContext';
+import { HelpCircle } from 'lucide-react';
+import QuizBuilderPage from './QuizBuilderPage';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +29,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
     { label: 'Tasks',         icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
+    { label: 'Style Quiz', icon: HelpCircle, to: `/s/${slug}/admin/dashboard/quiz` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
   ];
@@ -313,6 +316,7 @@ export default function AdminDashboardPage() {
             <Route path="calendar"   element={<TodoCalendarPage />} />
             <Route path="products"   element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
+            <Route path="quiz" element={<QuizBuilderPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
             <Route path="settings"   element={<WebsiteSettingsPage />} />
             <Route path="*"          element={<Navigate to="home" replace />} />

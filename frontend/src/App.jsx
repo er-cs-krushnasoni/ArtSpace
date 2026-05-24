@@ -22,6 +22,7 @@ import SuperAdminTenantsPage from './pages/superadmin/SuperAdminTenantsPage';
 import SuperAdminPricingPage from './pages/superadmin/SuperAdminPricingPage';
 import SuperAdminAuditPage from './pages/superadmin/SuperAdminAuditPage';
 import SetupIncompletePage from './pages/public/SetupIncompletePage';
+import QuizPage from './pages/public/QuizPage';
 
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
@@ -137,6 +138,7 @@ const TenantPublicSite = () => {
       <Route path="shop" element={<ShopPage />} />
       <Route path="custom-order" element={<CustomOrderPage />} />
       <Route path="appointment" element={<AppointmentPage />} />
+      <Route path="quiz" element={<QuizPage />} />
       <Route path="*" element={<Navigate to="" replace />} />
     </Routes>
   );

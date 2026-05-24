@@ -22,7 +22,9 @@ const productRoutes      = require('./routes/product');
 const publicShopRoutes   = require('./routes/publicShop');
 const { publicRouter: queryPublicRouter, tenantRouter: queryTenantRouter } = require('./routes/query');
 const inboxRoutes        = require('./routes/inbox');
-const taskRoutes         = require('./routes/tasks');   // ← Phase 10
+const taskRoutes         = require('./routes/tasks');
+const quizRoutes        = require('./routes/quiz');
+const { getPublicQuiz } = require('./controllers/quiz.controller');   
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -71,7 +73,9 @@ app.use('/api/public',             publicShopRoutes);
 app.use('/api/public',             queryPublicRouter);
 app.use('/api/tenant/queries',     queryTenantRouter);
 app.use('/api/tenant/inbox',       inboxRoutes);
-app.use('/api/tenant/tasks',       taskRoutes);          // ← Phase 10
+app.use('/api/tenant/tasks',       taskRoutes);     
+app.use('/api/tenant/quiz',  quizRoutes);
+app.get('/api/public/:slug/quiz', getPublicQuiz);
 
 app.use((req, res) =>
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` })

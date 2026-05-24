@@ -5,14 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 import { tokenStore } from '../../api/tokenStore';
-
-const BUSINESS_TYPES = [
-  { value: 'nail_art', label: 'Nail Art' },
-  { value: 'mehendi', label: 'Mehendi' },
-  { value: 'jewellery', label: 'Jewellery' },
-  { value: 'cake', label: 'Cake Shop' },       // ← was cake_shop, must be cake
-  { value: 'generic', label: 'Generic / Other' },
-];
+import { BUSINESS_TYPE_OPTIONS } from '../../config/businessTypeLabels';
 
 const COUNTRY_CODES = [
   { code: '+91', label: '🇮🇳 +91' },
@@ -48,6 +41,117 @@ const slugStatusText = (status) => {
   if (status === 'invalid') return { text: 'Only lowercase letters, numbers, hyphens (3–30 chars)', cls: 'text-red-500' };
   return null;
 };
+
+// ─── Searchable Business Type Dropdown ────────────────────────────────────────
+function BusinessTypeSelect({ value, onChange, options, error }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const containerRef = useRef(null);
+  const searchRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+        setQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (open && searchRef.current) searchRef.current.focus();
+  }, [open]);
+
+  const filtered = query.trim()
+    ? options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  const showOther = query.trim() && filtered.length === 0;
+  const selectedLabel = value === 'other'
+    ? 'Other'
+    : options.find(o => o.value === value)?.label || '';
+
+  const handleSelect = (val) => {
+    onChange({ target: { name: 'businessType', value: val } });
+    setOpen(false);
+    setQuery('');
+  };
+
+  return (
+    <div className="relative" ref={containerRef}>
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm text-left flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent ${
+          error ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'
+        } ${!selectedLabel ? 'text-gray-400' : 'text-gray-900'}`}
+      >
+        <span>{selectedLabel || 'Select type…'}</span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {/* Search input */}
+          <div className="p-2 border-b border-gray-100">
+            <input
+              ref={searchRef}
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search business type…"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Options list — max height with scroll, stays inside viewport */}
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.map(opt => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  onClick={() => handleSelect(opt.value)}
+                  className={`w-full text-left px-3.5 py-2 text-sm transition-colors ${
+                    value === opt.value
+                      ? 'bg-violet-50 text-violet-700 font-medium'
+                      : 'text-gray-800 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+
+            {/* "Other" fallback when no match */}
+            {showOther && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleSelect('other')}
+                  className="w-full text-left px-3.5 py-2 text-sm text-violet-600 hover:bg-violet-50 font-medium flex items-center gap-2"
+                >
+                  <span className="text-violet-400">+</span>
+                  Use "{query}" as Other
+                </button>
+              </li>
+            )}
+
+            {/* No results and no query match */}
+            {!showOther && filtered.length === 0 && (
+              <li className="px-3.5 py-3 text-sm text-gray-400 text-center">No results found</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -318,18 +422,16 @@ export default function SignupPage() {
           </div>
 
           {/* Business Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
-            <div className="relative">
-              <select name="businessType" value={form.businessType} onChange={handleChange}
-                className={`${inputClass('businessType')} appearance-none pr-8`}>
-                <option value="">Select type…</option>
-                {BUSINESS_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-            {errors.businessType && <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>}
-          </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
+  <BusinessTypeSelect
+    value={form.businessType}
+    onChange={handleChange}
+    options={BUSINESS_TYPE_OPTIONS}
+    error={errors.businessType}
+  />
+  {errors.businessType && <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>}
+</div>
 
           {/* Owner Name */}
           <div>

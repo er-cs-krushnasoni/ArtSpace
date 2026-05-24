@@ -21,6 +21,7 @@ ARTSPACE
 │       │   ├── product.controller.js
 │       │   ├── publicShop.controller.js
 │       │   ├── query.controller.js
+│       │   ├── quiz.controller.js
 │       │   ├── subscription.controller.js
 │       │   ├── superAdmin.controller.js
 │       │   ├── superAdminAuth.controller.js
@@ -58,6 +59,7 @@ ARTSPACE
 │       │   ├── product.js
 │       │   ├── publicShop.js
 │       │   ├── query.js
+│       │   ├── quiz.js
 │       │   ├── subscription.js
 │       │   ├── superAdmin.js
 │       │   ├── tasks.js
@@ -150,6 +152,7 @@ ARTSPACE
 │       │       ├── TenantDetailDrawer.jsx
 │       │
 │       ├── config/
+│       │   ├── quizTemplates.js
 │       │   └── businessTypeLabels.js
 │       │
 │       ├── context/
@@ -174,6 +177,7 @@ ARTSPACE
 │       │   │   ├── InboxPage.jsx
 │       │   │   ├── PausedPage.jsx
 │       │   │   ├── ProductsPage.jsx
+│       │   │   ├── QuizBuilderPage.jsx
 │       │   │   ├── ResetPasswordPage.jsx
 │       │   │   ├── SubscriptionPage.jsx
 │       │   │   ├── TenantLoginPage.jsx
@@ -185,6 +189,7 @@ ARTSPACE
 │       │   │   ├── CustomOrderPage.jsx
 │       │   │   ├── HomePage.jsx
 │       │   │   ├── PlatformLandingPage.jsx
+│       │   │   ├── QuizPage.jsx
 │       │   │   ├── SetupIncompletePage.jsx
 │       │   │   ├── ShopPage.jsx
 │       │   │   └── UnavailablePage.jsx

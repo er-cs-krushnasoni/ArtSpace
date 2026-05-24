@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Share2, Settings, ShoppingBag, Palette, Cake, Gem, Hand } from 'lucide-react';
+import { Sparkles, Share2, Settings, ShoppingBag, Palette, Cake, Gem, Hand, Brush, Gift, Flower2, Scissors } from 'lucide-react';
 
 const BUSINESS_TYPES = [
-  { icon: Sparkles, label: 'Nail Art' },
-  { icon: Hand, label: 'Mehendi' },
-  { icon: Gem, label: 'Jewellery' },
-  { icon: Cake, label: 'Cake Shop' },
-  { icon: ShoppingBag, label: 'And more…' },
+  { icon: Sparkles, label: 'Nail Artists' },
+  { icon: Hand, label: 'Mehendi Artists' },
+  { icon: Gem, label: 'Jewellery Brands' },
+  { icon: Cake, label: 'Cake & Bakery' },
+  { icon: Brush, label: 'Makeup Artists' },
+  { icon: Scissors, label: 'Hair Stylists' },
+  { icon: Gift, label: 'Gift Stores' },
+  { icon: Flower2, label: 'Florists' },
+  { icon: ShoppingBag, label: '80+ business types' },
 ];
 
 const STEPS = [
@@ -61,7 +65,7 @@ export default function PlatformLandingPage() {
           <span className="text-violet-600">beautifully online</span>.
         </h1>
         <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto">
-          Create your own shop for nail art, mehendi, jewellery, cakes, and more — in minutes.
+          Create your own shop for nail art, mehendi, jewellery, cakes, makeup, gifts, and 80+ other business types — in minutes.
           No tech skills needed.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -101,7 +105,9 @@ export default function PlatformLandingPage() {
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Made for your business</h2>
-          <p className="text-sm text-gray-500 mb-8">Whatever you create, ArtSpace works for you</p>
+          <p className="text-sm text-gray-500 mb-8">
+  From beauty artists to handmade brands — if you sell it, ArtSpace handles it
+</p>
           <div className="flex flex-wrap justify-center gap-3">
             {BUSINESS_TYPES.map((bt) => (
               <div
