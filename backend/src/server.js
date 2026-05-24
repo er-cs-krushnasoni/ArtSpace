@@ -24,6 +24,8 @@ const { publicRouter: queryPublicRouter, tenantRouter: queryTenantRouter } = req
 const inboxRoutes        = require('./routes/inbox');
 const taskRoutes         = require('./routes/tasks');
 const quizRoutes        = require('./routes/quiz');
+const blogRoutes = require('./routes/blog');
+const { getPublicBlogList, getPublicBlogPost } = require('./controllers/blog.controller');
 const { getPublicQuiz } = require('./controllers/quiz.controller');   
 
 const app  = express();
@@ -76,6 +78,9 @@ app.use('/api/tenant/inbox',       inboxRoutes);
 app.use('/api/tenant/tasks',       taskRoutes);     
 app.use('/api/tenant/quiz',  quizRoutes);
 app.get('/api/public/:slug/quiz', getPublicQuiz);
+app.use('/api/tenant/blog', blogRoutes);
+app.get('/api/public/:slug/blog', getPublicBlogList);
+app.get('/api/public/:slug/blog/:postSlug', getPublicBlogPost);
 
 app.use((req, res) =>
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` })

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
-  Package, Tag, Inbox, CalendarCheck,
+  Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
@@ -17,8 +17,9 @@ import TodoCalendarPage    from './TodoCalendarPage';
 import toast from 'react-hot-toast';
 import { AlertTriangle }   from 'lucide-react';
 import { useTenant }       from '../../context/TenantContext';
-import { HelpCircle } from 'lucide-react';
 import QuizBuilderPage from './QuizBuilderPage';
+import BlogManagerPage from './BlogManagerPage';
+import PostEditorPage  from './PostEditorPage';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Style Quiz', icon: HelpCircle, to: `/s/${slug}/admin/dashboard/quiz` },
+    { label: 'Blog', icon: BookOpen, to: `/s/${slug}/admin/dashboard/blog` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
   ];
@@ -317,6 +319,9 @@ export default function AdminDashboardPage() {
             <Route path="products"   element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="quiz" element={<QuizBuilderPage />} />
+            <Route path="blog"          element={<BlogManagerPage />} />
+<Route path="blog/new"      element={<PostEditorPage />} />
+<Route path="blog/edit/:postId" element={<PostEditorPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
             <Route path="settings"   element={<WebsiteSettingsPage />} />
             <Route path="*"          element={<Navigate to="home" replace />} />
