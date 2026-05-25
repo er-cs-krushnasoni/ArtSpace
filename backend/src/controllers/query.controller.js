@@ -4,6 +4,7 @@ const { cloudinary } = require('../config/cloudinary');
 const Tenant = require('../models/Tenant');
 const Product = require('../models/Product');
 const Query = require('../models/Query');
+const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -194,13 +195,11 @@ const createPublicQuery = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
-
     const imgError = validateImageUrls(req);
     if (imgError) return res.status(400).json({ success: false, message: imgError });
 
     const { slug } = req.params;
     const tenant = await getTenantBySlug(slug);
-
     if (!tenant || tenant.status === 'inactive') {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -214,7 +213,6 @@ const createPublicQuery = async (req, res) => {
       req.body.mobile.replace(/\s+/g, ''),
       req.body.productId
     );
-
     if (duplicate) {
       return res.status(409).json({
         success: false,
@@ -226,6 +224,22 @@ const createPublicQuery = async (req, res) => {
 
     const data = await buildQueryData(req.body, tenant._id, 'customer');
     const query = await Query.create(data);
+
+    // ── Write query snapshot (permanent) ─────────────────────────────────
+    try {
+      await AnalyticsSnapshot.create({
+        tenantId:    tenant._id,
+        type:        'query',
+        queryId:     query._id,
+        submittedAt: query.createdAt,
+        isConfirmed: false,
+        queryType:   query.type,
+        orderType:   query.orderType,
+        productId:   query.productId || undefined,
+      });
+    } catch (snapErr) {
+      console.error('[createPublicQuery] snapshot error:', snapErr.message);
+    }
 
     return res.status(201).json({ success: true, data: { _id: query._id } });
   } catch (err) {
@@ -324,7 +338,6 @@ const createAdminQuery = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
-
     const imgError = validateImageUrls(req);
     if (imgError) return res.status(400).json({ success: false, message: imgError });
 
@@ -336,7 +349,6 @@ const createAdminQuery = async (req, res) => {
       req.body.mobile.replace(/\s+/g, ''),
       req.body.productId
     );
-
     if (duplicate) {
       return res.status(409).json({
         success: false,
@@ -348,6 +360,22 @@ const createAdminQuery = async (req, res) => {
 
     const data = await buildQueryData(req.body, tenantId, 'admin');
     const query = await Query.create(data);
+
+    // ── Write query snapshot (permanent) ─────────────────────────────────
+    try {
+      await AnalyticsSnapshot.create({
+        tenantId:    tenantId,
+        type:        'query',
+        queryId:     query._id,
+        submittedAt: query.createdAt,
+        isConfirmed: false,
+        queryType:   query.type,
+        orderType:   query.orderType,
+        productId:   query.productId || undefined,
+      });
+    } catch (snapErr) {
+      console.error('[createAdminQuery] snapshot error:', snapErr.message);
+    }
 
     return res.status(201).json({ success: true, data: query });
   } catch (err) {

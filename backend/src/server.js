@@ -25,6 +25,7 @@ const inboxRoutes        = require('./routes/inbox');
 const taskRoutes         = require('./routes/tasks');
 const quizRoutes        = require('./routes/quiz');
 const blogRoutes = require('./routes/blog');
+const analyticsRoutes = require('./routes/analytics');
 const { getPublicBlogList, getPublicBlogPost } = require('./controllers/blog.controller');
 const { getPublicQuiz } = require('./controllers/quiz.controller');   
 
@@ -79,6 +80,7 @@ app.use('/api/tenant/tasks',       taskRoutes);
 app.use('/api/tenant/quiz',  quizRoutes);
 app.get('/api/public/:slug/quiz', getPublicQuiz);
 app.use('/api/tenant/blog', blogRoutes);
+app.use('/api/tenant/analytics', analyticsRoutes);
 app.get('/api/public/:slug/blog', getPublicBlogList);
 app.get('/api/public/:slug/blog/:postSlug', getPublicBlogPost);
 

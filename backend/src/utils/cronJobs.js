@@ -84,11 +84,16 @@ const deleteCancelledTasks = cron.schedule('10 * * * *', async () => {
   const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
   console.log(`[CRON] ${now.toISOString()} — Running cancelled task cleanup`);
   try {
+    const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
     const stale = await Task.find({
       taskStatus:  'cancelled',
       cancelledAt: { $lt: cutoff, $ne: null },
     });
     for (const task of stale) {
+      await AnalyticsSnapshot.deleteOne({
+        taskId: new mongoose.Types.ObjectId(task._id),
+        type: 'task',
+      });
       await task.deleteOne();
     }
     if (stale.length > 0)
@@ -158,6 +163,10 @@ const purgeExpiredTrials = cron.schedule('0 2 * * *', async () => {
       if (tenant.websiteConfig?.pwaIconPublicId) {
         await deleteFromCloudinary(tenant.websiteConfig.pwaIconPublicId).catch(() => {});
       }
+
+      // Delete analytics snapshots for this tenant
+      const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
+      await AnalyticsSnapshot.deleteMany({ tenantId });
 
       // Delete the tenant itself
       // NOTE: TrialBlacklist entry for this mobile is intentionally NOT deleted

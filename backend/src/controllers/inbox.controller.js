@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const { cloudinary } = require('../config/cloudinary');
 const Query = require('../models/Query');
 const Task  = require('../models/Task');
+const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
+const Product           = require('../models/Product');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -119,7 +121,6 @@ const deleteQuery = async (req, res) => {
 };
 
 // ─── POST /api/tenant/inbox/:queryId/confirm ─────────────────────────────────
-
 const confirmOrder = async (req, res) => {
   const tenantId  = req.user.tenantId;
   const { queryId } = req.params;
@@ -163,7 +164,6 @@ const confirmOrder = async (req, res) => {
     paymentStatus: 'none',
     scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
     scheduledTime: scheduledTime || undefined,
-    // Copy customer-submitted content from query
     referenceImages:   query.referenceImages   || [],
     descriptionImages: query.descriptionImages || [],
     descriptionText:   query.descriptionText   || '',
@@ -172,6 +172,42 @@ const confirmOrder = async (req, res) => {
 
   const task = await Task.create(taskData);
   await Query.deleteOne({ _id: queryId });
+
+  // ── Update query snapshot → mark confirmed ────────────────────────────────
+  // ── Create task snapshot ──────────────────────────────────────────────────
+  try {
+    // Mark the query snapshot as confirmed
+    await AnalyticsSnapshot.findOneAndUpdate(
+      { queryId: query._id, type: 'query' },
+      { $set: { isConfirmed: true } }
+    );
+
+    // Fetch product name
+    let productName = '';
+    if (query.productId) {
+      const product = await Product.findById(query.productId).select('name').lean();
+      if (product) productName = product.name || '';
+    }
+
+    // Create task snapshot
+    await AnalyticsSnapshot.create({
+      tenantId,
+      type:        'task',
+      taskId:      task._id,
+      confirmedAt: task.createdAt,
+      queryType:   query.type,
+      orderType:   resolvedOrderType,
+      productId:   query.productId || undefined,
+      productName,
+      totalPaid:     0,
+      finalPrice:    finalPrice !== undefined && finalPrice !== '' ? Number(finalPrice) : null,
+      paymentStatus: 'none',
+      amountPending: finalPrice !== undefined && finalPrice !== '' ? Number(finalPrice) : 0,
+      paymentEntries: [],
+    });
+  } catch (snapErr) {
+    console.error('[confirmOrder] snapshot error:', snapErr.message);
+  }
 
   return res.status(201).json({
     success: true,

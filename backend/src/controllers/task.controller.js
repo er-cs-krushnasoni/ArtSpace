@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Task = require('../models/Task');
+const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
 
 // ─── Payment recalculator ─────────────────────────────────────────────────────
 const recalcPayment = (task) => {
   const total = (task.paymentEntries || []).reduce((sum, e) => sum + (e.amount || 0), 0);
   task.totalPaid     = total;
   task.amountPending = task.finalPrice ? Math.max(0, task.finalPrice - total) : 0;
-
   if (!task.finalPrice || task.finalPrice === 0) {
     task.paymentStatus = 'none';
   } else if (total >= task.finalPrice) {
@@ -16,43 +16,59 @@ const recalcPayment = (task) => {
   } else {
     task.paymentStatus = 'none';
   }
-
-  // 7-day cron timer: only when BOTH completed AND fully paid
   if (task.taskStatus === 'completed' && task.paymentStatus === 'full') {
-    if (!task.completedAt) task.completedAt = new Date(); // set only once, don't reset
+    if (!task.completedAt) task.completedAt = new Date();
   } else if (task.taskStatus === 'completed' && task.paymentStatus !== 'full') {
-    task.completedAt = null; // payment regressed (entry deleted) — pause timer
+    task.completedAt = null;
   }
-  // If not in completed state, completedAt is managed by updateTaskStatus
+};
+
+// ─── Sync payment data to analytics snapshot ──────────────────────────────────
+const syncSnapshot = async (task) => {
+  try {
+    await AnalyticsSnapshot.findOneAndUpdate(
+      { taskId: new mongoose.Types.ObjectId(task._id), type: 'task' },
+      {
+        $set: {
+          totalPaid:      task.totalPaid,
+          finalPrice:     task.finalPrice,
+          paymentStatus:  task.paymentStatus,
+          amountPending:  task.amountPending,
+          paymentEntries: (task.paymentEntries || []).map((e) => ({
+            amount: e.amount,
+            date:   e.date,
+          })),
+        },
+      },
+      { upsert: false }
+    );
+  } catch (err) {
+    console.error('[syncSnapshot] Failed:', err.message);
+  }
 };
 
 // ─── GET /api/tenant/tasks ────────────────────────────────────────────────────
 const getTasks = async (req, res) => {
   const tenantId = req.user.tenantId;
   const { date, status } = req.query;
-
   const filter = { tenantId };
-
   if (date) {
     const day   = new Date(date);
     const start = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 0, 0, 0));
     const end   = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 23, 59, 59, 999));
     filter.scheduledDate = { $gte: start, $lte: end };
   }
-
   if (status) {
     const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
     if (statuses.length) filter.taskStatus = { $in: statuses };
   }
-
   const tasks = await Task.find(filter)
     .populate('productId', 'name nameVisible photos')
     .sort({ scheduledDate: 1 })
     .lean();
 
-  // Summary counts
   const allActive = await Task.find({ tenantId }).lean();
-  const now = new Date();
+  const now     = new Date();
   const IST_OFF = 5.5 * 60 * 60 * 1000;
   const istNow  = new Date(now.getTime() + IST_OFF);
   const yyyy = istNow.getUTCFullYear();
@@ -95,29 +111,42 @@ const updateTaskStatus = async (req, res) => {
   if (!task)
     return res.status(404).json({ success: false, message: 'Task not found' });
 
-  task.taskStatus = status;
+  task.taskStatus         = status;
+  task.cancelledAt        = status === 'cancelled' ? new Date() : null;
+  task.completedTimestamp = status === 'completed'
+    ? (task.completedTimestamp || new Date())
+    : null;
 
-// cancelledAt: set when cancelled, clear otherwise
-task.cancelledAt = status === 'cancelled' ? new Date() : null;
-
-// completedTimestamp: display only — set the moment admin marks completed, clear when moved away
-task.completedTimestamp = status === 'completed'
-  ? (task.completedTimestamp || new Date()) // keep original if already set
-  : null;
-
-// completedAt: cron timer — only set when completed AND payment is full
-// If moving away from completed, clear it
-if (status !== 'completed') {
-  task.completedAt = null;
-} else {
-  // Will be set by recalcPayment if payment is full, or stays null
-  // Don't touch it here — recalcPayment handles it
-  if (task.paymentStatus === 'full' && !task.completedAt) {
-    task.completedAt = new Date();
+  if (status !== 'completed') {
+    task.completedAt = null;
+  } else {
+    if (task.paymentStatus === 'full' && !task.completedAt) {
+      task.completedAt = new Date();
+    }
   }
-}
 
   await task.save();
+
+  // ── Sync analytics snapshot exclusion flag ────────────────────────────────
+  try {
+    const taskObjId = new mongoose.Types.ObjectId(taskId);
+    if (status === 'cancelled') {
+      // Exclude from analytics — but keep snapshot so it can be restored
+      await AnalyticsSnapshot.findOneAndUpdate(
+        { taskId: taskObjId, type: 'task' },
+        { $set: { isExcluded: true } }
+      );
+    } else {
+      // Any non-cancelled status — restore to analytics
+      await AnalyticsSnapshot.findOneAndUpdate(
+        { taskId: taskObjId, type: 'task' },
+        { $set: { isExcluded: false } }
+      );
+    }
+  } catch (err) {
+    console.error('[updateTaskStatus] snapshot sync error:', err.message);
+  }
+
   await task.populate('productId', 'name nameVisible photos');
   return res.json({ success: true, data: task });
 };
@@ -138,6 +167,7 @@ const updateFinalPrice = async (req, res) => {
   task.finalPrice = finalPrice != null ? Number(finalPrice) : null;
   recalcPayment(task);
   await task.save();
+  await syncSnapshot(task);
   await task.populate('productId', 'name nameVisible photos');
   return res.json({ success: true, data: task });
 };
@@ -162,13 +192,14 @@ const addPaymentEntry = async (req, res) => {
   task.paymentEntries.push({ amount: Number(amount), date: new Date(date), note: note || '' });
   recalcPayment(task);
   await task.save();
+  await syncSnapshot(task);
   await task.populate('productId', 'name nameVisible photos');
   return res.json({ success: true, data: task });
 };
 
 // ─── PATCH /api/tenant/tasks/:taskId/payment-entries/:entryId ────────────────
 const updatePaymentEntry = async (req, res) => {
-  const tenantId   = req.user.tenantId;
+  const tenantId        = req.user.tenantId;
   const { taskId, entryId } = req.params;
   const { amount, date, note } = req.body;
 
@@ -189,13 +220,14 @@ const updatePaymentEntry = async (req, res) => {
 
   recalcPayment(task);
   await task.save();
+  await syncSnapshot(task);
   await task.populate('productId', 'name nameVisible photos');
   return res.json({ success: true, data: task });
 };
 
 // ─── DELETE /api/tenant/tasks/:taskId/payment-entries/:entryId ───────────────
 const deletePaymentEntry = async (req, res) => {
-  const tenantId   = req.user.tenantId;
+  const tenantId        = req.user.tenantId;
   const { taskId, entryId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(taskId))
@@ -212,6 +244,7 @@ const deletePaymentEntry = async (req, res) => {
   entry.deleteOne();
   recalcPayment(task);
   await task.save();
+  await syncSnapshot(task);
   await task.populate('productId', 'name nameVisible photos');
   return res.json({ success: true, data: task });
 };
@@ -270,6 +303,17 @@ const deleteTask = async (req, res) => {
     return res.status(404).json({ success: false, message: 'Task not found' });
 
   await Task.deleteOne({ _id: taskId });
+
+  // Hard delete task snapshot regardless of state
+  try {
+    await AnalyticsSnapshot.deleteOne({
+      taskId: new mongoose.Types.ObjectId(taskId),
+      type: 'task',
+    });
+  } catch (err) {
+    console.error('[deleteTask] snapshot delete error:', err.message);
+  }
+
   return res.json({ success: true, message: 'Task deleted' });
 };
 

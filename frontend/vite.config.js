@@ -18,4 +18,13 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  optimizeDeps: {
+    include: ['recharts'],
+    force: true,
+  },
+  build: {
+    commonjsOptions: {
+      include: [/recharts/, /node_modules/],
+    },
+  },
 });
