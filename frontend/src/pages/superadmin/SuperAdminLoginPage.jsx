@@ -53,8 +53,8 @@ export default function SuperAdminLoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Logo / Wordmark */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-600 mb-4">
-              <span className="text-white font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>A</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl">
+              <img src="/artspace-logo.png" alt="ArtSpace" className="w-12 h-12 object-contain" />
             </div>
             <h1
               className="text-2xl font-semibold text-gray-900"

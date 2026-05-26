@@ -11,10 +11,10 @@ import api from '../../api/axiosInstance';
 import { tokenStore } from '../../api/tokenStore';
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, to: '/superadmin/dashboard' },
-  { label: 'Tenants', icon: Building2, to: '/superadmin/tenants' },
-  { label: 'Plans & Pricing', icon: CreditCard, to: '/superadmin/pricing' },
-  { label: 'Audit Log', icon: ScrollText, to: '/superadmin/audit' },
+  { label: 'Dashboard',      icon: LayoutDashboard, to: '/superadmin/dashboard' },
+  { label: 'Tenants',        icon: Building2,       to: '/superadmin/tenants' },
+  { label: 'Plans & Pricing', icon: CreditCard,     to: '/superadmin/pricing' },
+  { label: 'Audit Log',      icon: ScrollText,      to: '/superadmin/audit' },
 ];
 
 export default function SuperAdminSidebar() {
@@ -41,13 +41,8 @@ export default function SuperAdminSidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/5">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
-            <span
-              className="text-white font-bold text-sm"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              A
-            </span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+            <img src="/artspace-logo.png" alt="ArtSpace" className="w-8 h-8 object-contain rounded-lg" />
           </div>
           <div>
             <p
@@ -74,9 +69,7 @@ export default function SuperAdminSidebar() {
             to={to}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                isActive
-                  ? 'text-[#c4b5fd]'
-                  : 'hover:bg-white/5'
+                isActive ? 'text-[#c4b5fd]' : 'hover:bg-white/5'
               }`
             }
             style={({ isActive }) => ({

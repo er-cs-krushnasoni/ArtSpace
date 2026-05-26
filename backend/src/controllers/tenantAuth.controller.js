@@ -27,10 +27,11 @@ const calcExpiry = (plan, customDays) => {
 };
 
 const setRefreshCookie = (res, token) => {
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,           // always true — devtunnels are https
+    sameSite: 'none',       // required for cross-origin cookie sending
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -413,10 +414,10 @@ const logout = async (req, res) => {
     }
   }
   res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+});
   return res.json({ success: true, message: 'Logged out successfully' });
 };
 

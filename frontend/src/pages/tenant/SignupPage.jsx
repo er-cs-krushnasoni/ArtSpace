@@ -382,8 +382,8 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+              <img src="/artspace-logo.png" alt="ArtSpace" className="h-10 object-contain" />
             </div>
             <span className="font-semibold text-gray-900">ArtSpace</span>
           </Link>

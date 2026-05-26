@@ -90,7 +90,10 @@ ARTSPACE
 │   │
 │   ├── node_modules/
 │   │
-│   ├── public
+│   ├── public/
+│   │
+│   ├── scripts/
+│   │   ├── generate-icons.js
 │   │
 │   └── src/
 │       ├── App.jsx
@@ -170,6 +173,7 @@ ARTSPACE
 │       ├── hooks/
 │       │   ├── useCloudinaryUpload.js
 │       │   ├── usePublicCloudinaryUpload.js
+│       │   ├── usePWAInstall.js
 │       │   ├── useSuperAdminAuth.js
 │       │   ├── useTenantAuth.js
 │       │

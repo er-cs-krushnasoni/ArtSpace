@@ -51,6 +51,18 @@ export const TenantProvider = ({ children }) => {
         if (data.businessName) {
           document.title = data.businessName;
         }
+
+        // Inject tenant logo as browser tab favicon
+        if (data.websiteConfig?.logo) {
+          let link = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.type = 'image/png';
+          link.href = data.websiteConfig.logo;
+        }
       } catch (err) {
         console.error('Failed to load tenant config:', err);
         setError('Failed to load store configuration');

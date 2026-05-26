@@ -53,11 +53,11 @@ const login = async (req, res) => {
 
   // 6. Set refresh token as httpOnly cookie
   res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
 
   // 7. Return access token + safe user data
   return res.json({
@@ -95,10 +95,10 @@ const logout = async (req, res) => {
   }
 
   res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+});
 
   return res.json({ success: true, message: 'Logged out successfully' });
 };

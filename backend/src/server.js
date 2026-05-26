@@ -36,9 +36,10 @@ connectDB();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-const allowedOrigins = process.env.NODE_ENV === 'development'
-  ? ['http://localhost:5173']
-  : [process.env.FRONTEND_URL];
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {

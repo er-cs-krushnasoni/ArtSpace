@@ -41,8 +41,8 @@ export default function PlatformLandingPage() {
       {/* Nav */}
       <nav className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+            <img src="/artspace-logo.png" alt="ArtSpace" className="h-10 object-contain" />
           </div>
           <span className="font-semibold text-gray-900 text-lg">ArtSpace</span>
         </div>

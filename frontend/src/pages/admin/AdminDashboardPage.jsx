@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
-  Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen, BarChart2,
+  Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen, BarChart2, Download,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
@@ -21,19 +21,19 @@ import QuizBuilderPage from './QuizBuilderPage';
 import BlogManagerPage from './BlogManagerPage';
 import AnalyticsPage from './AnalyticsPage';
 import PostEditorPage  from './PostEditorPage';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount }) => {
+const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount, canInstall, onInstall }) => {
   const NAV_ITEMS = [
     { label: 'Dashboard',        icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
     { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,    badge: unreadCount },
-    { label: 'Tasks',         icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
+    { label: 'Tasks',            icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
     { label: 'Analytics',        icon: BarChart2,       to: `/s/${slug}/admin/dashboard/analytics` },
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
-    { label: 'Style Quiz', icon: HelpCircle, to: `/s/${slug}/admin/dashboard/quiz` },
-    { label: 'Blog', icon: BookOpen, to: `/s/${slug}/admin/dashboard/blog` },
+    { label: 'Style Quiz',       icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/quiz` },
+    { label: 'Blog',             icon: BookOpen,        to: `/s/${slug}/admin/dashboard/blog` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
   ];
@@ -66,7 +66,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map(({ label, icon: Icon, to, badge }) => (
             <NavLink
               key={to}
@@ -94,7 +94,17 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/5">
+        <div className="px-3 py-4 border-t border-white/5 space-y-1">
+          {canInstall && (
+            <button
+              onClick={onInstall}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium w-full transition-all duration-200 hover:bg-white/5"
+              style={{ color: 'var(--color-sidebar-active-text)' }}
+            >
+              <Download className="w-4 h-4" />
+              Install App
+            </button>
+          )}
           <button
             onClick={onLogout}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium w-full transition-all duration-200 hover:bg-white/5"
@@ -110,12 +120,10 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
 };
 
 // ─── Dashboard Home ───────────────────────────────────────────────────────────
-
 const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading }) => {
   const { tenant } = useTenant();
   const { slug }   = useParams();
   const navigate   = useNavigate();
-
   const showSetupBanner = tenant && !tenant.websiteConfig?.logo;
 
   return (
@@ -146,7 +154,6 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Unread queries */}
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
@@ -159,7 +166,6 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
           )}
         </div>
 
-        {/* Today's appointments */}
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
@@ -174,7 +180,6 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
           )}
         </div>
 
-        {/* Today's deliveries */}
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
@@ -194,11 +199,11 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
 };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-
 export default function AdminDashboardPage() {
-  const { slug }     = useParams();
+  const { slug }         = useParams();
   const { user, logout } = useAuth();
-  const navigate     = useNavigate();
+  const navigate         = useNavigate();
+  const { canInstall, install } = usePWAInstall();
 
   const [accountStatus, setAccountStatus] = useState(null);
   const [mobileOpen,    setMobileOpen]    = useState(false);
@@ -207,10 +212,29 @@ export default function AdminDashboardPage() {
   const [taskSummary,   setTaskSummary]   = useState({});
   const [taskLoading,   setTaskLoading]   = useState(true);
 
+  // Redirect if logged-in user's slug doesn't match the URL slug
   useEffect(() => {
     if (user && user.slug !== slug)
       navigate(`/s/${slug}/admin/login`, { replace: true });
   }, [user, slug, navigate]);
+
+  // Inject dynamic PWA manifest for this tenant
+  useEffect(() => {
+    const linkId = 'tenant-pwa-manifest';
+    const existing = document.getElementById(linkId);
+    if (existing) existing.remove();
+
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = `/api/public/${slug}/pwa-manifest.json`;
+    link.id = linkId;
+    document.head.appendChild(link);
+
+    return () => {
+      const el = document.getElementById(linkId);
+      if (el) el.remove();
+    };
+  }, [slug]);
 
   useEffect(() => { checkStatus(); }, []);
 
@@ -232,30 +256,28 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-  if (accountStatus === 'ok') {
-    fetchUnreadCount();
-    fetchTaskSummary();
-
-    // Poll every 30 seconds for unread count
-    const interval = setInterval(fetchUnreadCount, 30_000);
-    return () => clearInterval(interval);
-  }
-}, [accountStatus, fetchUnreadCount, fetchTaskSummary]);
+    if (accountStatus === 'ok') {
+      fetchUnreadCount();
+      fetchTaskSummary();
+      const interval = setInterval(fetchUnreadCount, 30_000);
+      return () => clearInterval(interval);
+    }
+  }, [accountStatus, fetchUnreadCount, fetchTaskSummary]);
 
   const checkStatus = async () => {
     try {
       const res = await api.get('/subscription/status');
       const s   = res.data?.status;
-      if (s === 'expired') setAccountStatus('expired');
-      else if (s === 'paused') setAccountStatus('paused');
-      else setAccountStatus('ok');
+      if (s === 'expired')      setAccountStatus('expired');
+      else if (s === 'paused')  setAccountStatus('paused');
+      else                      setAccountStatus('ok');
     } catch (err) {
       const code       = err?.response?.data?.code;
       const httpStatus = err?.response?.status;
-      if (code === 'SUBSCRIPTION_EXPIRED')    setAccountStatus('expired');
-      else if (code === 'ACCOUNT_PAUSED')     setAccountStatus('paused');
-      else if (httpStatus === 401)            setAccountStatus('unauthenticated');
-      else                                    setAccountStatus('ok');
+      if (code === 'SUBSCRIPTION_EXPIRED')   setAccountStatus('expired');
+      else if (code === 'ACCOUNT_PAUSED')    setAccountStatus('paused');
+      else if (httpStatus === 401)           setAccountStatus('unauthenticated');
+      else                                   setAccountStatus('ok');
     }
   };
 
@@ -272,12 +294,10 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
-
   if (accountStatus === 'unauthenticated') {
     navigate(`/s/${slug}/admin/login`, { replace: true });
     return null;
   }
-
   if (accountStatus === 'expired') return <ExpiredPage slug={slug} />;
   if (accountStatus === 'paused')  return <PausedPage  slug={slug} />;
 
@@ -290,16 +310,28 @@ export default function AdminDashboardPage() {
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
         unreadCount={unreadCount}
+        canInstall={canInstall}
+        onInstall={install}
       />
 
       <div className="lg:ml-60 min-h-screen flex flex-col">
+        {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
           <button onClick={() => setMobileOpen(true)} className="text-gray-500 hover:text-gray-700">
             <Menu className="w-5 h-5" />
           </button>
-          <span className="text-sm font-semibold text-gray-900 truncate">
+          <span className="text-sm font-semibold text-gray-900 truncate flex-1">
             {user?.businessName || 'Admin'}
           </span>
+          {canInstall && (
+            <button
+              onClick={install}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-50 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Install
+            </button>
+          )}
         </header>
 
         <main className="flex-1">
@@ -316,18 +348,18 @@ export default function AdminDashboardPage() {
                 />
               }
             />
-            <Route path="inbox"      element={<InboxPage />} />
-            <Route path="calendar"   element={<TodoCalendarPage />} />
-            <Route path="products"   element={<ProductsPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="quiz" element={<QuizBuilderPage />} />
-            <Route path="blog"          element={<BlogManagerPage />} />
-<Route path="blog/new"      element={<PostEditorPage />} />
-<Route path="blog/edit/:postId" element={<PostEditorPage />} />
-<Route path="analytics"    element={<AnalyticsPage />} />
-            <Route path="subscription" element={<SubscriptionPage />} />
-            <Route path="settings"   element={<WebsiteSettingsPage />} />
-            <Route path="*"          element={<Navigate to="home" replace />} />
+            <Route path="inbox"          element={<InboxPage />} />
+            <Route path="calendar"       element={<TodoCalendarPage />} />
+            <Route path="products"       element={<ProductsPage />} />
+            <Route path="categories"     element={<CategoriesPage />} />
+            <Route path="quiz"           element={<QuizBuilderPage />} />
+            <Route path="blog"           element={<BlogManagerPage />} />
+            <Route path="blog/new"       element={<PostEditorPage />} />
+            <Route path="blog/edit/:postId" element={<PostEditorPage />} />
+            <Route path="analytics"      element={<AnalyticsPage />} />
+            <Route path="subscription"   element={<SubscriptionPage />} />
+            <Route path="settings"       element={<WebsiteSettingsPage />} />
+            <Route path="*"              element={<Navigate to="home" replace />} />
           </Routes>
         </main>
       </div>
