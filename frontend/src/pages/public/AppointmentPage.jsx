@@ -141,7 +141,7 @@ const AppointmentPage = () => {
   const showAddress = form.orderType === 'at_home';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
       <div className="max-w-xl mx-auto px-4 py-8">
         <div className="mb-6">

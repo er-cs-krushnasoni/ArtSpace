@@ -169,7 +169,7 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="flex items-center justify-center py-24">
           <div className="space-y-3 w-full max-w-md px-6">

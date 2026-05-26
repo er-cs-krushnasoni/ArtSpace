@@ -34,7 +34,7 @@ export default function BlogIndexPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-3xl mx-auto px-4 py-10">
           <div className="h-8 bg-gray-100 rounded w-40 mb-8 animate-pulse" />
@@ -49,7 +49,7 @@ export default function BlogIndexPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <div className="mb-8">
@@ -75,7 +75,7 @@ export default function BlogIndexPage() {
                 onClick={() => navigate(`/s/${slug}/blog/${post.slug}`)}
                 className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
               >
-                <p className="text-xs font-medium mb-2" style={{ color: primaryColor }}>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--tenant-primary)' }}>
                   {formatDate(post.publishDate)}
                 </p>
                 <h2
@@ -89,7 +89,7 @@ export default function BlogIndexPage() {
                 )}
                 <span
                   className="inline-flex items-center gap-1 text-xs font-semibold mt-auto"
-                  style={{ color: primaryColor }}
+                  style={{ color: 'var(--tenant-primary)' }}
                 >
                   Read more <ArrowRight size={12} />
                 </span>

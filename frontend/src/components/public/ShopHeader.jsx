@@ -47,7 +47,7 @@ const ShopHeader = () => {
   });
 
   return (
-    <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+<header className="border-b border-gray-100 sticky top-0 z-50" style={{ background: 'var(--tenant-bg)' }}>
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-[72px] gap-3">
           <Link to={`/s/${slug}`} className="flex items-center gap-3 min-w-0 flex-shrink-0">
@@ -145,7 +145,7 @@ const ShopHeader = () => {
         )}
       </div>
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4">
+<div className="md:hidden border-t border-gray-100 px-4 pb-4" style={{ background: 'var(--tenant-bg)' }}>
           <nav className="flex flex-col gap-1 pt-3">
             {navLinks.map((link) => (
               <Link

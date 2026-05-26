@@ -11,6 +11,7 @@ export default function GeneralSettingsSection({ initialData, onSaved }) {
     instagram: initialData?.websiteConfig?.instagram || '',
     primaryColor: initialData?.websiteConfig?.primaryColor || '#8b5cf6',
     accentColor: initialData?.websiteConfig?.accentColor || '#ec4899',
+    bgColor:      initialData?.websiteConfig?.bgColor      || '#ffffff',
   });
   const [saving, setSaving] = useState(false);
 
@@ -27,6 +28,7 @@ export default function GeneralSettingsSection({ initialData, onSaved }) {
       // Apply colors live
       document.documentElement.style.setProperty('--tenant-primary', form.primaryColor);
       document.documentElement.style.setProperty('--tenant-accent', form.accentColor);
+      document.documentElement.style.setProperty('--tenant-bg', form.bgColor);
       toast.success('Settings saved');
       onSaved?.({ ...form });
     } catch (err) {
@@ -104,6 +106,8 @@ export default function GeneralSettingsSection({ initialData, onSaved }) {
             value={form.accentColor}
             onChange={(v) => handleChange('accentColor', v)}
           />
+            <ColorInput label="Background Color" value={form.bgColor}      onChange={(v) => handleChange('bgColor', v)} />
+
         </div>
       </div>
 

@@ -47,7 +47,7 @@ const updateGeneral = async (req, res) => {
   const err = handleValidationErrors(req, res);
   if (err) return;
 
-  const { businessName, address, whatsapp, instagram, primaryColor, accentColor } = req.body;
+const { businessName, address, whatsapp, instagram, primaryColor, accentColor, bgColor } = req.body;
 
   if (primaryColor && !isValidHex(primaryColor)) {
     return res.status(400).json({ success: false, message: 'Invalid primary color hex code' });
@@ -55,6 +55,9 @@ const updateGeneral = async (req, res) => {
   if (accentColor && !isValidHex(accentColor)) {
     return res.status(400).json({ success: false, message: 'Invalid accent color hex code' });
   }
+  if (bgColor && !isValidHex(bgColor)) {
+  return res.status(400).json({ success: false, message: 'Invalid background color hex code' });
+}
 
   const update = {};
   if (businessName !== undefined) update.businessName = businessName.trim();
@@ -63,6 +66,7 @@ const updateGeneral = async (req, res) => {
   if (instagram !== undefined) update['websiteConfig.instagram'] = instagram.trim().replace(/^@/, '') || null;
   if (primaryColor !== undefined) update['websiteConfig.primaryColor'] = primaryColor;
   if (accentColor !== undefined) update['websiteConfig.accentColor'] = accentColor;
+  if (bgColor !== undefined) update['websiteConfig.bgColor'] = bgColor;
 
   await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: update });
   res.json({ success: true, message: 'Settings updated successfully' });

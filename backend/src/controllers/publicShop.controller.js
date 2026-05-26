@@ -10,6 +10,7 @@ const sanitizeTenant = (tenant) => ({
     logo: tenant.websiteConfig?.logo || null,
     primaryColor: tenant.websiteConfig?.primaryColor || '#8b5cf6',
     accentColor: tenant.websiteConfig?.accentColor || '#ec4899',
+    bgColor: tenant.websiteConfig?.bgColor || '#ffffff',
     address: tenant.websiteConfig?.address || '',
     whatsapp: tenant.websiteConfig?.whatsapp || null,
     instagram: tenant.websiteConfig?.instagram || null,

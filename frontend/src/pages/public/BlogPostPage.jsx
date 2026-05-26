@@ -53,7 +53,7 @@ export default function BlogPostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-2xl mx-auto px-4 py-12">
           <div className="h-7 bg-gray-100 rounded w-3/4 mb-4 animate-pulse" />
@@ -68,7 +68,7 @@ export default function BlogPostPage() {
 
   if (notFound || !post) {
     return (
-      <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -92,7 +92,7 @@ export default function BlogPostPage() {
   const metaDesc   = post.seo?.metaDescription || '';
 
   return (
-    <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <Helmet>
         <title>{metaTitle} — {tenant?.businessName}</title>
         {metaDesc && <meta name="description" content={metaDesc} />}

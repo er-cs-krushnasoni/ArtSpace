@@ -17,6 +17,7 @@ const websiteConfigSchema = new mongoose.Schema({
   logoPublicId: { type: String, default: null },
   primaryColor: { type: String, default: '#8b5cf6' },
   accentColor: { type: String, default: '#ec4899' },
+  bgColor: { type: String, default: '#ffffff' }, 
   whatsapp: { type: String, default: null },
   instagram: { type: String, default: null },
   address: { type: String, default: '' },

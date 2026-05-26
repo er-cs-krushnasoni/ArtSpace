@@ -48,6 +48,9 @@ export const TenantProvider = ({ children }) => {
         if (data.websiteConfig?.accentColor) {
           document.documentElement.style.setProperty('--tenant-accent', data.websiteConfig.accentColor);
         }
+        if (data.websiteConfig?.bgColor) {
+  document.documentElement.style.setProperty('--tenant-bg', data.websiteConfig.bgColor);
+}
         if (data.businessName) {
           document.title = data.businessName;
         }

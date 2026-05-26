@@ -60,9 +60,12 @@ const PriceRow = ({ label, original, effective, hasDiscount, show }) => {
         {hasDiscount && original !== null && (
           <span className="text-gray-400 line-through text-xs">₹{original}</span>
         )}
-        <span className="font-semibold text-gray-900 text-sm">
-          {effective === 0 ? 'Free' : `₹${effective}`}
-        </span>
+        <span
+  className="font-semibold text-sm"
+  style={{ color: 'var(--tenant-accent)' }}
+>
+  {effective === 0 ? 'Free' : `₹${effective}`}
+</span>
       </div>
     </div>
   );
@@ -102,7 +105,10 @@ const ProductCard = ({ product, onClick }) => {
         )}
         {/* Discount badge */}
         {prices.hasDiscount && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+          <span
+  className="absolute top-2 left-2 text-white text-xs font-semibold px-2 py-0.5 rounded-full"
+  style={{ background: 'var(--tenant-accent)' }}
+>
             {prices.discountLabel}
           </span>
         )}
@@ -110,7 +116,7 @@ const ProductCard = ({ product, onClick }) => {
         <div className="absolute bottom-0 inset-x-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
             className="w-full py-2 rounded-full text-white text-xs font-semibold shadow-lg"
-            style={{ background: 'var(--tenant-primary)' }}
+style={{ background: 'var(--tenant-accent)' }}
             onClick={(e) => { e.stopPropagation(); onClick(); }}
           >
             Order Now

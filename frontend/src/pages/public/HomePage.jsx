@@ -154,7 +154,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
 
       {/* Hero slider */}
