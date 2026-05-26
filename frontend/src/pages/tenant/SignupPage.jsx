@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Check, X, Loader2, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Loader2, ChevronDown, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
@@ -8,12 +8,12 @@ import { tokenStore } from '../../api/tokenStore';
 import { BUSINESS_TYPE_OPTIONS } from '../../config/businessTypeLabels';
 
 const COUNTRY_CODES = [
-  { code: '+91', label: '🇮🇳 +91' },
-  { code: '+1', label: '🇺🇸 +1' },
-  { code: '+44', label: '🇬🇧 +44' },
+  { code: '+91',  label: '🇮🇳 +91' },
+  { code: '+1',   label: '🇺🇸 +1' },
+  { code: '+44',  label: '🇬🇧 +44' },
   { code: '+971', label: '🇦🇪 +971' },
-  { code: '+65', label: '🇸🇬 +65' },
-  { code: '+61', label: '🇦🇺 +61' },
+  { code: '+65',  label: '🇸🇬 +65' },
+  { code: '+61',  label: '🇦🇺 +61' },
 ];
 
 const loadRazorpay = () =>
@@ -26,30 +26,28 @@ const loadRazorpay = () =>
     document.body.appendChild(script);
   });
 
-// Slug availability indicator
 const SlugStatus = ({ status }) => {
-  if (status === 'checking') return <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />;
+  if (status === 'checking')  return <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />;
   if (status === 'available') return <Check className="w-4 h-4 text-green-500" />;
   if (['taken', 'reserved', 'invalid'].includes(status)) return <X className="w-4 h-4 text-red-500" />;
   return null;
 };
 
 const slugStatusText = (status) => {
-  if (status === 'available') return { text: 'Available', cls: 'text-green-600' };
-  if (status === 'taken') return { text: 'Already taken', cls: 'text-red-500' };
-  if (status === 'reserved') return { text: 'Reserved — choose another', cls: 'text-red-500' };
-  if (status === 'invalid') return { text: 'Only lowercase letters, numbers, hyphens (3–30 chars)', cls: 'text-red-500' };
+  if (status === 'available') return { text: 'Available',                                       cls: 'text-green-600' };
+  if (status === 'taken')     return { text: 'Already taken',                                   cls: 'text-red-500' };
+  if (status === 'reserved')  return { text: 'Reserved — choose another',                       cls: 'text-red-500' };
+  if (status === 'invalid')   return { text: 'Only lowercase letters, numbers, hyphens (3–30 chars)', cls: 'text-red-500' };
   return null;
 };
 
-// ─── Searchable Business Type Dropdown ────────────────────────────────────────
+// ─── Searchable Business Type Dropdown ───────────────────────────────────────
 function BusinessTypeSelect({ value, onChange, options, error }) {
-  const [open, setOpen] = useState(false);
+  const [open,  setOpen]  = useState(false);
   const [query, setQuery] = useState('');
   const containerRef = useRef(null);
-  const searchRef = useRef(null);
+  const searchRef    = useRef(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -61,7 +59,6 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Focus search input when opened
   useEffect(() => {
     if (open && searchRef.current) searchRef.current.focus();
   }, [open]);
@@ -70,7 +67,7 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
     ? options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
 
-  const showOther = query.trim() && filtered.length === 0;
+  const showOther     = query.trim() && filtered.length === 0;
   const selectedLabel = value === 'other'
     ? 'Other'
     : options.find(o => o.value === value)?.label || '';
@@ -83,7 +80,6 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* Trigger button */}
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
@@ -95,10 +91,8 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown panel */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-          {/* Search input */}
           <div className="p-2 border-b border-gray-100">
             <input
               ref={searchRef}
@@ -109,8 +103,6 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
             />
           </div>
-
-          {/* Options list — max height with scroll, stays inside viewport */}
           <ul className="max-h-52 overflow-y-auto py-1">
             {filtered.map(opt => (
               <li key={opt.value}>
@@ -127,8 +119,6 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
                 </button>
               </li>
             ))}
-
-            {/* "Other" fallback when no match */}
             {showOther && (
               <li>
                 <button
@@ -141,8 +131,6 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
                 </button>
               </li>
             )}
-
-            {/* No results and no query match */}
             {!showOther && filtered.length === 0 && (
               <li className="px-3.5 py-3 text-sm text-gray-400 text-center">No results found</li>
             )}
@@ -153,32 +141,34 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
   );
 }
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function SignupPage() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
+  const navigate    = useNavigate();
+  const { login }   = useAuth();
   const [form, setForm] = useState({
     businessName: '',
-    slug: '',
+    slug:         '',
     businessType: '',
-    ownerName: '',
-    email: '',
-    countryCode: '+91',
-    mobile: '',
-    password: '',
-    plan: 'trial',
-    customDays: '',
+    ownerName:    '',
+    email:        '',
+    countryCode:  '+91',
+    mobile:       '',
+    password:     '',
+    plan:         'trial',
+    customDays:   '',
   });
-
   const [showPassword, setShowPassword] = useState(false);
-  const [slugStatus, setSlugStatus] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [pricing, setPricing] = useState({});
-  const [planEnabled, setPlanEnabled] = useState({});
+  const [slugStatus,   setSlugStatus]   = useState(null);
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [errors,       setErrors]       = useState({});
+  const [pricing,      setPricing]      = useState({});
+  const [planEnabled,  setPlanEnabled]  = useState({});
   const debounceRef = useRef(null);
+  const APP_URL     = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
 
-  const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+  useEffect(() => {
+    document.title = 'Create Your Shop — ArtSpace';
+  }, []);
 
   const checkSlug = useCallback(async (value) => {
     if (!value || value.length < 3) { setSlugStatus(null); return; }
@@ -203,16 +193,15 @@ export default function SignupPage() {
 
   useEffect(() => () => clearTimeout(debounceRef.current), []);
 
-  // Build visible plan list — filter out disabled plans (except trial which is always shown)
   const PLAN_OPTIONS = [
-    { value: 'trial', label: 'Free Trial', duration: '7 days', price: 'Free', highlight: true },
-    { value: '1m', label: '1 Month', duration: '30 days' },
-    { value: '3m', label: '3 Months', duration: '90 days' },
-    { value: '6m', label: '6 Months', duration: '180 days' },
-    { value: '12m', label: '12 Months', duration: '365 days' },
-    { value: 'custom', label: 'Custom Days', duration: 'You choose' },
+    { value: 'trial',  label: 'Free Trial',    duration: '7 days',    price: 'Free', highlight: true },
+    { value: '1m',     label: '1 Month',        duration: '30 days' },
+    { value: '3m',     label: '3 Months',       duration: '90 days' },
+    { value: '6m',     label: '6 Months',       duration: '180 days' },
+    { value: '12m',    label: '12 Months',      duration: '365 days' },
+    { value: 'custom', label: 'Custom Days',    duration: 'You choose' },
   ].filter(plan => {
-    if (plan.value === 'trial') return true; // trial always visible
+    if (plan.value === 'trial') return true;
     const key = plan.value === 'custom' ? 'custom_daily' : plan.value;
     return planEnabled[key] !== false;
   });
@@ -232,30 +221,38 @@ export default function SignupPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.businessName.trim() || form.businessName.trim().length < 2) e.businessName = 'Business name must be at least 2 characters.';
-    if (!form.slug || form.slug.length < 3) e.slug = 'Shop URL must be at least 3 characters.';
-    if (slugStatus !== 'available') e.slug = 'Please choose a valid, available shop URL.';
-    if (!form.businessType) e.businessType = 'Please select a business type.';
-    if (!form.ownerName.trim() || form.ownerName.trim().length < 2) e.ownerName = 'Your name must be at least 2 characters.';
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Please enter a valid email.';
-    if (!form.mobile || !/^\d{10,15}$/.test(form.mobile)) e.mobile = 'Mobile must be 10–15 digits.';
-    if (!form.password || form.password.length < 8) e.password = 'Password must be at least 8 characters.';
-    if (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1)) e.customDays = 'Enter a valid number of days.';
+    if (!form.businessName.trim() || form.businessName.trim().length < 2)
+      e.businessName = 'Business name must be at least 2 characters.';
+    if (!form.slug || form.slug.length < 3)
+      e.slug = 'Shop URL must be at least 3 characters.';
+    if (slugStatus !== 'available')
+      e.slug = 'Please choose a valid, available shop URL.';
+    if (!form.businessType)
+      e.businessType = 'Please select a business type.';
+    if (!form.ownerName.trim() || form.ownerName.trim().length < 2)
+      e.ownerName = 'Your name must be at least 2 characters.';
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email))
+      e.email = 'Please enter a valid email.';
+    if (!form.mobile || !/^\d{10,15}$/.test(form.mobile))
+      e.mobile = 'Mobile must be 10–15 digits.';
+    if (!form.password || form.password.length < 8)
+      e.password = 'Password must be at least 8 characters.';
+    if (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1))
+      e.customDays = 'Enter a valid number of days.';
     return e;
   };
 
-  // ─── Trial signup (existing flow) ─────────────────────────────────────────
   const handleTrialSignup = async () => {
     try {
       const res = await api.post('/tenantauth/signup', {
         businessName: form.businessName.trim(),
-        slug: form.slug,
+        slug:         form.slug,
         businessType: form.businessType,
-        ownerName: form.ownerName.trim(),
-        email: form.email,
-        mobile: form.mobile,
-        password: form.password,
-        plan: 'trial',
+        ownerName:    form.ownerName.trim(),
+        email:        form.email,
+        mobile:       form.mobile,
+        password:     form.password,
+        plan:         'trial',
       });
       const { accessToken, user } = res.data;
       tokenStore.set(accessToken);
@@ -264,33 +261,34 @@ export default function SignupPage() {
       navigate(`/s/${user.slug}/admin/dashboard`, { replace: true });
     } catch (err) {
       const msg = err?.response?.data?.message || 'Signup failed. Please try again.';
-      if (msg.toLowerCase().includes('slug') || msg.toLowerCase().includes('url')) setErrors({ slug: msg });
-      else if (msg.toLowerCase().includes('email')) setErrors({ email: msg });
-      else if (msg.toLowerCase().includes('mobile')) setErrors({ mobile: msg });
-      else toast.error(msg);
+      if (msg.toLowerCase().includes('slug') || msg.toLowerCase().includes('url'))
+        setErrors({ slug: msg });
+      else if (msg.toLowerCase().includes('email'))
+        setErrors({ email: msg });
+      else if (msg.toLowerCase().includes('mobile'))
+        setErrors({ mobile: msg });
+      else
+        toast.error(msg);
     }
   };
 
-  // ─── Paid signup (Razorpay flow) ──────────────────────────────────────────
   const handlePaidSignup = async () => {
     const loaded = await loadRazorpay();
     if (!loaded) {
       toast.error('Failed to load payment gateway. Please check your connection.');
       return;
     }
-
-    // Step 1: create order + pending token
     let orderData;
     try {
       const res = await api.post('/tenantauth/signup-create-order', {
         businessName: form.businessName.trim(),
-        slug: form.slug,
+        slug:         form.slug,
         businessType: form.businessType,
-        ownerName: form.ownerName.trim(),
-        email: form.email,
-        mobile: form.mobile,
-        password: form.password,
-        plan: form.plan,
+        ownerName:    form.ownerName.trim(),
+        email:        form.email,
+        mobile:       form.mobile,
+        password:     form.password,
+        plan:         form.plan,
         ...(form.plan === 'custom' && { customDays: parseInt(form.customDays, 10) }),
       });
       orderData = res.data;
@@ -302,27 +300,25 @@ export default function SignupPage() {
       return;
     }
 
-    // Step 2: open Razorpay
     const planLabel = form.plan === 'custom'
       ? `${form.customDays} Day Custom Plan`
       : { '1m': '1 Month', '3m': '3 Months', '6m': '6 Months', '12m': '12 Months' }[form.plan];
 
     return new Promise((resolve) => {
       const options = {
-        key: orderData.keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        order_id: orderData.razorpayOrderId,
-        name: 'ArtSpace',
+        key:       orderData.keyId,
+        amount:    orderData.amount,
+        currency:  orderData.currency,
+        order_id:  orderData.razorpayOrderId,
+        name:      'ArtSpace',
         description: `${planLabel} Subscription`,
         handler: async (response) => {
-          // Step 3: verify payment + create account
           try {
             const verifyRes = await api.post('/tenantauth/signup-verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
+              razorpay_order_id:   response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              pendingToken: orderData.pendingToken,
+              razorpay_signature:  response.razorpay_signature,
+              pendingToken:        orderData.pendingToken,
             });
             const { accessToken, user } = verifyRes.data;
             tokenStore.set(accessToken);
@@ -336,14 +332,9 @@ export default function SignupPage() {
             resolve();
           }
         },
-        modal: {
-          ondismiss: () => {
-            setIsLoading(false);
-            resolve();
-          },
-        },
+        modal: { ondismiss: () => { setIsLoading(false); resolve(); } },
         prefill: { email: form.email, contact: form.mobile },
-        theme: { color: '#8b5cf6' },
+        theme:   { color: '#8b5cf6' },
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -359,11 +350,8 @@ export default function SignupPage() {
     }
     setIsLoading(true);
     try {
-      if (form.plan === 'trial') {
-        await handleTrialSignup();
-      } else {
-        await handlePaidSignup();
-      }
+      if (form.plan === 'trial') await handleTrialSignup();
+      else await handlePaidSignup();
     } finally {
       setIsLoading(false);
     }
@@ -382,9 +370,7 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-              <img src="/artspace-logo.png" alt="ArtSpace" className="h-10 object-contain" />
-            </div>
+            <img src="/artspace-logo.png" alt="ArtSpace" className="h-9 object-contain" />
             <span className="font-semibold text-gray-900">ArtSpace</span>
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">Create your shop</h1>
@@ -392,22 +378,20 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-5">
-
           {/* Business Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Name</label>
-            <input name="businessName" value={form.businessName} onChange={handleChange}
+            <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1.5">Business Name</label>
+            <input id="businessName" name="businessName" value={form.businessName} onChange={handleChange}
               placeholder="e.g. Glamour Nails" className={inputClass('businessName')} />
             {errors.businessName && <p className="mt-1 text-xs text-red-500">{errors.businessName}</p>}
           </div>
 
           {/* Slug */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop URL</label>
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1.5">Shop URL</label>
             <div className="relative">
-              <input name="slug" value={form.slug} onChange={handleChange}
-                placeholder="glamournails"
-                className={`${inputClass('slug')} pr-10`} />
+              <input id="slug" name="slug" value={form.slug} onChange={handleChange}
+                placeholder="glamournails" className={`${inputClass('slug')} pr-10`} />
               <span className="absolute right-3 top-1/2 -translate-y-1/2">
                 <SlugStatus status={slugStatus} />
               </span>
@@ -422,36 +406,36 @@ export default function SignupPage() {
           </div>
 
           {/* Business Type */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
-  <BusinessTypeSelect
-    value={form.businessType}
-    onChange={handleChange}
-    options={BUSINESS_TYPE_OPTIONS}
-    error={errors.businessType}
-  />
-  {errors.businessType && <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>}
-</div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
+            <BusinessTypeSelect
+              value={form.businessType}
+              onChange={handleChange}
+              options={BUSINESS_TYPE_OPTIONS}
+              error={errors.businessType}
+            />
+            {errors.businessType && <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>}
+          </div>
 
           {/* Owner Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
-            <input name="ownerName" value={form.ownerName} onChange={handleChange}
+            <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
+            <input id="ownerName" name="ownerName" value={form.ownerName} onChange={handleChange}
               placeholder="Your full name" className={inputClass('ownerName')} />
             {errors.ownerName && <p className="mt-1 text-xs text-red-500">{errors.ownerName}</p>}
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange}
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <input id="email" type="email" name="email" value={form.email} onChange={handleChange}
               placeholder="you@example.com" autoComplete="email" className={inputClass('email')} />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           {/* Mobile */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Mobile Number</label>
+            <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1.5">Mobile Number</label>
             <div className="flex gap-2">
               <div className="relative">
                 <select name="countryCode" value={form.countryCode} onChange={handleChange}
@@ -460,7 +444,7 @@ export default function SignupPage() {
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
-              <input name="mobile" value={form.mobile} onChange={handleChange}
+              <input id="mobile" name="mobile" value={form.mobile} onChange={handleChange}
                 placeholder="9876543210" inputMode="numeric"
                 className={`flex-1 ${inputClass('mobile')}`} />
             </div>
@@ -469,14 +453,17 @@ export default function SignupPage() {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <input
+                id="password"
                 type={showPassword ? 'text' : 'password'}
                 name="password" value={form.password} onChange={handleChange}
                 placeholder="Min. 8 characters" autoComplete="new-password"
-                className={`${inputClass('password')} pr-10`} />
+                className={`${inputClass('password')} pr-10`}
+              />
               <button type="button" onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -507,15 +494,17 @@ export default function SignupPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {plan.highlight && (
-                      <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">Recommended</span>
+                      <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
+                        Recommended
+                      </span>
                     )}
-                    <span className={`text-sm font-semibold ${plan.value === 'trial' ? 'text-green-600' : plan.value === 'custom' ? 'text-violet-600' : 'text-gray-800'}`}>
-                      {plan.value === 'trial'
-                        ? 'Free'
-                        : plan.value === 'custom'
-                        ? `₹${pricing['custom_daily'] ?? '—'}/day`
-                        : pricing[plan.value]
-                        ? `₹${pricing[plan.value]}`
+                    <span className={`text-sm font-semibold ${
+                      plan.value === 'trial'  ? 'text-green-600'  :
+                      plan.value === 'custom' ? 'text-violet-600' : 'text-gray-800'
+                    }`}>
+                      {plan.value === 'trial'  ? 'Free'
+                        : plan.value === 'custom' ? `₹${pricing['custom_daily'] ?? '—'}/day`
+                        : pricing[plan.value]      ? `₹${pricing[plan.value]}`
                         : '—'}
                     </span>
                   </div>
@@ -531,7 +520,8 @@ export default function SignupPage() {
                     type="number" min="1" name="customDays" value={form.customDays}
                     onChange={e => setForm(p => ({ ...p, customDays: e.target.value.replace(/[^0-9]/g, '') }))}
                     placeholder="Enter number of days"
-                    className="flex-1 px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    className="flex-1 px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
                   <span className="text-sm text-gray-400 whitespace-nowrap">days</span>
                 </div>
                 {form.customDays && parseInt(form.customDays, 10) > 0 && pricing['custom_daily'] && (
@@ -561,15 +551,29 @@ export default function SignupPage() {
             className="w-full py-3 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors mt-2"
           >
             {isLoading
-              ? form.plan === 'trial' ? 'Creating your shop…' : 'Opening payment…'
-              : form.plan === 'trial' ? 'Create My Shop →' : 'Continue to Payment →'}
+              ? (form.plan === 'trial' ? 'Creating your shop…' : 'Opening payment…')
+              : (form.plan === 'trial' ? 'Create My Shop →'    : 'Continue to Payment →')}
           </button>
 
           <p className="text-center text-xs text-gray-400 pt-1">
             Already have a shop?{' '}
-            <span className="text-gray-500">Log in via your shop's admin URL (e.g. {APP_URL}/s/yourshop/admin/login)</span>
+            <span className="text-gray-500">
+              Log in via your shop's admin URL (e.g. {APP_URL}/s/yourshop/admin/login)
+            </span>
           </p>
         </form>
+
+        {/* Developer watermark */}
+        <p className="text-center text-xs text-gray-400 mt-6 flex items-center justify-center gap-1.5">
+          Built by{' '}
+          
+            <a href="mailto:er.cs.krushnasoni@gmail.com"
+            className="inline-flex items-center gap-1 text-gray-400 hover:text-violet-600 transition-colors font-medium"
+          >
+            <Mail className="w-3 h-3" />
+            Krushna Soni
+          </a>
+        </p>
       </div>
     </div>
   );

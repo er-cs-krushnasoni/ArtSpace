@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, MapPin, ExternalLink } from 'lucide-react';
+import { ArrowRight, ShoppingBag, MapPin, ExternalLink,Mail } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
 import HeroSlider from '../../components/public/HeroSlider';
@@ -103,12 +103,16 @@ const ShopFooter = ({ tenant, labels, slug }) => {
             </Link>
           </div>
 
-          {/* Divider + powered by */}
-          <div className="w-full border-t border-gray-100 pt-5 mt-1">
-            <p className="text-xs text-gray-300">
-              Powered by ArtSpace
-            </p>
-          </div>
+{/* Divider + powered by */}
+<div className="w-full border-t border-gray-100 pt-5 mt-1">
+  <div className="flex flex-col items-center gap-1 text-xl text-gray-300">
+    <span>Powered by ArtSpace</span>
+    <a href="mailto:er.cs.krushnasoni@gmail.com" title="Contact developer" className="inline-flex items-center gap-1 hover:text-violet-500 transition-colors">
+      <Mail className="w-3.5 h-3.5" />
+      @Built by Krushna Soni
+    </a>
+  </div>
+</div>
         </div>
       </div>
     </footer>

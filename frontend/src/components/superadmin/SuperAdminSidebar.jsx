@@ -5,6 +5,7 @@ import {
   CreditCard,
   ScrollText,
   LogOut,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axiosInstance';
@@ -102,6 +103,11 @@ export default function SuperAdminSidebar() {
           <LogOut size={16} />
           Sign out
         </button>
+        <a href="mailto:er.cs.krushnasoni@gmail.com"
+  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs w-full transition-all duration-200 hover:bg-white/5 mt-1"
+  style={{ color: 'var(--color-sidebar-text)' }}
+  title="Contact developer"
+></a>
       </div>
     </aside>
   );

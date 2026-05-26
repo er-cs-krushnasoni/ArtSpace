@@ -2,10 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
-  Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen, BarChart2, Download,
+  Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen,
+  BarChart2, Download, AlertTriangle, Mail,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth }   from '../../context/AuthContext';
+import { useTenant } from '../../context/TenantContext';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import toast from 'react-hot-toast';
+
 import SubscriptionPage    from './SubscriptionPage';
 import ExpiredPage         from './ExpiredPage';
 import PausedPage          from './PausedPage';
@@ -14,20 +19,16 @@ import ProductsPage        from './ProductsPage';
 import CategoriesPage      from './CategoriesPage';
 import InboxPage           from './InboxPage';
 import TodoCalendarPage    from './TodoCalendarPage';
-import toast from 'react-hot-toast';
-import { AlertTriangle }   from 'lucide-react';
-import { useTenant }       from '../../context/TenantContext';
-import QuizBuilderPage from './QuizBuilderPage';
-import BlogManagerPage from './BlogManagerPage';
-import AnalyticsPage from './AnalyticsPage';
-import PostEditorPage  from './PostEditorPage';
-import { usePWAInstall } from '../../hooks/usePWAInstall';
+import QuizBuilderPage     from './QuizBuilderPage';
+import BlogManagerPage     from './BlogManagerPage';
+import AnalyticsPage       from './AnalyticsPage';
+import PostEditorPage      from './PostEditorPage';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount, canInstall, onInstall }) => {
   const NAV_ITEMS = [
     { label: 'Dashboard',        icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
-    { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,    badge: unreadCount },
+    { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,      badge: unreadCount },
     { label: 'Tasks',            icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
     { label: 'Analytics',        icon: BarChart2,       to: `/s/${slug}/admin/dashboard/analytics` },
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
@@ -52,20 +53,22 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
         `}
         style={{ background: 'var(--color-sidebar, #0f1117)' }}
       >
+        {/* Shop name header */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/5">
           <div>
             <p className="text-white font-semibold text-sm leading-tight truncate max-w-[160px]">
               {businessName || 'My Shop'}
             </p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--color-sidebar-text, #8b8fa8)' }}>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-sidebar-text)' }}>
               Admin Panel
             </p>
           </div>
-          <button onClick={onClose} className="lg:hidden text-gray-500 hover:text-white">
+          <button onClick={onClose} className="lg:hidden text-gray-500 hover:text-white" aria-label="Close menu">
             <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map(({ label, icon: Icon, to, badge }) => (
             <NavLink
@@ -94,6 +97,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
           ))}
         </nav>
 
+        {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-white/5 space-y-1">
           {canInstall && (
             <button
@@ -113,6 +117,17 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
             <LogOut className="w-4 h-4" />
             Sign out
           </button>
+
+          {/* Developer watermark */}
+          
+            <a href="mailto:er.cs.krushnasoni@gmail.com"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs w-full transition-all duration-200 hover:bg-white/5 mt-1"
+            style={{ color: 'var(--color-sidebar-text)' }}
+            title="Contact developer"
+          >
+            <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Developed by Krushna Soni</span>
+          </a>
         </div>
       </aside>
     </>
@@ -124,6 +139,13 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
   const { tenant } = useTenant();
   const { slug }   = useParams();
   const navigate   = useNavigate();
+
+  useEffect(() => {
+    if (tenant?.businessName) {
+      document.title = `Dashboard — ${tenant.businessName} Admin`;
+    }
+  }, [tenant]);
+
   const showSetupBanner = tenant && !tenant.websiteConfig?.logo;
 
   return (
@@ -159,39 +181,27 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
           onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
         >
           <p className="text-xs text-gray-500 mb-1">Unread Queries</p>
-          {unreadLoading ? (
-            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-          ) : (
-            <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>
-          )}
+          {unreadLoading
+            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+            : <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>}
         </div>
-
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
         >
           <p className="text-xs text-gray-500 mb-1">Today's Appointments</p>
-          {taskLoading ? (
-            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-          ) : (
-            <p className="text-2xl font-semibold text-gray-900">
-              {taskSummary.todayAppointments ?? 0}
-            </p>
-          )}
+          {taskLoading
+            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+            : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayAppointments ?? 0}</p>}
         </div>
-
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
           onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
         >
           <p className="text-xs text-gray-500 mb-1">Today's Deliveries</p>
-          {taskLoading ? (
-            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-          ) : (
-            <p className="text-2xl font-semibold text-gray-900">
-              {taskSummary.todayDeliveries ?? 0}
-            </p>
-          )}
+          {taskLoading
+            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+            : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayDeliveries ?? 0}</p>}
         </div>
       </div>
     </div>
@@ -212,28 +222,21 @@ export default function AdminDashboardPage() {
   const [taskSummary,   setTaskSummary]   = useState({});
   const [taskLoading,   setTaskLoading]   = useState(true);
 
-  // Redirect if logged-in user's slug doesn't match the URL slug
   useEffect(() => {
     if (user && user.slug !== slug)
       navigate(`/s/${slug}/admin/login`, { replace: true });
   }, [user, slug, navigate]);
 
-  // Inject dynamic PWA manifest for this tenant
   useEffect(() => {
-    const linkId = 'tenant-pwa-manifest';
+    const linkId  = 'tenant-pwa-manifest';
     const existing = document.getElementById(linkId);
     if (existing) existing.remove();
-
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = `/api/public/${slug}/pwa-manifest.json`;
-    link.id = linkId;
+    const link  = document.createElement('link');
+    link.rel    = 'manifest';
+    link.href   = `/api/public/${slug}/pwa-manifest.json`;
+    link.id     = linkId;
     document.head.appendChild(link);
-
-    return () => {
-      const el = document.getElementById(linkId);
-      if (el) el.remove();
-    };
+    return () => { document.getElementById(linkId)?.remove(); };
   }, [slug]);
 
   useEffect(() => { checkStatus(); }, []);
@@ -242,7 +245,7 @@ export default function AdminDashboardPage() {
     try {
       const res = await api.get('/tenant/inbox');
       const all = res.data.data || [];
-      setUnreadCount(all.filter((q) => q.status === 'unread').length);
+      setUnreadCount(all.filter(q => q.status === 'unread').length);
     } catch { /* non-critical */ }
     finally   { setUnreadLoading(false); }
   }, []);
@@ -268,16 +271,16 @@ export default function AdminDashboardPage() {
     try {
       const res = await api.get('/subscription/status');
       const s   = res.data?.status;
-      if (s === 'expired')      setAccountStatus('expired');
+      if      (s === 'expired') setAccountStatus('expired');
       else if (s === 'paused')  setAccountStatus('paused');
       else                      setAccountStatus('ok');
     } catch (err) {
       const code       = err?.response?.data?.code;
       const httpStatus = err?.response?.status;
-      if (code === 'SUBSCRIPTION_EXPIRED')   setAccountStatus('expired');
-      else if (code === 'ACCOUNT_PAUSED')    setAccountStatus('paused');
-      else if (httpStatus === 401)           setAccountStatus('unauthenticated');
-      else                                   setAccountStatus('ok');
+      if      (code === 'SUBSCRIPTION_EXPIRED') setAccountStatus('expired');
+      else if (code === 'ACCOUNT_PAUSED')       setAccountStatus('paused');
+      else if (httpStatus === 401)              setAccountStatus('unauthenticated');
+      else                                      setAccountStatus('ok');
     }
   };
 
@@ -290,7 +293,7 @@ export default function AdminDashboardPage() {
   if (accountStatus === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-sm text-gray-400">Loading...</div>
+        <div className="text-sm text-gray-400">Loading…</div>
       </div>
     );
   }
@@ -317,7 +320,7 @@ export default function AdminDashboardPage() {
       <div className="lg:ml-60 min-h-screen flex flex-col">
         {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-          <button onClick={() => setMobileOpen(true)} className="text-gray-500 hover:text-gray-700">
+          <button onClick={() => setMobileOpen(true)} className="text-gray-500 hover:text-gray-700" aria-label="Open menu">
             <Menu className="w-5 h-5" />
           </button>
           <span className="text-sm font-semibold text-gray-900 truncate flex-1">
@@ -337,29 +340,19 @@ export default function AdminDashboardPage() {
         <main className="flex-1">
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
-            <Route
-              path="home"
-              element={
-                <DashboardHome
-                  unreadCount={unreadCount}
-                  unreadLoading={unreadLoading}
-                  taskSummary={taskSummary}
-                  taskLoading={taskLoading}
-                />
-              }
-            />
-            <Route path="inbox"          element={<InboxPage />} />
-            <Route path="calendar"       element={<TodoCalendarPage />} />
-            <Route path="products"       element={<ProductsPage />} />
-            <Route path="categories"     element={<CategoriesPage />} />
-            <Route path="quiz"           element={<QuizBuilderPage />} />
-            <Route path="blog"           element={<BlogManagerPage />} />
-            <Route path="blog/new"       element={<PostEditorPage />} />
+            <Route path="home"            element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} taskSummary={taskSummary} taskLoading={taskLoading} />} />
+            <Route path="inbox"           element={<InboxPage />} />
+            <Route path="calendar"        element={<TodoCalendarPage />} />
+            <Route path="products"        element={<ProductsPage />} />
+            <Route path="categories"      element={<CategoriesPage />} />
+            <Route path="quiz"            element={<QuizBuilderPage />} />
+            <Route path="blog"            element={<BlogManagerPage />} />
+            <Route path="blog/new"        element={<PostEditorPage />} />
             <Route path="blog/edit/:postId" element={<PostEditorPage />} />
-            <Route path="analytics"      element={<AnalyticsPage />} />
-            <Route path="subscription"   element={<SubscriptionPage />} />
-            <Route path="settings"       element={<WebsiteSettingsPage />} />
-            <Route path="*"              element={<Navigate to="home" replace />} />
+            <Route path="analytics"       element={<AnalyticsPage />} />
+            <Route path="subscription"    element={<SubscriptionPage />} />
+            <Route path="settings"        element={<WebsiteSettingsPage />} />
+            <Route path="*"               element={<Navigate to="home" replace />} />
           </Routes>
         </main>
       </div>

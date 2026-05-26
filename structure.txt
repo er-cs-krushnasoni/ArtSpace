@@ -106,6 +106,10 @@ ARTSPACE
 │       │
 │       ├── components/
 │       │   ├── common/
+│       │   │   ├── ErrorBoundary.jsx
+│       │   │   ├── ConfirmDialog.jsx
+│       │   │   ├── Skeleton.jsx
+│       │   │  
 │       │   ├── public/
 │       │   │   ├── CountryCodeDropdown.jsx
 │       │   │   ├── DuplicateDialog.jsx
@@ -225,8 +229,11 @@ ARTSPACE
 │       │   │
 │       │   ├── tenant/
 │       │   │   ├── SignupPage.jsx
+│       │   │
+│       │   ├── NotFoundPage.jsx
 │       │   
 │       └── utils/
+│           ├── apiError.js
 │           └── subdomainUtils.js
 │
 ├── .gitignore
