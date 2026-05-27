@@ -38,7 +38,7 @@ const HeroSlider = ({ slides, onSlideClick }) => {
   return (
     <div
       className="relative w-full overflow-hidden bg-gray-100 select-none"
-      style={{ aspectRatio: '16/7' }}
+      style={{ aspectRatio: '16/9' }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

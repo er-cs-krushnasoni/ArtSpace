@@ -1,29 +1,72 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ProductDetailModal from './ProductDetailModal';
 import { useTenant } from '../../context/TenantContext';
 import { getEffectivePrices } from './ProductCard';
 
-const ProductGrid = ({ products, limit }) => {
+const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, initialValue }) => {
   const { labels } = useTenant();
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeCategories, setActiveCategories] = useState({}); // { groupName: Set of values }
+  const [activeCategories, setActiveCategories] = useState({});
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [initialFilterApplied, setInitialFilterApplied] = useState(false);
+  const [initialProductOpened, setInitialProductOpened] = useState(false);
+
 
   // Build category groups from products
-  const categoryGroups = useMemo(() => {
-    const groups = {};
-    products.forEach((p) => {
-      (p.categories || []).forEach((cat) => {
-        if (!groups[cat.groupName]) groups[cat.groupName] = new Set();
-        (cat.values || []).forEach((v) => groups[cat.groupName].add(v));
-      });
+const categoryGroups = useMemo(() => {
+  const groups = {};
+  products.forEach((p) => {
+    (p.categories || []).forEach(({ categoryId, selectedValues }) => {
+      if (!categoryId?.groupName) return;
+      if (!groups[categoryId.groupName]) groups[categoryId.groupName] = new Set();
+      // Show only selected values; fall back to all values if none selected
+      const vals = selectedValues?.length > 0 ? selectedValues : (categoryId.values || []);
+      vals.forEach((v) => groups[categoryId.groupName].add(v));
     });
-    return Object.entries(groups).map(([name, vals]) => ({ name, values: [...vals] }));
-  }, [products]);
+  });
+  return Object.entries(groups).map(([name, vals]) => ({ name, values: [...vals] }));
+}, [products]);
+
+useEffect(() => {
+    if (initialFilterApplied) return;
+    if (!initialCategoryId || !products.length) return;
+    let groupName = null;
+    for (const p of products) {
+      for (const entry of (p.categories || [])) {
+        const catObj = entry.categoryId ?? entry;
+        const catId = (typeof catObj === 'object' ? catObj._id : catObj)?.toString();
+        if (catId === initialCategoryId) {
+          groupName = catObj.groupName ?? null;
+          break;
+        }
+      }
+      if (groupName) break;
+    }
+     if (!groupName) return;
+  if (initialValue) {
+    setActiveCategories({ [groupName]: new Set([initialValue]) });
+  } else {
+    // No specific value — select all values in this group
+    const group = categoryGroups.find((g) => g.name === groupName);
+    if (group?.values.length) {
+      setActiveCategories({ [groupName]: new Set(group.values) });
+    }
+  }
+  setInitialFilterApplied(true);
+  }, [initialCategoryId, initialValue, products, initialFilterApplied, categoryGroups]);
+
+  useEffect(() => {
+    if (initialProductOpened || !initialProductId || !products.length) return;
+    const found = products.find((p) => p._id === initialProductId);
+    if (found) {
+      setSelectedProduct(found);
+      setInitialProductOpened(true);
+    }
+  }, [initialProductId, products, initialProductOpened]);
 
   const toggleCategoryValue = (groupName, value) => {
     setActiveCategories((prev) => {
@@ -58,19 +101,21 @@ const ProductGrid = ({ products, limit }) => {
   const filteredProducts = useMemo(() => {
     let result = products;
 
-    // Category filter
-    const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
-    if (activeCatEntries.length > 0) {
-      result = result.filter((p) =>
-        activeCatEntries.every(([group, vals]) =>
-          (p.categories || []).some(
-            (cat) => cat.groupName === group && (cat.values || []).some((v) => vals.has(v))
-          )
-        )
-      );
-    }
+    // Category value filter
+   const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
+if (activeCatEntries.length > 0) {
+  result = result.filter((p) =>
+    activeCatEntries.every(([group, vals]) =>
+      (p.categories || []).some(({ categoryId, selectedValues }) => {
+        if (categoryId?.groupName !== group) return false;
+        const checkVals = selectedValues?.length > 0 ? selectedValues : (categoryId.values || []);
+        return checkVals.some((v) => vals.has(v));
+      })
+    )
+  );
+}
 
-    // Price filter — uses min of delivery/appointment effective price
+    // Price filter
     const min = parseFloat(priceMin);
     const max = parseFloat(priceMax);
     if (!isNaN(min) || !isNaN(max)) {
@@ -106,7 +151,8 @@ const ProductGrid = ({ products, limit }) => {
       {!limit && (
         <div className="flex items-center justify-between mb-4 gap-3">
           <p className="text-sm text-gray-500">
-            Showing <span className="font-medium text-gray-900">{filteredProducts.length}</span> {labels.products || 'products'}
+            Showing <span className="font-medium text-gray-900">{filteredProducts.length}</span>{' '}
+            {labels.products || 'products'}
           </p>
           <button
             onClick={() => setShowFilters((v) => !v)}
@@ -129,34 +175,42 @@ const ProductGrid = ({ products, limit }) => {
       {/* Filter panel */}
       {!limit && showFilters && (
         <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-4">
-          {categoryGroups.map((group) => (
-            <div key={group.name}>
-              <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">{group.name}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {group.values.map((val) => {
-                  const isOn = activeCategories[group.name]?.has(val);
-                  return (
-                    <button
-                      key={val}
-                      onClick={() => toggleCategoryValue(group.name, val)}
-                      className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
-                      style={
-                        isOn
-                          ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
-                          : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
-                      }
-                    >
-                      {val}
-                    </button>
-                  );
-                })}
+          {categoryGroups.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">No category filters available</p>
+          ) : (
+            categoryGroups.map((group) => (
+              <div key={group.name}>
+                <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                  {group.name}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.values.map((val) => {
+                    const isOn = activeCategories[group.name]?.has(val);
+                    return (
+                      <button
+                        key={val}
+                        onClick={() => toggleCategoryValue(group.name, val)}
+                        className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
+                        style={
+                          isOn
+                            ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
+                            : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
+                        }
+                      >
+                        {val}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           {/* Price range */}
           <div>
-            <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Price Range (₹)</p>
+            <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              Price Range (₹)
+            </p>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -210,7 +264,11 @@ const ProductGrid = ({ products, limit }) => {
           <Search size={40} className="text-gray-200 mb-3" />
           <p className="text-sm font-medium text-gray-500">No products found</p>
           {hasActiveFilters && (
-            <button onClick={clearAllFilters} className="mt-2 text-sm underline" style={{ color: 'var(--tenant-primary)' }}>
+            <button
+              onClick={clearAllFilters}
+              className="mt-2 text-sm underline"
+              style={{ color: 'var(--tenant-primary)' }}
+            >
               Clear filters
             </button>
           )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams,useNavigate } from 'react-router-dom';
 import { ArrowRight, ShoppingBag, MapPin, ExternalLink,Mail } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
@@ -126,6 +126,7 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [sliders, setSliders] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const navigate = useNavigate();
 
   const config = tenant?.websiteConfig || {};
 
@@ -149,9 +150,14 @@ const HomePage = () => {
     loadData();
   }, [slug]);
 
-  const handleSlideClick = (slide) => {
-    console.log('Slide clicked:', slide);
-  };
+const handleSlideClick = (slide) => {
+  if (slide.linkType === 'product' && slide.linkId) {
+    navigate(`/s/${slug}/shop?product=${slide.linkId}`);
+  } else if (slide.linkType === 'category' && slide.linkId) {
+    const valueParam = slide.linkValue ? `&value=${encodeURIComponent(slide.linkValue)}` : '';
+    navigate(`/s/${slug}/shop?category=${slide.linkId}${valueParam}`);
+  }
+};
 
   return (
 <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>

@@ -38,7 +38,12 @@ const productSchema = new mongoose.Schema(
       default: null,
       set: (v) => (v === null || v === undefined || v === '') ? null : Number(v),
     },
-    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+    categories: [
+  {
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
+    selectedValues: [{ type: String }],
+  }
+],
     description: { type: String, default: '' },
     isActive: { type: Boolean, default: true },
     discount: { type: discountSchema, default: () => ({}) },

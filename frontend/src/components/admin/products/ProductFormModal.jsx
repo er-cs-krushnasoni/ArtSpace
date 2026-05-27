@@ -95,9 +95,29 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
 
 // ─── Category Select ──────────────────────────────────────────────────────────
 function CategorySelect({ allCategories, selected, onChange }) {
-  const toggle = (catId) => {
-    if (selected.includes(catId)) onChange(selected.filter((id) => id !== catId));
-    else onChange([...selected, catId]);
+  // selected: [{ categoryId: string, selectedValues: string[] }]
+
+  const getEntry = (catId) => selected.find((s) => s.categoryId === catId);
+
+  const toggleGroup = (catId) => {
+    if (getEntry(catId)) {
+      onChange(selected.filter((s) => s.categoryId !== catId));
+    } else {
+      onChange([...selected, { categoryId: catId, selectedValues: [] }]);
+    }
+  };
+
+  const toggleValue = (catId, val) => {
+    onChange(selected.map((s) => {
+      if (s.categoryId !== catId) return s;
+      const has = s.selectedValues.includes(val);
+      return {
+        ...s,
+        selectedValues: has
+          ? s.selectedValues.filter((v) => v !== val)
+          : [...s.selectedValues, val],
+      };
+    }));
   };
 
   if (allCategories.length === 0) {
@@ -109,35 +129,74 @@ function CategorySelect({ allCategories, selected, onChange }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="space-y-2">
       {allCategories.map((group) => {
-        const isSelected = selected.includes(group._id);
+        const entry = getEntry(group._id);
+        const isSelected = Boolean(entry);
         return (
-          <button
+          <div
             key={group._id}
-            type="button"
-            onClick={() => toggle(group._id)}
-            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition-all"
-            style={
-              isSelected
-                ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
-                : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
-            }
+            className={`rounded-lg border transition-all ${
+              isSelected ? 'border-violet-200 bg-violet-50/40' : 'border-gray-100 bg-gray-50/50'
+            }`}
           >
-            {group.groupName}
-            {group.values.length > 0 && (
-              <span className="ml-1.5 text-xs opacity-60">
-                ({group.values.slice(0, 2).join(', ')}
-                {group.values.length > 2 ? '…' : ''})
+            {/* Group toggle */}
+            <button
+              type="button"
+              onClick={() => toggleGroup(group._id)}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+            >
+              <span className={`text-sm font-medium ${isSelected ? 'text-violet-700' : 'text-gray-600'}`}>
+                {group.groupName}
               </span>
+              <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                isSelected ? 'bg-violet-500 border-violet-500' : 'border-gray-300'
+              }`}>
+                {isSelected && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </span>
+            </button>
+
+            {/* Value chips — only when group is selected and has values */}
+            {isSelected && group.values.length > 0 && (
+              <div className="px-3 pb-3">
+                <p className="text-xs text-gray-400 mb-1.5">Select applicable values:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.values.map((val) => {
+                    const isValOn = entry.selectedValues.includes(val);
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => toggleValue(group._id, val)}
+                        className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                        style={
+                          isValOn
+                            ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                            : { background: '#fff', color: '#6b7280', borderColor: '#e5e7eb' }
+                        }
+                      >
+                        {val}
+                      </button>
+                    );
+                  })}
+                </div>
+                {entry.selectedValues.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1.5">
+                    ⚠ No values selected — product matches all values in this group
+                  </p>
+                )}
+              </div>
             )}
-          </button>
+          </div>
         );
       })}
     </div>
   );
 }
-
 // ─── Service Toggle Row ───────────────────────────────────────────────────────
 function ServicePriceRow({ icon: Icon, label, enabled, onToggle, price, onPriceChange, disabled }) {
   return (
@@ -270,9 +329,15 @@ export default function ProductFormModal({
     getInitialPrice('appointmentPrice', 'originalAppointmentPrice')
   );
   const [description, setDescription] = useState(product?.description || '');
-  const [selectedCats, setSelectedCats] = useState(
-    product?.categories?.map((c) => (typeof c === 'object' ? c._id : c)) || []
+  const [selectedCats, setSelectedCats] = useState(() => {
+  if (!product?.categories) return [];
+  return product.categories.map((c) =>
+    typeof c === 'object' && c.categoryId
+      ? { categoryId: typeof c.categoryId === 'object' ? c.categoryId._id : c.categoryId,
+          selectedValues: c.selectedValues || [] }
+      : { categoryId: typeof c === 'object' ? c._id : c, selectedValues: [] }
   );
+});
   const [isActive, setIsActive] = useState(product?.isActive !== false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);

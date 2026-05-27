@@ -138,6 +138,9 @@ ARTSPACE
 │       │   │   │   ├── CategoryManager.jsx
 │       │   │   │ 
 │       │   │   ├── products/
+│       │   │   │   ├── BulkDiscountModal.jsx
+│       │   │   │   ├── BulkRemoveDiscountModal.jsx
+│       │   │   │   ├── BulkStatusModal.jsx
 │       │   │   │   ├── DiscountModal.jsx
 │       │   │   │   ├── ProductCard.jsx
 │       │   │   │   ├── ProductFormModal.jsx

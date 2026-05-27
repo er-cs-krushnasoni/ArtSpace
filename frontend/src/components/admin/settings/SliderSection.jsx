@@ -19,13 +19,13 @@ function SlideModal({ slide, onClose, onSaved }) {
     title: slide?.title || '',
     linkType: slide?.linkType || 'none',
     linkId: slide?.linkId || '',
+    linkValue: slide?.linkValue || '',  // new: specific category value
   });
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingLinks, setLoadingLinks] = useState(false);
 
-  // Fetch products + categories when modal opens (needed for link dropdowns)
   useEffect(() => {
     const fetchLinkData = async () => {
       setLoadingLinks(true);
@@ -37,7 +37,7 @@ function SlideModal({ slide, onClose, onSaved }) {
         setProducts((prodRes.data.data || []).filter((p) => p.isActive));
         setCategories(catRes.data.data || []);
       } catch {
-        // Non-blocking — dropdowns will just be empty
+        // Non-blocking
       } finally {
         setLoadingLinks(false);
       }
@@ -62,13 +62,18 @@ function SlideModal({ slide, onClose, onSaved }) {
     try {
       if (isEdit) {
         const res = await api.put(`/tenant/settings/sliders/${slide._id}`, {
+          imageUrl: form.imageUrl,
+          imagePublicId: form.imagePublicId,
           title: form.title,
           linkType: form.linkType,
           linkId: form.linkId,
+          linkValue: form.linkValue,
         });
         onSaved(res.data.data, 'update');
       } else {
-        const res = await api.post('/tenant/settings/sliders', form);
+        const res = await api.post('/tenant/settings/sliders', {
+          ...form,
+        });
         onSaved(res.data.data, 'create');
       }
       toast.success(isEdit ? 'Slide updated' : 'Slide added');
@@ -80,10 +85,15 @@ function SlideModal({ slide, onClose, onSaved }) {
     }
   };
 
+  // Get values for the selected category
+  const selectedCategoryValues = categories.find(
+    (c) => c._id === form.linkId
+  )?.values || [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-base font-semibold text-gray-900">{isEdit ? 'Edit Slide' : 'Add Slide'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
@@ -95,9 +105,13 @@ function SlideModal({ slide, onClose, onSaved }) {
             <label className="block text-xs font-medium text-gray-600 mb-1.5">
               Slide Image <span className="text-red-500">*</span>
             </label>
+            <p className="text-xs text-gray-400 mb-2">
+              Recommended: <span className="font-medium text-gray-500">16:9 ratio</span> — e.g. 1920×1080px or 1280×720px. Image will be cropped if it doesn't match.
+            </p>
             <div
               onClick={() => fileRef.current?.click()}
-              className="w-full h-36 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-violet-400 transition-all overflow-hidden bg-gray-50"
+              className="w-full rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-violet-400 transition-all overflow-hidden bg-gray-50"
+              style={{ aspectRatio: '16/9' }}
             >
               {form.imageUrl ? (
                 <img src={form.imageUrl} alt="Slide" className="w-full h-full object-cover" />
@@ -105,6 +119,7 @@ function SlideModal({ slide, onClose, onSaved }) {
                 <div className="text-center">
                   <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-1" />
                   <p className="text-xs text-gray-400">{isUploading ? 'Uploading…' : 'Click to upload'}</p>
+                  <p className="text-xs text-gray-300 mt-0.5">16:9 · JPEG, PNG, WebP · max 2MB</p>
                 </div>
               )}
             </div>
@@ -134,7 +149,7 @@ function SlideModal({ slide, onClose, onSaved }) {
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Link to</label>
             <select
               value={form.linkType}
-              onChange={(e) => setForm((f) => ({ ...f, linkType: e.target.value, linkId: '' }))}
+              onChange={(e) => setForm((f) => ({ ...f, linkType: e.target.value, linkId: '', linkValue: '' }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
             >
               <option value="none">No link</option>
@@ -143,7 +158,7 @@ function SlideModal({ slide, onClose, onSaved }) {
             </select>
           </div>
 
-          {/* Link ID — real dropdowns */}
+          {/* Product picker */}
           {form.linkType === 'product' && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Select Product</label>
@@ -166,27 +181,71 @@ function SlideModal({ slide, onClose, onSaved }) {
             </div>
           )}
 
+          {/* Category picker + optional value picker */}
           {form.linkType === 'category' && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Select Category</label>
-              {loadingLinks ? (
-                <div className="h-10 bg-gray-100 rounded-pulse" />
-              ) : (
-                <select
-                  value={form.linkId}
-                  onChange={(e) => setForm((f) => ({ ...f, linkId: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                >
-                  <option value="">— No specific category —</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.groupName}
-                      {c.values.length > 0 ? ` (${c.values.slice(0, 3).join(', ')}${c.values.length > 3 ? '…' : ''})` : ''}
-                    </option>
-                  ))}
-                </select>
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Select Category</label>
+                {loadingLinks ? (
+                  <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+                ) : (
+                  <select
+                    value={form.linkId}
+                    onChange={(e) => setForm((f) => ({ ...f, linkId: e.target.value, linkValue: '' }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
+                  >
+                    <option value="">— No specific category —</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.groupName}
+                        {c.values.length > 0 ? ` (${c.values.slice(0, 3).join(', ')}${c.values.length > 3 ? '…' : ''})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Sub-value picker — only shown if selected category has values */}
+              {form.linkId && selectedCategoryValues.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    Filter by value <span className="text-gray-400">(optional)</span>
+                  </label>
+                  <p className="text-xs text-gray-400 mb-2">
+                    If selected, the slider will open the shop pre-filtered to this specific value.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, linkValue: '' }))}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
+                      style={
+                        !form.linkValue
+                          ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                          : { background: '#fff', color: '#6b7280', borderColor: '#e5e7eb' }
+                      }
+                    >
+                      All
+                    </button>
+                    {selectedCategoryValues.map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, linkValue: val }))}
+                        className="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
+                        style={
+                          form.linkValue === val
+                            ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                            : { background: '#fff', color: '#6b7280', borderColor: '#e5e7eb' }
+                        }
+                      >
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
+            </>
           )}
         </div>
 

@@ -17,7 +17,8 @@ const sliderSchema = new mongoose.Schema(
       enum: ['product', 'category', 'none'],
       default: 'none',
     },
-    linkId: { type: mongoose.Schema.Types.ObjectId }, // product or category id
+    linkId: { type: mongoose.Schema.Types.ObjectId },
+    linkValue: { type: String, default: null },   
   },
   { timestamps: true }
 );

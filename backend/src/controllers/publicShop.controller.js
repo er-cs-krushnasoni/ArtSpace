@@ -56,7 +56,7 @@ const getPublicProducts = async (req, res) => {
     return res.json({ success: true, data: [] });
   }
   const products = await Product.find({ tenantId: tenant._id, isActive: true })
-    .populate({ path: 'categories', model: 'Category', select: 'groupName values' })
+.populate({ path: 'categories.categoryId', model: 'Category', select: 'groupName values' })
     .sort({ createdAt: -1 })
     .lean();
   return res.json({ success: true, data: products });

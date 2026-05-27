@@ -285,7 +285,7 @@ const createSlider = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Maximum 5 slides allowed' });
   }
 
-  const { imageUrl, imagePublicId, title, linkType, linkId } = req.body;
+const { imageUrl, imagePublicId, title, linkType, linkId, linkValue } = req.body;
 
   if (!imageUrl || !imagePublicId) {
     return res.status(400).json({ success: false, message: 'Image is required' });
@@ -303,7 +303,8 @@ const createSlider = async (req, res) => {
     title: title?.trim() || '',
     linkType: linkType || 'none',
     linkId: linkType && linkType !== 'none' ? linkId : null,
-    order: count, // next position
+    linkValue: linkType === 'category' && linkValue ? linkValue : null,
+    order: count,
   });
 
   res.status(201).json({ success: true, message: 'Slide created', data: slider });
@@ -333,11 +334,11 @@ const reorderSliders = async (req, res) => {
   res.json({ success: true, message: 'Slides reordered' });
 };
 
-// ─── PUT /api/tenant/settings/sliders/:sliderId ───────────────────────────────
 
+// ─── PUT /api/tenant/settings/sliders/:sliderId ───────────────────────────────
 const updateSlider = async (req, res) => {
   const { sliderId } = req.params;
-  const { title, linkType, linkId } = req.body;
+const { title, linkType, linkId, linkValue, imageUrl, imagePublicId } = req.body;
 
   const slider = await Slider.findOne({ _id: sliderId, tenantId: req.user.tenantId });
   if (!slider) return res.status(404).json({ success: false, message: 'Slide not found' });
@@ -347,10 +348,20 @@ const updateSlider = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid link type' });
   }
 
+  // Update image if a new one was uploaded
+  if (imageUrl && imagePublicId && imagePublicId !== slider.imagePublicId) {
+    // Delete old image from Cloudinary
+    if (slider.imagePublicId) {
+      await deleteFromCloudinary(slider.imagePublicId, 'image');
+    }
+    slider.imageUrl = imageUrl;
+    slider.imagePublicId = imagePublicId;
+  }
+
   if (title !== undefined) slider.title = title.trim();
   if (linkType !== undefined) slider.linkType = linkType;
   slider.linkId = linkType && linkType !== 'none' ? linkId : null;
-
+  slider.linkValue = linkType === 'category' && linkValue ? linkValue : null;
   await slider.save();
   res.json({ success: true, message: 'Slide updated', data: slider });
 };

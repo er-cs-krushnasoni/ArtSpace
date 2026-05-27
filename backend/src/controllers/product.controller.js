@@ -3,13 +3,11 @@ const Category = require('../models/Category');
 const { deleteFromCloudinary } = require('../config/cloudinary');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const validateCategoryOwnership = async (categoryIds, tenantId) => {
-  if (!categoryIds || categoryIds.length === 0) return true;
-  const count = await Category.countDocuments({
-    _id: { $in: categoryIds },
-    tenantId,
-  });
-  return count === categoryIds.length;
+const validateCategoryOwnership = async (categories, tenantId) => {
+  if (!categories || categories.length === 0) return true;
+  const ids = categories.map((c) => c.categoryId || c);
+  const count = await Category.countDocuments({ _id: { $in: ids }, tenantId });
+  return count === ids.length;
 };
 
 const deletePhotosFromCloudinary = async (photos = []) => {
@@ -25,7 +23,7 @@ const deletePhotosFromCloudinary = async (photos = []) => {
 // ─── GET /api/tenant/products ─────────────────────────────────────────────────
 const getProducts = async (req, res) => {
   const products = await Product.find({ tenantId: req.user.tenantId })
-    .populate('categories', 'groupName values')
+.populate('categories.categoryId', 'groupName values')
     .sort({ createdAt: -1 })
     .lean();
   res.json({ success: true, data: products });
@@ -69,13 +67,16 @@ const createProduct = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Maximum 5 photos allowed per product' });
   }
 
-  const catIds = Array.isArray(categories) ? categories : [];
-  if (catIds.length > 0) {
-    const valid = await validateCategoryOwnership(catIds, req.user.tenantId);
-    if (!valid) {
-      return res.status(400).json({ success: false, message: 'One or more categories are invalid' });
-    }
-  }
+  const catInput = Array.isArray(categories) ? categories : [];
+const cleanCats = catInput.map((c) =>
+  typeof c === 'object' && c.categoryId
+    ? { categoryId: c.categoryId, selectedValues: c.selectedValues || [] }
+    : { categoryId: c, selectedValues: [] }
+);
+if (cleanCats.length > 0) {
+  const valid = await validateCategoryOwnership(cleanCats, req.user.tenantId);
+  if (!valid) return res.status(400).json({ success: false, message: 'One or more categories are invalid' });
+}
 
   const product = await Product.create({
     tenantId: req.user.tenantId,
@@ -87,11 +88,11 @@ const createProduct = async (req, res) => {
     appointmentEnabled: hasAppointment,
     deliveryPrice: hasDelivery ? Number(deliveryPrice) : null,
     appointmentPrice: hasAppointment ? Number(appointmentPrice) : null,
-    categories: catIds,
+    categories: cleanCats,
     isActive: isActive !== false,
   });
 
-  const populated = await product.populate('categories', 'groupName values');
+const populated = await product.populate('categories.categoryId', 'groupName values');
   res.status(201).json({ success: true, message: 'Product created', data: populated });
 };
 
@@ -190,18 +191,21 @@ const updateProduct = async (req, res) => {
   }
 
   if (categories !== undefined) {
-    const catIds = Array.isArray(categories) ? categories : [];
-    if (catIds.length > 0) {
-      const valid = await validateCategoryOwnership(catIds, req.user.tenantId);
-      if (!valid) {
-        return res.status(400).json({ success: false, message: 'One or more categories are invalid' });
-      }
-    }
-    product.categories = catIds;
+  const catInput = Array.isArray(categories) ? categories : [];
+  const cleanCats = catInput.map((c) =>
+    typeof c === 'object' && c.categoryId
+      ? { categoryId: c.categoryId, selectedValues: c.selectedValues || [] }
+      : { categoryId: c, selectedValues: [] }
+  );
+  if (cleanCats.length > 0) {
+    const valid = await validateCategoryOwnership(cleanCats, req.user.tenantId);
+    if (!valid) return res.status(400).json({ success: false, message: 'One or more categories are invalid' });
   }
+  product.categories = cleanCats;
+}
 
   await product.save();
-  const populated = await product.populate('categories', 'groupName values');
+const populated = await product.populate('categories.categoryId', 'groupName values');
   res.json({ success: true, message: 'Product updated', data: populated });
 };
 
