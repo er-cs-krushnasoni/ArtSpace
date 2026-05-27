@@ -37,34 +37,42 @@ const ShopHeader = () => {
   };
 
   const activeStyle = (to) => ({
-    color: isActive(to) ? 'var(--tenant-primary)' : '#4b5563',
-    background: isActive(to) ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)' : 'transparent',
-  });
+  color: isActive(to) ? 'var(--tenant-primary)' : 'var(--tenant-nav-text, #4b5563)',
+  background: isActive(to) ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)' : 'transparent',
+});
 
-  const mobileActiveStyle = (to) => ({
-    color: isActive(to) ? 'var(--tenant-primary)' : '#374151',
-    background: isActive(to) ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)' : 'transparent',
-  });
+const mobileActiveStyle = (to) => ({
+  color: isActive(to) ? 'var(--tenant-primary)' : 'var(--tenant-nav-text, #374151)',
+  background: isActive(to) ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)' : 'transparent',
+});
 
   return (
-<header className="border-b border-gray-100 sticky top-0 z-50" style={{ background: 'var(--tenant-bg)' }}>
+<header className="border-b border-gray-100 sticky top-0 z-50" style={{ background: 'var(--tenant-nav-bg, var(--tenant-bg))' }}>
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-[72px] gap-3">
           <Link to={`/s/${slug}`} className="flex items-center gap-3 min-w-0 flex-shrink-0">
-            {config.logo && (
-              <img
-                src={config.logo}
-                alt={businessName}
-                className="w-14 h-14 rounded-2xl object-contain flex-shrink-0 border border-gray-100 shadow-sm"
-              />
-            )}
-            <span
-              className="font-bold text-gray-900 truncate"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.2rem', letterSpacing: '-0.01em' }}
-            >
-              {businessName}
-            </span>
-          </Link>
+  {config.logo && (
+    <img
+      src={config.logo}
+      alt={businessName}
+      className="w-16 h-16 rounded-2xl object-contain flex-shrink-0 border border-gray-100 shadow-sm"
+    />
+  )}
+  <div className="flex flex-col min-w-0">
+    <span
+      className="font-bold text-gray-900 truncate"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.5rem', letterSpacing: '-0.01em', color: 'var(--tenant-nav-text, #111827)' }}
+    >
+      {businessName}
+    </span>
+    {config.address && (
+      <div className="flex items-center gap-1 mt-0.5">
+        <MapPin size={11} className="text-gray-400 flex-shrink-0" />
+        <span className="text-xs text-gray-400 truncate">{config.address}</span>
+      </div>
+    )}
+  </div>
+</Link>
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
@@ -137,15 +145,10 @@ const ShopHeader = () => {
             </button>
           </div>
         </div>
-        {config.address && (
-          <div className="flex items-center gap-1.5 pb-2 -mt-1">
-            <MapPin size={12} className="text-gray-400 flex-shrink-0" />
-            <span className="text-xs text-gray-400 truncate">{config.address}</span>
-          </div>
-        )}
+       
       </div>
       {mobileMenuOpen && (
-<div className="md:hidden border-t border-gray-100 px-4 pb-4" style={{ background: 'var(--tenant-bg)' }}>
+<div className="md:hidden border-t border-gray-100 px-4 pb-4" style={{ background: 'var(--tenant-nav-bg, var(--tenant-bg))' }}>
           <nav className="flex flex-col gap-1 pt-3">
             {navLinks.map((link) => (
               <Link

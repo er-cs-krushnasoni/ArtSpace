@@ -3,7 +3,6 @@ import { getLabels } from '../config/businessTypeLabels';
 import { getTenantSlug } from '../utils/subdomainUtils';
 
 const TenantContext = createContext(null);
-
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const TenantProvider = ({ children }) => {
@@ -13,6 +12,7 @@ export const TenantProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [isUnavailable, setIsUnavailable] = useState(false);
   const [isSetupIncomplete, setIsSetupIncomplete] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   useEffect(() => {
     const slug = getTenantSlug();
@@ -20,28 +20,25 @@ export const TenantProvider = ({ children }) => {
       setIsLoading(false);
       return;
     }
-
     const fetchTenantConfig = async () => {
       try {
         const res = await fetch(`${API_BASE}/public/${slug}/config`);
         if (!res.ok) {
           if (res.status === 404) {
+            setIsNotFound(true);
             setError('Shop not found');
           } else {
             setError('Failed to load store configuration');
           }
           return;
         }
-
         const json = await res.json();
         const data = json.data;
-
         setTenant(data);
         setLabels(getLabels(data.businessType || 'generic'));
         setIsUnavailable(!!data.unavailable);
         setIsSetupIncomplete(!!data.setupIncomplete);
 
-        // Apply tenant brand colors
         if (data.websiteConfig?.primaryColor) {
           document.documentElement.style.setProperty('--tenant-primary', data.websiteConfig.primaryColor);
         }
@@ -49,13 +46,24 @@ export const TenantProvider = ({ children }) => {
           document.documentElement.style.setProperty('--tenant-accent', data.websiteConfig.accentColor);
         }
         if (data.websiteConfig?.bgColor) {
-  document.documentElement.style.setProperty('--tenant-bg', data.websiteConfig.bgColor);
+          document.documentElement.style.setProperty('--tenant-bg', data.websiteConfig.bgColor);
+        }
+        if (data.websiteConfig?.navBg) {
+  document.documentElement.style.setProperty('--tenant-nav-bg', data.websiteConfig.navBg);
 }
+if (data.websiteConfig?.navText) {
+  document.documentElement.style.setProperty('--tenant-nav-text', data.websiteConfig.navText);
+}
+if (data.websiteConfig?.cardBg) {
+  document.documentElement.style.setProperty('--tenant-card-bg', data.websiteConfig.cardBg);
+}
+if (data.websiteConfig?.btnText) {
+  document.documentElement.style.setProperty('--tenant-btn-text', data.websiteConfig.btnText);
+}
+
         if (data.businessName) {
           document.title = data.businessName;
         }
-
-        // Inject tenant logo as browser tab favicon
         if (data.websiteConfig?.logo) {
           let link = document.querySelector("link[rel~='icon']");
           if (!link) {
@@ -73,12 +81,11 @@ export const TenantProvider = ({ children }) => {
         setIsLoading(false);
       }
     };
-
     fetchTenantConfig();
   }, []);
 
   return (
-    <TenantContext.Provider value={{ tenant, labels, isLoading, error, isUnavailable, isSetupIncomplete }}>
+    <TenantContext.Provider value={{ tenant, labels, isLoading, error, isUnavailable, isSetupIncomplete, isNotFound }}>
       {children}
     </TenantContext.Provider>
   );

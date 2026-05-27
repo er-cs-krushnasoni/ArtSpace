@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Compass } from 'lucide-react';
 
@@ -18,12 +17,12 @@ export default function NotFoundPage() {
         <p className="text-sm text-gray-500 mb-8">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <Link
-          to="/"
+        
+          <a href="/"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors"
-        >
+    >
           Go to ArtSpace
-        </Link>
+        </a>
       </div>
     </div>
   );

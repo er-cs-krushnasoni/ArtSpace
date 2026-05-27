@@ -86,9 +86,10 @@ const ProductCard = ({ product, onClick }) => {
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
-      onClick={onClick}
-    >
+  className="rounded-xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+  style={{ background: 'var(--tenant-card-bg, #ffffff)' }}
+  onClick={onClick}
+>
       {/* Photo */}
       <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
         {coverPhoto ? (
@@ -115,10 +116,10 @@ const ProductCard = ({ product, onClick }) => {
         {/* Hover Order Now overlay — desktop */}
         <div className="absolute bottom-0 inset-x-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
-            className="w-full py-2 rounded-full text-white text-xs font-semibold shadow-lg"
-style={{ background: 'var(--tenant-accent)' }}
-            onClick={(e) => { e.stopPropagation(); onClick(); }}
-          >
+  className="w-full py-2 rounded-full text-xs font-semibold shadow-lg"
+  style={{ background: 'var(--tenant-accent)', color: 'var(--tenant-btn-text, #ffffff)' }}
+  onClick={(e) => { e.stopPropagation(); onClick(); }}
+>
             Order Now
           </button>
         </div>
@@ -159,10 +160,10 @@ style={{ background: 'var(--tenant-accent)' }}
 
         {/* Mobile Order Now */}
         <button
-          className="sm:hidden w-full py-2 rounded-full text-white text-xs font-semibold mt-1"
-          style={{ background: 'var(--tenant-primary)' }}
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-        >
+  className="sm:hidden w-full py-2 rounded-full text-xs font-semibold mt-1"
+  style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
+  onClick={(e) => { e.stopPropagation(); onClick(); }}
+>
           Order Now
         </button>
       </div>

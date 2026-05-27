@@ -34,21 +34,21 @@ const ShopFooter = ({ tenant, labels, slug }) => {
 
           {/* Logo */}
           {config.logo && (
-            <img
-              src={config.logo}
-              alt={tenant?.businessName}
-              className="w-20 h-20 rounded-2xl object-contain border border-gray-100 shadow-sm"
-            />
-          )}
+  <img
+    src={config.logo}
+    alt={tenant?.businessName}
+    className="w-40 h-40 rounded-2xl object-contain border border-gray-100 shadow-sm"
+  />
+)}
 
           {/* Business name */}
           <div>
             <h3
-              className="text-xl font-bold text-gray-900"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              {tenant?.businessName}
-            </h3>
+  className="text-4xl font-bold text-gray-900"
+  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+>
+  {tenant?.businessName}
+</h3>
             {config.address && (
               <div className="flex items-center justify-center gap-1.5 mt-2">
                 <MapPin size={13} className="text-gray-400 flex-shrink-0" />
@@ -105,13 +105,13 @@ const ShopFooter = ({ tenant, labels, slug }) => {
 
 {/* Divider + powered by */}
 <div className="w-full border-t border-gray-100 pt-5 mt-1">
-  <div className="flex flex-col items-center gap-1 text-xl text-gray-300">
-    <span>Powered by ArtSpace</span>
-    <a href="mailto:er.cs.krushnasoni@gmail.com" title="Contact developer" className="inline-flex items-center gap-1 hover:text-violet-500 transition-colors">
-      <Mail className="w-3.5 h-3.5" />
-      @Built by Krushna Soni
-    </a>
-  </div>
+  <div className="flex flex-col items-center gap-1 text-gray-300" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+  <span className="text-xl">Powered by ArtSpace</span>
+  <a href="mailto:er.cs.krushnasoni@gmail.com" title="Contact developer" className="inline-flex items-center gap-1 text-xl hover:text-violet-500 transition-colors">
+    <Mail className="w-3.5 h-3.5" />
+    @Built by Krushna Soni
+  </a>
+</div>
 </div>
         </div>
       </div>

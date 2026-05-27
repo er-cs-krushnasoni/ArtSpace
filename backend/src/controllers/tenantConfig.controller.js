@@ -47,8 +47,7 @@ const updateGeneral = async (req, res) => {
   const err = handleValidationErrors(req, res);
   if (err) return;
 
-const { businessName, address, whatsapp, instagram, primaryColor, accentColor, bgColor } = req.body;
-
+const { businessName, address, whatsapp, instagram, primaryColor, accentColor, bgColor, navBg, navText, cardBg, btnText } = req.body;
   if (primaryColor && !isValidHex(primaryColor)) {
     return res.status(400).json({ success: false, message: 'Invalid primary color hex code' });
   }
@@ -57,6 +56,18 @@ const { businessName, address, whatsapp, instagram, primaryColor, accentColor, b
   }
   if (bgColor && !isValidHex(bgColor)) {
   return res.status(400).json({ success: false, message: 'Invalid background color hex code' });
+}
+if (navBg && !isValidHex(navBg)) {
+  return res.status(400).json({ success: false, message: 'Invalid navbar background color hex code' });
+}
+if (navText && !isValidHex(navText)) {
+  return res.status(400).json({ success: false, message: 'Invalid navbar text color hex code' });
+}
+if (cardBg && !isValidHex(cardBg)) {
+  return res.status(400).json({ success: false, message: 'Invalid card background color hex code' });
+}
+if (btnText && !isValidHex(btnText)) {
+  return res.status(400).json({ success: false, message: 'Invalid button text color hex code' });
 }
 
   const update = {};
@@ -67,6 +78,10 @@ const { businessName, address, whatsapp, instagram, primaryColor, accentColor, b
   if (primaryColor !== undefined) update['websiteConfig.primaryColor'] = primaryColor;
   if (accentColor !== undefined) update['websiteConfig.accentColor'] = accentColor;
   if (bgColor !== undefined) update['websiteConfig.bgColor'] = bgColor;
+  if (navBg !== undefined) update['websiteConfig.navBg'] = navBg || null;
+if (navText !== undefined) update['websiteConfig.navText'] = navText || null;
+if (cardBg !== undefined) update['websiteConfig.cardBg'] = cardBg || null;
+if (btnText !== undefined) update['websiteConfig.btnText'] = btnText || null;
 
   await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: update });
   res.json({ success: true, message: 'Settings updated successfully' });

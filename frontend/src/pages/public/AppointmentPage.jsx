@@ -297,8 +297,8 @@ const AppointmentPage = () => {
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: 'var(--tenant-primary)' }}
+              className="w-full py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
             >
               {submitting ? 'Sending…' : 'Book Appointment'}
             </button>

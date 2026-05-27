@@ -4,27 +4,26 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { isSuperAdminPath, getTenantSlug } from './utils/subdomainUtils';
 import ErrorBoundary from './components/common/ErrorBoundary';
-
-import PlatformLandingPage   from './pages/public/PlatformLandingPage';
-import SignupPage             from './pages/tenant/SignupPage';
-import HomePage               from './pages/public/HomePage';
-import ShopPage               from './pages/public/ShopPage';
-import CustomOrderPage        from './pages/public/CustomOrderPage';
-import AppointmentPage        from './pages/public/AppointmentPage';
-import UnavailablePage        from './pages/public/UnavailablePage';
-import TenantLoginPage        from './pages/admin/TenantLoginPage';
-import ForgotPasswordPage     from './pages/admin/ForgotPasswordPage';
-import ResetPasswordPage      from './pages/admin/ResetPasswordPage';
-import AdminDashboardPage     from './pages/admin/AdminDashboardPage';
-import SuperAdminLoginPage    from './pages/superadmin/SuperAdminLoginPage';
+import PlatformLandingPage    from './pages/public/PlatformLandingPage';
+import SignupPage              from './pages/tenant/SignupPage';
+import HomePage                from './pages/public/HomePage';
+import ShopPage                from './pages/public/ShopPage';
+import CustomOrderPage         from './pages/public/CustomOrderPage';
+import AppointmentPage         from './pages/public/AppointmentPage';
+import UnavailablePage         from './pages/public/UnavailablePage';
+import TenantLoginPage         from './pages/admin/TenantLoginPage';
+import ForgotPasswordPage      from './pages/admin/ForgotPasswordPage';
+import ResetPasswordPage       from './pages/admin/ResetPasswordPage';
+import AdminDashboardPage      from './pages/admin/AdminDashboardPage';
+import SuperAdminLoginPage     from './pages/superadmin/SuperAdminLoginPage';
 import SuperAdminDashboardPage from './pages/superadmin/SuperAdminDashboardPage';
-import SuperAdminTenantsPage  from './pages/superadmin/SuperAdminTenantsPage';
-import SuperAdminPricingPage  from './pages/superadmin/SuperAdminPricingPage';
-import SuperAdminAuditPage    from './pages/superadmin/SuperAdminAuditPage';
-import QuizPage               from './pages/public/QuizPage';
-import BlogIndexPage          from './pages/public/BlogIndexPage';
-import BlogPostPage           from './pages/public/BlogPostPage';
-import NotFoundPage           from './pages/NotFoundPage';
+import SuperAdminTenantsPage   from './pages/superadmin/SuperAdminTenantsPage';
+import SuperAdminPricingPage   from './pages/superadmin/SuperAdminPricingPage';
+import SuperAdminAuditPage     from './pages/superadmin/SuperAdminAuditPage';
+import QuizPage                from './pages/public/QuizPage';
+import BlogIndexPage           from './pages/public/BlogIndexPage';
+import BlogPostPage            from './pages/public/BlogPostPage';
+import NotFoundPage            from './pages/NotFoundPage';
 
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
@@ -80,8 +79,12 @@ const SuperAdminPanel = () => (
 
 // ─── Tenant Admin Panel ───────────────────────────────────────────────────────
 const TenantAdminPanel = ({ slug }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  if (isLoading) return <LoadingScreen />;
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isLoading: tenantLoading, isNotFound } = useTenant(); // ← add this
+
+  if (authLoading || tenantLoading) return <LoadingScreen />;
+  if (isNotFound) return <NotFoundPage />;                      // ← add this
+
   return (
     <Routes>
       <Route path="login"
@@ -108,9 +111,12 @@ const TenantAdminPanel = ({ slug }) => {
 
 // ─── Tenant Public Site ───────────────────────────────────────────────────────
 const TenantPublicSite = () => {
-  const { isLoading, isUnavailable } = useTenant();
+  const { isLoading, isUnavailable, isNotFound } = useTenant();
+
   if (isLoading)     return <LoadingScreen />;
+  if (isNotFound)    return <NotFoundPage />;
   if (isUnavailable) return <UnavailablePage />;
+
   return (
     <Routes>
       <Route index element={<HomePage />} />

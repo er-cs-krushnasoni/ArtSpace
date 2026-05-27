@@ -311,8 +311,8 @@ const DeliveryFormModal = ({ product, onClose }) => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ background: 'var(--tenant-primary)' }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90 disabled:opacity-60"
+                  style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
                 >
                   {submitting ? 'Sending…' : 'Send Order Request'}
                 </button>
@@ -613,8 +613,8 @@ const AppointmentFormModal = ({ product, onClose }) => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ background: 'var(--tenant-primary)' }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90 disabled:opacity-60"
+                  style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
                 >
                   {submitting ? 'Sending…' : 'Book Appointment'}
                 </button>
@@ -716,7 +716,7 @@ const ProductDetailModal = ({ product, onClose }) => {
                   <div className="flex items-center gap-2">
                     {prices.hasDiscount && <span className="text-gray-400 line-through text-sm">₹{prices.originalDelivery}</span>}
                     <span className="font-semibold text-gray-900">{prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}</span>
-                    {prices.hasDiscount && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{prices.discountLabel}</span>}
+                    {prices.hasDiscount && <span className="bg-red-500  text-xs px-2 py-0.5 rounded-full">{prices.discountLabel}</span>}
                   </div>
                 </div>
               </div>
@@ -728,7 +728,7 @@ const ProductDetailModal = ({ product, onClose }) => {
                   <div className="flex items-center gap-2">
                     {prices.hasDiscount && <span className="text-gray-400 line-through text-sm">₹{prices.originalAppointment}</span>}
                     <span className="font-semibold text-gray-900">{prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}</span>
-                    {prices.hasDiscount && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{prices.discountLabel}</span>}
+                    {prices.hasDiscount && <span className="bg-red-500  text-xs px-2 py-0.5 rounded-full">{prices.discountLabel}</span>}
                   </div>
                 </div>
               </div>
@@ -755,8 +755,8 @@ const ProductDetailModal = ({ product, onClose }) => {
           <div className="flex gap-3 pt-1">
             {canDelivery && (
               <button
-                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: 'var(--tenant-primary)' }}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90"
+                style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
                 onClick={() => setActiveForm('delivery')}
               >
                 Order / Delivery
