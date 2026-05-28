@@ -16,6 +16,8 @@ const {
   reorderSliders,
   updateSlider,
   deleteSlider,
+    updateEmail,   
+  updatePassword, 
 } = require('../controllers/tenantConfig.controller');
 
 // All settings routes require tenant admin auth + active subscription
@@ -25,6 +27,10 @@ router.use(authenticateTenantAdmin, requireActiveSubscription);
 router.get('/', getSettings);
 router.put('/general', updateGeneral);
 router.put('/toggles', updateToggles);
+
+// Credentials
+router.put('/email', updateEmail);
+router.put('/password', updatePassword);
 
 // Cloudinary upload signature
 router.post('/upload-signature', getUploadSignature);

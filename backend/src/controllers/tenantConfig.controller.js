@@ -383,6 +383,50 @@ const deleteSlider = async (req, res) => {
   res.json({ success: true, message: 'Slide deleted' });
 };
 
+
+// ─── PUT /api/tenant/settings/email ──────────────────────────────────────────
+const updateEmail = async (req, res) => {
+  const { newEmail } = req.body;
+  if (!newEmail) return res.status(400).json({ success: false, message: 'New email is required' });
+
+  const emailLower = newEmail.toLowerCase().trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
+    return res.status(400).json({ success: false, message: 'Invalid email format' });
+  }
+
+  const existing = await Tenant.findOne({ email: emailLower, _id: { $ne: req.user.tenantId } }).lean();
+  if (existing) {
+    return res.status(400).json({ success: false, message: 'This email is already in use' });
+  }
+
+  await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: { email: emailLower } });
+  res.json({ success: true, message: 'Email updated successfully' });
+};
+
+// ─── PUT /api/tenant/settings/password ───────────────────────────────────────
+const updatePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current and new password are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+  }
+
+  const tenant = await Tenant.findById(req.user.tenantId).select('+passwordHash');
+  if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
+
+  const isMatch = await tenant.comparePassword(currentPassword);
+  if (!isMatch) {
+    return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+  }
+
+  tenant.passwordHash = newPassword; // pre-save hook will hash it
+  await tenant.save();
+
+  res.json({ success: true, message: 'Password updated successfully' });
+};
+
 module.exports = {
   getSettings,
   updateGeneral,
@@ -397,4 +441,6 @@ module.exports = {
   reorderSliders,
   updateSlider,
   deleteSlider,
+   updateEmail,      
+  updatePassword,
 };

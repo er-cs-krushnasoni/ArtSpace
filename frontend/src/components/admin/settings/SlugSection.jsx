@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, AlertTriangle, Copy, Check } from 'lucide-react';
 import api from '../../../api/axiosInstance';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -18,6 +18,7 @@ export default function SlugSection({ currentSlug }) {
   const [availability, setAvailability] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -89,6 +90,13 @@ export default function SlugSection({ currentSlug }) {
     }
   };
 
+  const handleCopy = () => {
+  navigator.clipboard.writeText(shopUrl).then(() => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  });
+};
+
   const shopUrl = `${PROD_BASE}/s/${isEditing ? inputSlug : currentSlug}`;
 
   return (
@@ -97,8 +105,15 @@ export default function SlugSection({ currentSlug }) {
       <p className="text-xs text-gray-400 mb-5">Your public shop address shared with customers</p>
 
       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg mb-4">
-        <span className="text-xs text-gray-500 font-mono break-all">{shopUrl}</span>
-      </div>
+  <span className="text-xs text-gray-500 font-mono break-all flex-1">{shopUrl}</span>
+  <button
+    onClick={handleCopy}
+    title="Copy URL"
+    className="flex-shrink-0 p-1.5 rounded-lg hover:bg-gray-200 transition-all text-gray-400 hover:text-gray-700"
+  >
+    Copy link{copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-3 h-3" />}
+  </button>
+</div>
 
       {!isEditing ? (
         <button

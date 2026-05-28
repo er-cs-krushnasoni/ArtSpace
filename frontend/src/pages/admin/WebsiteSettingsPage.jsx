@@ -7,6 +7,7 @@ import TogglesSection from '../../components/admin/settings/TogglesSection';
 import SliderSection from '../../components/admin/settings/SliderSection';
 import TutorialVideoSection from '../../components/admin/settings/TutorialVideoSection';
 import SlugSection from '../../components/admin/settings/SlugSection';
+import CredentialsSection from '../../components/admin/settings/CredentialsSection';
 
 // Skeleton loader
 const SectionSkeleton = () => (
@@ -118,6 +119,8 @@ export default function WebsiteSettingsPage() {
           )}
 
           <SlugSection currentSlug={settings.slug} />
+          <CredentialsSection initialData={settings} />
+
         </div>
       ) : null}
     </div>
