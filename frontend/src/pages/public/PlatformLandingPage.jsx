@@ -85,7 +85,7 @@ export default function PlatformLandingPage() {
       {/* ── Nav ── */}
       <nav className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/artspace-logo.png" alt="ArtSpace" className="h-9 object-contain" />
+          <img src="/artspace-logo.png" alt="ArtSpace" className="h-14 object-contain" />
           <span className="font-semibold text-gray-900 text-lg">ArtSpace</span>
         </div>
         <Link
@@ -102,10 +102,16 @@ export default function PlatformLandingPage() {
           <Sparkles className="w-3.5 h-3.5" />
           For creators &amp; small businesses
         </div>
-        <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 leading-tight mb-5">
-          Your business,{' '}
-          <span className="text-violet-600">beautifully online</span>.
-        </h1>
+        
+
+          <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 leading-tight mb-3">
+  Turn your craft into a{' '}
+  <span className="text-violet-600">brand</span>.
+</h1>
+<p className="text-xl font-semibold text-gray-600 mb-5">
+  Your business, beautifully online.
+</p>
+        
         <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto">
           Create your own shop for nail art, mehendi, jewellery, cakes, makeup, gifts, and 80+
           other business types — in minutes. No tech skills needed.
@@ -118,7 +124,7 @@ export default function PlatformLandingPage() {
             Get Your Store — It's Free →
           </Link>
         </div>
-        <p className="text-xs text-gray-400 mt-3">7-day free trial · No credit card required</p>
+        <p className="text-xs text-gray-400 mt-3">7-day free trial · No Payment Details Required</p>
       </section>
 
       {/* ── How it works ── */}
@@ -208,7 +214,7 @@ export default function PlatformLandingPage() {
       <footer className="py-10 px-6 border-t border-gray-100">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="/artspace-logo.png" alt="ArtSpace" className="h-6 object-contain" />
+            <img src="/artspace-logo.png" alt="ArtSpace" className="h-20 object-contain" />
             <span className="text-sm font-semibold text-gray-700">ArtSpace</span>
           </div>
           <p className="text-xs text-gray-400 text-center">
@@ -217,7 +223,7 @@ export default function PlatformLandingPage() {
           {/* Developer watermark */}
           
             <a href="mailto:er.cs.krushnasoni@gmail.com"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xl text-gray-400 hover:text-violet-600 transition-colors"
             title="Contact developer"
           >
             <Mail className="w-5 h-5" />
