@@ -68,9 +68,8 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
     : options;
 
   const showOther     = query.trim() && filtered.length === 0;
-  const selectedLabel = value === 'other'
-    ? 'Other'
-    : options.find(o => o.value === value)?.label || '';
+  const selectedLabel =
+  options.find(o => o.value === value)?.label || '';
 
   const handleSelect = (val) => {
     onChange({ target: { name: 'businessType', value: val } });
@@ -123,7 +122,7 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => handleSelect('other')}
+                  onClick={() => handleSelect('generic')}
                   className="w-full text-left px-3.5 py-2 text-sm text-violet-600 hover:bg-violet-50 font-medium flex items-center gap-2"
                 >
                   <span className="text-violet-400">+</span>
