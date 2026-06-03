@@ -38,6 +38,14 @@ const Field = ({ label, children }) => (
   </div>
 );
 
+// Block non-numeric key presses
+const handleMobileKeyDown = (e) => {
+  const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
+  if (allowed.includes(e.key)) return;
+  if (e.ctrlKey || e.metaKey) return; // Allow copy/paste/select-all combos
+  if (!/^\d$/.test(e.key)) e.preventDefault();
+};
+
 export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
   const badge = TYPE_BADGE[query.type] || TYPE_BADGE.SHOP_ORDER;
 
@@ -66,10 +74,10 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
   );
   const [preferredTime, setPreferredTime] = useState(query.preferredTime || '');
   const [descriptionText, setDescriptionText] = useState(query.descriptionText || '');
-const [scheduledDate, setScheduledDate] = useState(
-  query.preferredDate ? new Date(query.preferredDate).toISOString().split('T')[0] : ''
-);
-const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
+  const [scheduledDate, setScheduledDate] = useState(
+    query.preferredDate ? new Date(query.preferredDate).toISOString().split('T')[0] : ''
+  );
+  const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
   const [finalPrice, setFinalPrice] = useState(defaultPrice);
   const [loading, setLoading] = useState(false);
 
@@ -162,7 +170,9 @@ const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
                   </select>
                   <input
                     value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} // Strip non-digits (handles paste)
+                    onKeyDown={handleMobileKeyDown} // Block non-digit key presses
+                    inputMode="numeric"
                     className={inputClass}
                     placeholder="Mobile"
                   />
@@ -218,26 +228,6 @@ const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
                 />
               </Field>
             )}
-
-            {/* Preferred date + time */}
-            {/* <div className="grid grid-cols-2 gap-3">
-              <Field label="Preferred Date">
-                <input
-                  type="date"
-                  value={preferredDate}
-                  onChange={(e) => setPreferredDate(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Preferred Time">
-                <input
-                  type="time"
-                  value={preferredTime}
-                  onChange={(e) => setPreferredTime(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-            </div> */}
 
             {/* Description */}
             <Field label="Description">

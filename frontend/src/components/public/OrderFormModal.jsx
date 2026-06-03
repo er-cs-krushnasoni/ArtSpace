@@ -26,6 +26,14 @@ const Field = ({ label, required, error, children }) => (
   </div>
 );
 
+// Block non-numeric key presses on mobile field
+const handleMobileKeyDown = (e) => {
+  const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
+  if (allowed.includes(e.key)) return;
+  if (e.ctrlKey || e.metaKey) return; // Allow copy/paste/select-all combos
+  if (!/^\d$/.test(e.key)) e.preventDefault();
+};
+
 const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
   const { tenant } = useTenant();
   const slug = tenant?.slug;
@@ -36,12 +44,12 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
   const canAppointment = !!config.appointmentEnabled && product.appointmentEnabled && prices.offersAppointment;
 
   const resolveInitial = () => {
-  if (preSelectedOrderType === 'delivery' && canDelivery) return 'delivery';
-  if (preSelectedOrderType === 'appointment' && canAppointment) return 'at_shop';
-  if (canDelivery && !canAppointment) return 'delivery';
-  if (canAppointment && !canDelivery) return 'at_shop';
-  return '';
-};
+    if (preSelectedOrderType === 'delivery' && canDelivery) return 'delivery';
+    if (preSelectedOrderType === 'appointment' && canAppointment) return 'at_shop';
+    if (canDelivery && !canAppointment) return 'delivery';
+    if (canAppointment && !canDelivery) return 'at_shop';
+    return '';
+  };
 
   const [form, setForm] = useState({
     customerName: '',
@@ -77,25 +85,25 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
     else if (canDelivery && canAppointment && !form.orderType)
       errs.orderType = 'Please select an option';
     if ((form.orderType === 'delivery' || form.orderType === 'at_home') && !form.address.trim())
-  errs.address = 'Address is required for delivery or home service';
+      errs.address = 'Address is required for delivery or home service';
     return errs;
   };
 
   const buildBody = () => ({
-  type: 'SHOP_ORDER',
-  customerName: form.customerName.trim(),
-  mobile: form.mobile.replace(/\s+/g, ''),
-  countryCode: form.countryCode,
-  instagram: form.instagram.trim(),
-  preferredDate: form.preferredDate || undefined,
-  preferredTime: form.preferredTime || undefined,
-  orderType: form.orderType || (canDelivery ? 'delivery' : 'at_shop'),
-  address: form.address.trim(),
-  productId: product._id,
-  descriptionText: form.descriptionText.trim(),
-  descriptionImages: descImages.map((i) => i.secure_url),
-  referenceImages: [],
-});
+    type: 'SHOP_ORDER',
+    customerName: form.customerName.trim(),
+    mobile: form.mobile.replace(/\s+/g, ''),
+    countryCode: form.countryCode,
+    instagram: form.instagram.trim(),
+    preferredDate: form.preferredDate || undefined,
+    preferredTime: form.preferredTime || undefined,
+    orderType: form.orderType || (canDelivery ? 'delivery' : 'at_shop'),
+    address: form.address.trim(),
+    productId: product._id,
+    descriptionText: form.descriptionText.trim(),
+    descriptionImages: descImages.map((i) => i.secure_url),
+    referenceImages: [],
+  });
 
   const handleSubmit = async () => {
     const errs = validate();
@@ -149,16 +157,17 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
     setErrors({ _form: `Your request is already with ${tenant?.businessName}. We'll get back to you soon.` });
   };
 
-const showSelector = canDelivery || canAppointment;
+  const showSelector = canDelivery || canAppointment;
   const effectiveOrderType = form.orderType || (canDelivery ? 'delivery' : 'pickup');
-const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 'at_home';
+  const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 'at_home';
+
   const displayPrice = () => {
-  if ((effectiveOrderType === 'delivery' || effectiveOrderType === 'pickup') && canDelivery)
-    return prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`;
-  if ((effectiveOrderType === 'at_shop' || effectiveOrderType === 'at_home') && canAppointment)
-    return prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`;
-  return null;
-};
+    if ((effectiveOrderType === 'delivery' || effectiveOrderType === 'pickup') && canDelivery)
+      return prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`;
+    if ((effectiveOrderType === 'at_shop' || effectiveOrderType === 'at_home') && canAppointment)
+      return prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`;
+    return null;
+  };
 
   return (
     <>
@@ -225,7 +234,9 @@ const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 
                     <input
                       type="tel"
                       value={form.mobile}
-                      onChange={(e) => set('mobile', e.target.value.replace(/\D/g, ''))}
+                      onChange={(e) => set('mobile', e.target.value.replace(/\D/g, ''))} // Strip non-digits (handles paste)
+                      onKeyDown={handleMobileKeyDown} // Block non-digit key presses
+                      inputMode="numeric"
                       placeholder="Mobile number"
                       className="flex-1 px-3 text-sm focus:outline-none bg-white rounded-r-lg"
                     />
@@ -265,85 +276,85 @@ const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 
                 </div>
 
                 {/* Order Type selector */}
-{showSelector && (
-  <Field label="How would you like it?" required error={errors.orderType}>
-    <div className="grid grid-cols-2 gap-2">
-      {canDelivery && (
-        <>
-          <button
-            type="button"
-            onClick={() => set('orderType', 'delivery')}
-            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-            style={
-              form.orderType === 'delivery'
-                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                : { borderColor: '#e5e7eb', color: '#4b5563' }
-            }
-          >
-            Delivery · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
-          </button>
-          <button
-            type="button"
-            onClick={() => set('orderType', 'pickup')}
-            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-            style={
-              form.orderType === 'pickup'
-                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                : { borderColor: '#e5e7eb', color: '#4b5563' }
-            }
-          >
-            Pickup · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
-          </button>
-        </>
-      )}
-      {canAppointment && (
-        <>
-          <button
-            type="button"
-            onClick={() => set('orderType', 'at_shop')}
-            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-            style={
-              form.orderType === 'at_shop'
-                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                : { borderColor: '#e5e7eb', color: '#4b5563' }
-            }
-          >
-            At Shop · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
-          </button>
-          {config.appointmentAtHome !== false && (
-            <button
-              type="button"
-              onClick={() => set('orderType', 'at_home')}
-              className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-              style={
-                form.orderType === 'at_home'
-                  ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                  : { borderColor: '#e5e7eb', color: '#4b5563' }
-              }
-            >
-              At Home · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  </Field>
-)}
+                {showSelector && (
+                  <Field label="How would you like it?" required error={errors.orderType}>
+                    <div className="grid grid-cols-2 gap-2">
+                      {canDelivery && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => set('orderType', 'delivery')}
+                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            style={
+                              form.orderType === 'delivery'
+                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
+                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                            }
+                          >
+                            Delivery · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => set('orderType', 'pickup')}
+                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            style={
+                              form.orderType === 'pickup'
+                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
+                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                            }
+                          >
+                            Pickup · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
+                          </button>
+                        </>
+                      )}
+                      {canAppointment && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => set('orderType', 'at_shop')}
+                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            style={
+                              form.orderType === 'at_shop'
+                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
+                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                            }
+                          >
+                            At Shop · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
+                          </button>
+                          {config.appointmentAtHome !== false && (
+                            <button
+                              type="button"
+                              onClick={() => set('orderType', 'at_home')}
+                              className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                              style={
+                                form.orderType === 'at_home'
+                                  ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
+                                  : { borderColor: '#e5e7eb', color: '#4b5563' }
+                              }
+                            >
+                              At Home · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </Field>
+                )}
 
                 {/* Single option price banner */}
                 {!showSelector && displayPrice() && (
-  <div
-    className="flex items-center justify-between p-3 rounded-xl"
-    style={{ background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }}
-  >
-    <span className="text-sm font-medium" style={{ color: 'var(--tenant-primary)' }}>
-      {canDelivery ? 'Delivery / Pickup' : 'Appointment'}
-    </span>
-    <span className="text-sm font-bold" style={{ color: 'var(--tenant-primary)' }}>
-      {displayPrice()}
-    </span>
-  </div>
-)}
+                  <div
+                    className="flex items-center justify-between p-3 rounded-xl"
+                    style={{ background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }}
+                  >
+                    <span className="text-sm font-medium" style={{ color: 'var(--tenant-primary)' }}>
+                      {canDelivery ? 'Delivery / Pickup' : 'Appointment'}
+                    </span>
+                    <span className="text-sm font-bold" style={{ color: 'var(--tenant-primary)' }}>
+                      {displayPrice()}
+                    </span>
+                  </div>
+                )}
 
                 {/* Address */}
                 {showAddress && (
@@ -401,7 +412,7 @@ const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
                   style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
                 >
                   {submitting ? 'Sending…' : 'Send Request'}
