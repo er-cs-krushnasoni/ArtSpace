@@ -78,7 +78,7 @@ const deleteCategory = async (req, res) => {
   // Remove this categoryId from all products of this tenant
   await Product.updateMany(
     { tenantId: req.user.tenantId },
-    { $pull: { categories: category._id } }
+    { $pull: { categories: { categoryId: category._id } } }
   );
   await category.deleteOne();
   res.json({ success: true, message: 'Category deleted' });

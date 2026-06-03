@@ -5,6 +5,9 @@ import ProductDetailModal from './ProductDetailModal';
 import { useTenant } from '../../context/TenantContext';
 import { getEffectivePrices } from './ProductCard';
 
+// Sentinel value used internally for simple-tag categories (no sub-values)
+const SIMPLE_TAG_SENTINEL = '__tag__';
+
 const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, initialValue }) => {
   const { labels } = useTenant();
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -15,30 +18,49 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
   const [initialFilterApplied, setInitialFilterApplied] = useState(false);
   const [initialProductOpened, setInitialProductOpened] = useState(false);
 
+  // ── Build category groups from products ───────────────────────────────────
+  // Each group is: { name, values[], isSimpleTag }
+  // isSimpleTag = true when a category has no values defined anywhere —
+  // the group name itself acts as the filter chip.
+  const categoryGroups = useMemo(() => {
+    const groups = {};
+    products.forEach((p) => {
+      (p.categories || []).forEach(({ categoryId, selectedValues }) => {
+        if (!categoryId?.groupName) return;
+        const name = categoryId.groupName;
+        if (!groups[name]) groups[name] = { values: new Set(), isSimpleTag: false };
 
-  // Build category groups from products
-const categoryGroups = useMemo(() => {
-  const groups = {};
-  products.forEach((p) => {
-    (p.categories || []).forEach(({ categoryId, selectedValues }) => {
-      if (!categoryId?.groupName) return;
-      if (!groups[categoryId.groupName]) groups[categoryId.groupName] = new Set();
-      // Show only selected values; fall back to all values if none selected
-      const vals = selectedValues?.length > 0 ? selectedValues : (categoryId.values || []);
-      vals.forEach((v) => groups[categoryId.groupName].add(v));
+        const hasDefinedValues  = categoryId.values?.length > 0;
+        const hasSelectedValues = selectedValues?.length > 0;
+
+        if (!hasDefinedValues && !hasSelectedValues) {
+          // No values anywhere — mark as simple tag
+          groups[name].isSimpleTag = true;
+        } else {
+          // Value-based category — collect all visible values
+          const vals = hasSelectedValues ? selectedValues : categoryId.values;
+          vals.forEach((v) => groups[name].values.add(v));
+        }
+      });
     });
-  });
-  return Object.entries(groups).map(([name, vals]) => ({ name, values: [...vals] }));
-}, [products]);
 
-useEffect(() => {
+    return Object.entries(groups).map(([name, { values, isSimpleTag }]) => ({
+      name,
+      values: [...values],
+      isSimpleTag,
+    }));
+  }, [products]);
+
+  // ── Apply initial category filter from URL params ─────────────────────────
+  useEffect(() => {
     if (initialFilterApplied) return;
     if (!initialCategoryId || !products.length) return;
+
     let groupName = null;
     for (const p of products) {
       for (const entry of (p.categories || [])) {
         const catObj = entry.categoryId ?? entry;
-        const catId = (typeof catObj === 'object' ? catObj._id : catObj)?.toString();
+        const catId  = (typeof catObj === 'object' ? catObj._id : catObj)?.toString();
         if (catId === initialCategoryId) {
           groupName = catObj.groupName ?? null;
           break;
@@ -46,19 +68,25 @@ useEffect(() => {
       }
       if (groupName) break;
     }
-     if (!groupName) return;
-  if (initialValue) {
-    setActiveCategories({ [groupName]: new Set([initialValue]) });
-  } else {
-    // No specific value — select all values in this group
+    if (!groupName) return;
+
     const group = categoryGroups.find((g) => g.name === groupName);
-    if (group?.values.length) {
-      setActiveCategories({ [groupName]: new Set(group.values) });
+
+    if (group?.isSimpleTag) {
+      setActiveCategories({ [groupName]: new Set([SIMPLE_TAG_SENTINEL]) });
+    } else if (initialValue) {
+      setActiveCategories({ [groupName]: new Set([initialValue]) });
+    } else {
+      // No specific value — select all values in this group
+      if (group?.values.length) {
+        setActiveCategories({ [groupName]: new Set(group.values) });
+      }
     }
-  }
-  setInitialFilterApplied(true);
+
+    setInitialFilterApplied(true);
   }, [initialCategoryId, initialValue, products, initialFilterApplied, categoryGroups]);
 
+  // ── Open initial product modal from URL params ────────────────────────────
   useEffect(() => {
     if (initialProductOpened || !initialProductId || !products.length) return;
     const found = products.find((p) => p._id === initialProductId);
@@ -68,11 +96,21 @@ useEffect(() => {
     }
   }, [initialProductId, products, initialProductOpened]);
 
+  // ── Filter toggle helpers ─────────────────────────────────────────────────
   const toggleCategoryValue = (groupName, value) => {
     setActiveCategories((prev) => {
       const current = new Set(prev[groupName] || []);
       if (current.has(value)) current.delete(value);
       else current.add(value);
+      return { ...prev, [groupName]: current };
+    });
+  };
+
+  const toggleSimpleTag = (groupName) => {
+    setActiveCategories((prev) => {
+      const current = new Set(prev[groupName] || []);
+      if (current.has(SIMPLE_TAG_SENTINEL)) current.delete(SIMPLE_TAG_SENTINEL);
+      else current.add(SIMPLE_TAG_SENTINEL);
       return { ...prev, [groupName]: current };
     });
   };
@@ -88,39 +126,53 @@ useEffect(() => {
     priceMin !== '' ||
     priceMax !== '';
 
+  // ── Active chips for display ──────────────────────────────────────────────
   const activeChips = useMemo(() => {
     const chips = [];
     Object.entries(activeCategories).forEach(([group, vals]) => {
-      vals.forEach((val) => chips.push({ type: 'category', group, val, label: val }));
+      vals.forEach((val) => {
+        // For simple tags, show the group name as the chip label
+        const label = val === SIMPLE_TAG_SENTINEL ? group : val;
+        chips.push({ type: 'category', group, val, label });
+      });
     });
     if (priceMin) chips.push({ type: 'price_min', label: `Min ₹${priceMin}` });
     if (priceMax) chips.push({ type: 'price_max', label: `Max ₹${priceMax}` });
     return chips;
   }, [activeCategories, priceMin, priceMax]);
 
+  // ── Filtered products ─────────────────────────────────────────────────────
   const filteredProducts = useMemo(() => {
     let result = products;
 
-    // Category value filter
-   const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
-if (activeCatEntries.length > 0) {
-  result = result.filter((p) =>
-    activeCatEntries.every(([group, vals]) =>
-      (p.categories || []).some(({ categoryId, selectedValues }) => {
-        if (categoryId?.groupName !== group) return false;
-        const checkVals = selectedValues?.length > 0 ? selectedValues : (categoryId.values || []);
-        return checkVals.some((v) => vals.has(v));
-      })
-    )
-  );
-}
+    const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
+    if (activeCatEntries.length > 0) {
+      result = result.filter((p) =>
+        activeCatEntries.every(([group, vals]) => {
+          // Simple tag: just check if product has this category attached at all
+          if (vals.has(SIMPLE_TAG_SENTINEL)) {
+            return (p.categories || []).some(
+              ({ categoryId }) => categoryId?.groupName === group
+            );
+          }
+          // Value-based filter: product must have at least one matching value
+          return (p.categories || []).some(({ categoryId, selectedValues }) => {
+            if (categoryId?.groupName !== group) return false;
+            const checkVals = selectedValues?.length > 0
+              ? selectedValues
+              : (categoryId.values || []);
+            return checkVals.some((v) => vals.has(v));
+          });
+        })
+      );
+    }
 
     // Price filter
     const min = parseFloat(priceMin);
     const max = parseFloat(priceMax);
     if (!isNaN(min) || !isNaN(max)) {
       result = result.filter((p) => {
-        const prices = getEffectivePrices(p);
+        const prices   = getEffectivePrices(p);
         const relevant = [prices.delivery, prices.appointment].filter((x) => x > 0);
         if (relevant.length === 0) return true;
         const lowest = Math.min(...relevant);
@@ -134,6 +186,7 @@ if (activeCatEntries.length > 0) {
     return result;
   }, [products, activeCategories, priceMin, priceMax, limit]);
 
+  // ── Remove a single chip ──────────────────────────────────────────────────
   const removeChip = (chip) => {
     if (chip.type === 'category') {
       setActiveCategories((prev) => {
@@ -147,7 +200,7 @@ if (activeCatEntries.length > 0) {
 
   return (
     <div>
-      {/* Toolbar */}
+      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       {!limit && (
         <div className="flex items-center justify-between mb-4 gap-3">
           <p className="text-sm text-gray-500">
@@ -172,7 +225,7 @@ if (activeCatEntries.length > 0) {
         </div>
       )}
 
-      {/* Filter panel */}
+      {/* ── Filter panel ────────────────────────────────────────────────── */}
       {!limit && showFilters && (
         <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-4">
           {categoryGroups.length === 0 ? (
@@ -184,23 +237,39 @@ if (activeCatEntries.length > 0) {
                   {group.name}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {group.values.map((val) => {
-                    const isOn = activeCategories[group.name]?.has(val);
-                    return (
-                      <button
-                        key={val}
-                        onClick={() => toggleCategoryValue(group.name, val)}
-                        className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
-                        style={
-                          isOn
-                            ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
-                            : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
-                        }
-                      >
-                        {val}
-                      </button>
-                    );
-                  })}
+                  {group.isSimpleTag ? (
+                    // Simple tag category — one chip, group name is the label
+                    <button
+                      onClick={() => toggleSimpleTag(group.name)}
+                      className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
+                      style={
+                        activeCategories[group.name]?.has(SIMPLE_TAG_SENTINEL)
+                          ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
+                          : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
+                      }
+                    >
+                      {group.name}
+                    </button>
+                  ) : (
+                    // Value-based category — one chip per value
+                    group.values.map((val) => {
+                      const isOn = activeCategories[group.name]?.has(val);
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => toggleCategoryValue(group.name, val)}
+                          className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
+                          style={
+                            isOn
+                              ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
+                              : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
+                          }
+                        >
+                          {val}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             ))
@@ -240,7 +309,7 @@ if (activeCatEntries.length > 0) {
         </div>
       )}
 
-      {/* Active filter chips */}
+      {/* ── Active filter chips ──────────────────────────────────────────── */}
       {!limit && activeChips.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           {activeChips.map((chip, i) => (
@@ -258,7 +327,7 @@ if (activeCatEntries.length > 0) {
         </div>
       )}
 
-      {/* Grid */}
+      {/* ── Product grid ─────────────────────────────────────────────────── */}
       {filteredProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search size={40} className="text-gray-200 mb-3" />
@@ -285,7 +354,7 @@ if (activeCatEntries.length > 0) {
         </div>
       )}
 
-      {/* Product detail modal */}
+      {/* ── Product detail modal ─────────────────────────────────────────── */}
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}

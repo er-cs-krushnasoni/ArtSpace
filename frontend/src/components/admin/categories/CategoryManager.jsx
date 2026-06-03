@@ -89,6 +89,10 @@ function CategoryForm({ initial, onSave, onCancel, saving }) {
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1.5">Values</label>
         <TagInput values={values} onChange={setValues} />
+        <p className="text-xs text-gray-400 mt-1">
+  Press Enter or comma to add each value.{' '}
+  <span className="text-gray-400">Leave empty to use as a simple tag filter (e.g. "Featured", "Sale").</span>
+</p>
         <p className="text-xs text-gray-400 mt-1">Press Enter or comma to add each value</p>
       </div>
       <div className="flex gap-2 justify-end pt-1">

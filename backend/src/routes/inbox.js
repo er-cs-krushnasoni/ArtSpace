@@ -4,6 +4,7 @@ const { authenticateTenantAdmin } = require('../middleware/auth');
 const requireActiveSubscription = require('../middleware/requireActiveSubscription');
 const {
   getInbox,
+  getUnreadCount,
   markAsSeen,
   markAsReplyLater,
   deleteQuery,
@@ -15,6 +16,7 @@ const {
 router.use(authenticateTenantAdmin, requireActiveSubscription);
 
 router.get('/', getInbox);
+router.get('/unread-count', getUnreadCount); 
 router.patch('/:queryId/seen', markAsSeen);
 router.patch('/:queryId/reply-later', markAsReplyLater);
 router.delete('/:queryId', deleteQuery);

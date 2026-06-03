@@ -10,7 +10,6 @@ import { useAuth }   from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import toast from 'react-hot-toast';
-
 import SubscriptionPage    from './SubscriptionPage';
 import ExpiredPage         from './ExpiredPage';
 import PausedPage          from './PausedPage';
@@ -117,10 +116,8 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
             <LogOut className="w-4 h-4" />
             Sign out
           </button>
-
-          {/* Developer watermark */}
-          
-            <a href="mailto:er.cs.krushnasoni@gmail.com"
+          <a
+            href="mailto:er.cs.krushnasoni@gmail.com"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs w-full transition-all duration-200 hover:bg-white/5 mt-1"
             style={{ color: 'var(--color-sidebar-text)' }}
             title="Contact developer"
@@ -169,12 +166,10 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
           </button>
         </div>
       )}
-
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-0.5">Welcome back.</p>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
@@ -208,6 +203,20 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
   );
 };
 
+// ─── Blocked screen helper ────────────────────────────────────────────────────
+const BlockedScreen = ({ icon: Icon, iconBg, iconColor, title, message, action }) => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-8 max-w-md w-full text-center">
+      <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
+        <Icon className={`w-7 h-7 ${iconColor}`} />
+      </div>
+      <h1 className="text-xl font-semibold text-gray-900 mb-2">{title}</h1>
+      <p className="text-sm text-gray-500 mb-6">{message}</p>
+      {action}
+    </div>
+  </div>
+);
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
   const { slug }         = useParams();
@@ -228,7 +237,7 @@ export default function AdminDashboardPage() {
   }, [user, slug, navigate]);
 
   useEffect(() => {
-    const linkId  = 'tenant-pwa-manifest';
+    const linkId   = 'tenant-pwa-manifest';
     const existing = document.getElementById(linkId);
     if (existing) existing.remove();
     const link  = document.createElement('link');
@@ -241,11 +250,11 @@ export default function AdminDashboardPage() {
 
   useEffect(() => { checkStatus(); }, []);
 
+  // ── Fix #8: dedicated unread-count endpoint ───────────────────────────────
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const res = await api.get('/tenant/inbox');
-      const all = res.data.data || [];
-      setUnreadCount(all.filter(q => q.status === 'unread').length);
+      const res = await api.get('/tenant/inbox/unread-count');
+      setUnreadCount(res.data.count ?? 0);
     } catch { /* non-critical */ }
     finally   { setUnreadLoading(false); }
   }, []);
@@ -262,25 +271,40 @@ export default function AdminDashboardPage() {
     if (accountStatus === 'ok') {
       fetchUnreadCount();
       fetchTaskSummary();
-      const interval = setInterval(fetchUnreadCount, 30_000);
+      // ── Fix #11: skip polling when tab is hidden ──────────────────────────
+      const interval = setInterval(() => {
+        if (!document.hidden) fetchUnreadCount();
+      }, 30_000);
       return () => clearInterval(interval);
     }
   }, [accountStatus, fetchUnreadCount, fetchTaskSummary]);
 
-  const checkStatus = async () => {
+  // ── Fix #7: retry on network error, handle pending_manual ─────────────────
+  const checkStatus = async (retryCount = 0) => {
     try {
       const res = await api.get('/subscription/status');
       const s   = res.data?.status;
-      if      (s === 'expired') setAccountStatus('expired');
-      else if (s === 'paused')  setAccountStatus('paused');
-      else                      setAccountStatus('ok');
+      if      (s === 'expired')        setAccountStatus('expired');
+      else if (s === 'paused')         setAccountStatus('paused');
+      else if (s === 'pending_manual') setAccountStatus('pending_manual');
+      else if (s === 'inactive')       setAccountStatus('unauthenticated');
+      else                             setAccountStatus('ok');
     } catch (err) {
       const code       = err?.response?.data?.code;
       const httpStatus = err?.response?.status;
       if      (code === 'SUBSCRIPTION_EXPIRED') setAccountStatus('expired');
       else if (code === 'ACCOUNT_PAUSED')       setAccountStatus('paused');
+      else if (code === 'PENDING_MANUAL')       setAccountStatus('pending_manual');
       else if (httpStatus === 401)              setAccountStatus('unauthenticated');
-      else                                      setAccountStatus('ok');
+      else if (httpStatus >= 400)               setAccountStatus('ok');
+      else {
+        // Network error — retry up to 3 times before showing error screen
+        if (retryCount < 3) {
+          setTimeout(() => checkStatus(retryCount + 1), 2000);
+        } else {
+          setAccountStatus('network_error');
+        }
+      }
     }
   };
 
@@ -290,6 +314,7 @@ export default function AdminDashboardPage() {
     toast.success('Signed out successfully');
   };
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (accountStatus === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -297,13 +322,62 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
+
+  // ── Unauthenticated ───────────────────────────────────────────────────────
   if (accountStatus === 'unauthenticated') {
     navigate(`/s/${slug}/admin/login`, { replace: true });
     return null;
   }
+
+  // ── Subscription expired ──────────────────────────────────────────────────
   if (accountStatus === 'expired') return <ExpiredPage slug={slug} />;
+
+  // ── Account paused ────────────────────────────────────────────────────────
   if (accountStatus === 'paused')  return <PausedPage  slug={slug} />;
 
+  // ── Fix #7: pending_manual screen ─────────────────────────────────────────
+  if (accountStatus === 'pending_manual') {
+    return (
+      <BlockedScreen
+        icon={AlertTriangle}
+        iconBg="bg-amber-50"
+        iconColor="text-amber-400"
+        title="Account Pending Activation"
+        message="Your account is awaiting manual activation. Please contact support to get started."
+        action={
+          <button
+            onClick={handleLogout}
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Sign out
+          </button>
+        }
+      />
+    );
+  }
+
+  // ── Fix #8: network error with retry ──────────────────────────────────────
+  if (accountStatus === 'network_error') {
+    return (
+      <BlockedScreen
+        icon={AlertTriangle}
+        iconBg="bg-gray-50"
+        iconColor="text-gray-400"
+        title="Connection Problem"
+        message="Unable to reach the server. Please check your connection and try again."
+        action={
+          <button
+            onClick={() => { setAccountStatus(null); checkStatus(); }}
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium rounded-lg px-4 py-2.5 transition-all duration-200"
+          >
+            Retry
+          </button>
+        }
+      />
+    );
+  }
+
+  // ── Main dashboard ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar
@@ -316,7 +390,6 @@ export default function AdminDashboardPage() {
         canInstall={canInstall}
         onInstall={install}
       />
-
       <div className="lg:ml-60 min-h-screen flex flex-col">
         {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
@@ -340,19 +413,19 @@ export default function AdminDashboardPage() {
         <main className="flex-1">
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
-            <Route path="home"            element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} taskSummary={taskSummary} taskLoading={taskLoading} />} />
-            <Route path="inbox"           element={<InboxPage />} />
-            <Route path="calendar"        element={<TodoCalendarPage />} />
-            <Route path="products"        element={<ProductsPage />} />
-            <Route path="categories"      element={<CategoriesPage />} />
-            <Route path="quiz"            element={<QuizBuilderPage />} />
-            <Route path="blog"            element={<BlogManagerPage />} />
-            <Route path="blog/new"        element={<PostEditorPage />} />
+            <Route path="home"              element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} taskSummary={taskSummary} taskLoading={taskLoading} />} />
+            <Route path="inbox"             element={<InboxPage />} />
+            <Route path="calendar"          element={<TodoCalendarPage />} />
+            <Route path="products"          element={<ProductsPage />} />
+            <Route path="categories"        element={<CategoriesPage />} />
+            <Route path="quiz"              element={<QuizBuilderPage />} />
+            <Route path="blog"              element={<BlogManagerPage />} />
+            <Route path="blog/new"          element={<PostEditorPage />} />
             <Route path="blog/edit/:postId" element={<PostEditorPage />} />
-            <Route path="analytics"       element={<AnalyticsPage />} />
-            <Route path="subscription"    element={<SubscriptionPage />} />
-            <Route path="settings"        element={<WebsiteSettingsPage />} />
-            <Route path="*"               element={<Navigate to="home" replace />} />
+            <Route path="analytics"         element={<AnalyticsPage />} />
+            <Route path="subscription"      element={<SubscriptionPage />} />
+            <Route path="settings"          element={<WebsiteSettingsPage />} />
+            <Route path="*"                 element={<Navigate to="home" replace />} />
           </Routes>
         </main>
       </div>

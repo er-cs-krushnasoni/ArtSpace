@@ -233,13 +233,21 @@ const markAsUnread = async (req, res) => {
   return res.json({ success: true, message: 'Moved to unread' });
 };
 
-// ─── Exports ──────────────────────────────────────────────────────────────────
+const getUnreadCount = async (req, res) => {
+  const count = await Query.countDocuments({
+    tenantId: req.user.tenantId,
+    status: 'unread',
+  });
+  return res.json({ success: true, count });
+};
 
+// ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   getInbox,
+  getUnreadCount,
   markAsSeen,
   markAsReplyLater,
   deleteQuery,
   confirmOrder,
-  markAsUnread
+  markAsUnread,
 };

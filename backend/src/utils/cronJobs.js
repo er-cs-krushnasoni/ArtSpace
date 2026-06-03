@@ -133,45 +133,93 @@ const purgeExpiredTrials = cron.schedule('0 2 * * *', async () => {
   const now = new Date();
   console.log(`[CRON] ${now.toISOString()} — Running expired trial purge`);
   try {
-    const Product = require('../models/Product');
-    const expiredTrials = await Tenant.find({
-      status: 'expired',
-      plan: 'trial',
-    });
+    const Product  = require('../models/Product');
+    const Query    = require('../models/Query');
+    const Task     = require('../models/Task');
+    const Slider   = require('../models/Slider');
+    const Category = require('../models/Category');
+    const BlogPost = require('../models/BlogPost');
+    const QuizQuestion    = require('../models/QuizQuestion');
+    const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
+
+    const expiredTrials = await Tenant.find({ status: 'expired', plan: 'trial' });
 
     for (const tenant of expiredTrials) {
       const tenantId = tenant._id;
+      try {
+        // 1. Products + their Cloudinary photos
+        const products = await Product.find({ tenantId });
+        for (const product of products) {
+          for (const photo of product.photos || []) {
+            if (photo.publicId) {
+              await deleteFromCloudinary(photo.publicId).catch((e) =>
+                console.error(`Cloudinary delete failed [product photo] ${photo.publicId}:`, e.message)
+              );
+            }
+          }
+          await product.deleteOne();
+        }
 
-      // Delete all products + their Cloudinary images
-      const products = await Product.find({ tenantId });
-      for (const product of products) {
-        for (const photoUrl of product.photos || []) {
-          const publicId = extractPublicId(photoUrl);
-          if (publicId) {
-            await deleteFromCloudinary(publicId).catch((e) =>
-              console.error(`Cloudinary delete failed for ${publicId}:`, e.message)
+        // 2. Sliders + their Cloudinary images
+        const sliders = await Slider.find({ tenantId });
+        for (const slider of sliders) {
+          if (slider.imagePublicId) {
+            await deleteFromCloudinary(slider.imagePublicId).catch((e) =>
+              console.error(`Cloudinary delete failed [slider] ${slider.imagePublicId}:`, e.message)
             );
           }
+          await slider.deleteOne();
         }
-        await product.deleteOne();
-      }
 
-      // Delete tenant logo + pwa icon from Cloudinary
-      if (tenant.websiteConfig?.logoPublicId) {
-        await deleteFromCloudinary(tenant.websiteConfig.logoPublicId).catch(() => {});
-      }
-      if (tenant.websiteConfig?.pwaIconPublicId) {
-        await deleteFromCloudinary(tenant.websiteConfig.pwaIconPublicId).catch(() => {});
-      }
+        // 3. Queries + their Cloudinary images
+        const queries = await Query.find({ tenantId });
+        for (const query of queries) {
+          const assetUrls = [
+            ...(query.referenceImages || []),
+            ...(query.descriptionImages || []),
+          ];
+          for (const url of assetUrls) {
+            const publicId = extractPublicId(url);
+            if (publicId) {
+              await deleteFromCloudinary(publicId).catch((e) =>
+                console.error(`Cloudinary delete failed [query image] ${publicId}:`, e.message)
+              );
+            }
+          }
+          await query.deleteOne();
+        }
 
-      // Delete analytics snapshots for this tenant
-      const AnalyticsSnapshot = require('../models/AnalyticsSnapshot');
-      await AnalyticsSnapshot.deleteMany({ tenantId });
+        // 4. Tasks (no Cloudinary assets — images copied from query at confirm time, already deleted above)
+        await Task.deleteMany({ tenantId });
 
-      // Delete the tenant itself
-      // NOTE: TrialBlacklist entry for this mobile is intentionally NOT deleted
-      await tenant.deleteOne();
-      console.log(`[CRON] Purged expired trial tenant: ${tenant.slug}`);
+        // 5. Blog posts, quiz questions, categories (no Cloudinary assets)
+        await BlogPost.deleteMany({ tenantId });
+        await QuizQuestion.deleteMany({ tenantId });
+        await Category.deleteMany({ tenantId });
+
+        // 6. Analytics snapshots
+        await AnalyticsSnapshot.deleteMany({ tenantId });
+
+        // 7. Tenant logo + pwa icon from Cloudinary
+        if (tenant.websiteConfig?.logoPublicId) {
+          await deleteFromCloudinary(tenant.websiteConfig.logoPublicId).catch(() => {});
+        }
+        if (tenant.websiteConfig?.pwaIconPublicId) {
+          await deleteFromCloudinary(tenant.websiteConfig.pwaIconPublicId).catch(() => {});
+        }
+        if (tenant.websiteConfig?.tutorialVideoPublicId) {
+          await deleteFromCloudinary(tenant.websiteConfig.tutorialVideoPublicId).catch(() => {});
+        }
+
+        // 8. Delete the tenant itself
+        // NOTE: TrialBlacklist entry is intentionally NOT deleted
+        await tenant.deleteOne();
+
+        console.log(`[CRON] Purged expired trial tenant: ${tenant.slug}`);
+      } catch (tenantErr) {
+        // Isolate per-tenant failures — don't stop other tenants from being purged
+        console.error(`[CRON] Failed to purge tenant ${tenant.slug}:`, tenantErr.message);
+      }
     }
   } catch (error) {
     console.error('[CRON] Trial purge error:', error.message);

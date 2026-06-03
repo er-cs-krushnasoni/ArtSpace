@@ -209,7 +209,8 @@ export default function SignupPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     let sanitized = value;
-    if (name === 'slug') sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (name === 'slug')   sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (name === 'mobile') sanitized = value.replace(/\D/g, ''); // Strip non-digits (handles paste)
     setForm(prev => ({ ...prev, [name]: sanitized }));
     if (errors[name]) setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     if (name === 'slug') {
@@ -217,6 +218,16 @@ export default function SignupPage() {
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => checkSlug(sanitized), 500);
     }
+  };
+
+  // Block non-numeric key presses on mobile field
+  const handleMobileKeyDown = (e) => {
+    const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
+    if (allowed.includes(e.key)) return;
+    // Allow Ctrl/Cmd combos (copy, paste, select all, etc.)
+    if (e.ctrlKey || e.metaKey) return;
+    // Block anything that isn't a digit
+    if (!/^\d$/.test(e.key)) e.preventDefault();
   };
 
   const validate = () => {
@@ -444,9 +455,16 @@ export default function SignupPage() {
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
-              <input id="mobile" name="mobile" value={form.mobile} onChange={handleChange}
-                placeholder="9876543210" inputMode="numeric"
-                className={`flex-1 ${inputClass('mobile')}`} />
+              <input
+                id="mobile"
+                name="mobile"
+                value={form.mobile}
+                onChange={handleChange}
+                onKeyDown={handleMobileKeyDown}
+                placeholder="9876543210"
+                inputMode="numeric"
+                className={`flex-1 ${inputClass('mobile')}`}
+              />
             </div>
             {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile}</p>}
           </div>
@@ -566,8 +584,7 @@ export default function SignupPage() {
         {/* Developer watermark */}
         <p className="text-center text-xs text-gray-400 mt-6 flex items-center justify-center gap-1.5">
           Built by{' '}
-          
-            <a href="mailto:er.cs.krushnasoni@gmail.com"
+          <a href="mailto:er.cs.krushnasoni@gmail.com"
             className="inline-flex items-center gap-1 text-gray-400 hover:text-violet-600 transition-colors font-medium"
           >
             <Mail className="w-3 h-3" />

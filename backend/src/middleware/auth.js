@@ -214,11 +214,11 @@ const refreshTokenHandler = async (req, res, next) => {
 
     // Set new refresh token cookie
     res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
 
     // Return new access token + user data for AuthContext to restore state
     const userData = {
@@ -274,10 +274,10 @@ const logoutHandler = async (req, res, next) => {
     }
 
     res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+});
 
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {

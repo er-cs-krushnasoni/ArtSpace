@@ -44,9 +44,12 @@ function PhotoUploader({ photos, onChange, uploading, setUploading }) {
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-2">
-        Photos <span className="text-gray-400">(max {MAX_PHOTOS})</span>
-      </label>
+      <label className="block text-xs font-medium text-gray-600 mb-1">
+  Photos <span className="text-gray-400">(max {MAX_PHOTOS})</span>
+</label>
+<p className="text-xs text-gray-400 mb-2">
+  Use <span className="font-medium text-gray-500">square images (1:1)</span> for best results on the public shop. Recommended: 800×800px or larger. Max 2MB · JPEG, PNG, WebP only.
+</p>
       <div className="flex flex-wrap gap-2">
         {photos.map((photo, idx) => (
           <div

@@ -205,7 +205,13 @@ const verifyPayment = async (req, res) => {
   }
 
   // For custom plan, get daysCount from the PaymentRecord (server-stored, not from frontend)
-  const paymentRecord = await PaymentRecord.findOne({ razorpayOrderId: razorpay_order_id });
+  const paymentRecord = await PaymentRecord.findOne({ 
+  razorpayOrderId: razorpay_order_id,
+  tenantId: req.user.tenantId,
+});
+if (!paymentRecord) {
+  return res.status(403).json({ success: false, message: 'Order not found or does not belong to your account.' });
+}
   const durationDays = plan === 'custom'
     ? (paymentRecord?.daysCount || 0)
     : PLAN_DURATION[plan];
@@ -285,7 +291,11 @@ const getSubscriptionStatus = async (req, res) => {
     : 0;
 
   // Total days for the current plan (for progress bar)
-  const totalDays = PLAN_DURATION[tenant.plan] || 7; // trial = 7
+  const totalDays = tenant.plan === 'custom'
+  ? (tenant.planStartDate && tenant.planExpiryDate
+      ? Math.ceil((new Date(tenant.planExpiryDate) - new Date(tenant.planStartDate)) / (1000 * 60 * 60 * 24))
+      : daysRemaining)
+  : (PLAN_DURATION[tenant.plan] || 7);
 
   res.json({
     success: true,
@@ -375,10 +385,11 @@ const unpauseTenant = async (req, res) => {
   });
 
   res.json({
-    success: true,
-    message: `Tenant unpaused. ~${pausedMinutes} minute(s) credited back. Status: ${restoredStatus}.`,
-    tenant,
-  });
+  success: true,
+  message: `Tenant unpaused. ~${pausedMinutes} minute(s) credited back. Status: ${restoredStatus}.`,
+  restoredStatus,  // ← add this so frontend can act on it
+  tenant,
+});
 };
 
 module.exports = {

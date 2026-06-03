@@ -27,11 +27,10 @@ const calcExpiry = (plan, customDays) => {
 };
 
 const setRefreshCookie = (res, token) => {
-  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', token, {
     httpOnly: true,
-    secure: true,           // always true — devtunnels are https
-    sameSite: 'none',       // required for cross-origin cookie sending
+    secure: true,
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
