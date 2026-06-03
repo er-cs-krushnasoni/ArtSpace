@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Tenant = require('../models/Tenant');
 const { deleteFromCloudinary, extractPublicId } = require('../config/cloudinary');
+const mongoose = require('mongoose');
 
 let Query, Task;
 const loadModels = () => {
@@ -90,10 +91,7 @@ const deleteCancelledTasks = cron.schedule('10 * * * *', async () => {
       cancelledAt: { $lt: cutoff, $ne: null },
     });
     for (const task of stale) {
-      await AnalyticsSnapshot.deleteOne({
-        taskId: new mongoose.Types.ObjectId(task._id),
-        type: 'task',
-      });
+      await AnalyticsSnapshot.deleteOne({ taskId: task._id });
       await task.deleteOne();
     }
     if (stale.length > 0)

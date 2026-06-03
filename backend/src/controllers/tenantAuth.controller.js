@@ -29,8 +29,8 @@ const calcExpiry = (plan, customDays) => {
 const setRefreshCookie = (res, token) => {
   res.cookie('refreshToken', token, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -414,8 +414,8 @@ const logout = async (req, res) => {
   }
   res.clearCookie('refreshToken', {
   httpOnly: true,
-  secure: true,
-  sameSite: 'none',
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 });
   return res.json({ success: true, message: 'Logged out successfully' });
 };
@@ -438,7 +438,7 @@ const forgotPassword = async (req, res) => {
   await tenant.save();
 
   const resetUrl = `${process.env.FRONTEND_URL}/s/${tenant.slug}/admin/reset-password?token=${rawToken}&id=${tenant._id}`;
-  console.log('🔑 DEV reset URL:', resetUrl); // remove before production
+  // console.log('🔑 DEV reset URL:', resetUrl); // remove before production
 
   try {
     await sendPasswordResetEmail({ to: tenant.email, ownerName: tenant.ownerName, resetUrl });

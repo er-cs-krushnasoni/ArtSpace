@@ -66,8 +66,8 @@ app.get('/api/health', (_req, res) =>
 
 // Routes
 app.use('/api/auth',               authRoutes);
-app.use('/api/tenant',             tenantConfigRoutes);
 app.use('/api/tenant/settings',    tenantSettingsRoutes);
+app.use('/api/tenant',             tenantConfigRoutes);
 app.use('/api/superadmin',         superAdminRoutes);
 app.use('/api/tenantauth',         tenantAuthRoutes);
 app.use('/api/subscription',       subscriptionRoutes);

@@ -91,6 +91,8 @@ ARTSPACE
 │   ├── node_modules/
 │   │
 │   ├── public/
+│   │   ├── _redirects
+│   │   ├── artspace-logo.png
 │   │
 │   ├── scripts/
 │   │   ├── generate-icons.js
