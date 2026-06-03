@@ -30,6 +30,7 @@ const { getPublicBlogList, getPublicBlogPost } = require('./controllers/blog.con
 const { getPublicQuiz } = require('./controllers/quiz.controller');   
 
 const app  = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 connectDB();
