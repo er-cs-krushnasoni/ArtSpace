@@ -66,31 +66,42 @@ export default function TogglesSection({ initialData, onSaved }) {
       <div className="space-y-4">
         {BASE_TOGGLES.map(({ key, label, desc }) => (
           <div key={key}>
-            <div className="flex items-center justify-between gap-4">
-              <div>
+            {/* Main toggle row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-800">{label}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
               </div>
-              <Toggle
-                checked={toggles[key]}
-                onChange={(val) => handleToggle(key, val)}
-                disabled={saving === key}
-              />
+              <div className="flex-shrink-0 pt-0.5">
+                <Toggle
+                  checked={toggles[key]}
+                  onChange={(val) => handleToggle(key, val)}
+                  disabled={saving === key}
+                />
+              </div>
             </div>
+
             {/* Sub-toggle: At Home service — only shown when appointmentEnabled is on */}
             {key === 'appointmentEnabled' && toggles.appointmentEnabled && (
-              <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-100 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Home Service (Artist Visits Customer)</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    When on, customers see "At Home" option. When off, only "At Shop" is shown.
-                  </p>
+              <div className="mt-3 ml-2 pl-3 border-l-2 border-gray-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-700 leading-snug">
+                      Home Service
+                      <span className="hidden sm:inline"> (Artist Visits Customer)</span>
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      When on, customers see "At Home" option. When off, only "At Shop" is shown.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-0.5">
+                    <Toggle
+                      checked={toggles.appointmentAtHome}
+                      onChange={(val) => handleToggle('appointmentAtHome', val)}
+                      disabled={saving === 'appointmentAtHome'}
+                    />
+                  </div>
                 </div>
-                <Toggle
-                  checked={toggles.appointmentAtHome}
-                  onChange={(val) => handleToggle('appointmentAtHome', val)}
-                  disabled={saving === 'appointmentAtHome'}
-                />
               </div>
             )}
           </div>

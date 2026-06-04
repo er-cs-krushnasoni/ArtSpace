@@ -1,1 +1,6 @@
+# Service worker and manifest — must be served as real files, not caught by SPA redirect
+/sw.js        /sw.js        200
+/manifest.webmanifest  /manifest.webmanifest  200
+
+# SPA fallback — everything else
 /*    /index.html    200

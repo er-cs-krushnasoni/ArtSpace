@@ -8,6 +8,7 @@ import SliderSection from '../../components/admin/settings/SliderSection';
 import TutorialVideoSection from '../../components/admin/settings/TutorialVideoSection';
 import SlugSection from '../../components/admin/settings/SlugSection';
 import CredentialsSection from '../../components/admin/settings/CredentialsSection';
+import BusinessTypeSection from '../../components/admin/settings/BusinessTypeSection';
 
 // Skeleton loader
 const SectionSkeleton = () => (
@@ -103,6 +104,10 @@ export default function WebsiteSettingsPage() {
               ...s,
               websiteConfig: { ...s.websiteConfig, ...updated },
             }))}
+          />
+          <BusinessTypeSection
+            initialData={settings}
+            onSaved={(updated) => setSettings((s) => ({ ...s, ...updated }))}
           />
 
           <TogglesSection
