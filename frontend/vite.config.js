@@ -31,10 +31,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/],
-      },
+  globPatterns: ['**/*.{js,css,html,ico,svg,webp}'], // ← removed png
+  globIgnores: ['**/artspace-logo.png'],              // ← explicitly exclude
+  navigateFallback: '/index.html',
+  navigateFallbackDenylist: [/^\/api/],
+},
       devOptions: {
         enabled: false,
       },
