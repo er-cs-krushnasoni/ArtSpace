@@ -4,6 +4,8 @@ const express      = require('express');
 const cors         = require('cors');
 const helmet       = require('helmet');
 const cookieParser = require('cookie-parser');
+const https = require('https');
+const http  = require('http');
 
 const connectDB       = require('./config/db');
 const errorHandler    = require('./middleware/errorHandler');
@@ -88,6 +90,31 @@ app.use('/api/tenant/blog', blogRoutes);
 app.use('/api/tenant/analytics', analyticsRoutes);
 app.get('/api/public/:slug/blog', getPublicBlogList);
 app.get('/api/public/:slug/blog/:postSlug', getPublicBlogPost);
+
+// ── PWA icon proxy (serves Cloudinary images same-origin for PWA manifest) ──
+app.get('/api/proxy-icon', (req, res) => {
+  const { url } = req.query;
+
+  if (!url) return res.status(400).send('Missing url param');
+
+  let parsed;
+  try { parsed = new URL(url); }
+  catch { return res.status(400).send('Invalid URL'); }
+
+  // Only allow Cloudinary to prevent open-redirect abuse
+  if (!parsed.hostname.endsWith('cloudinary.com')) {
+    return res.status(403).send('Only Cloudinary URLs are allowed');
+  }
+
+  const client = parsed.protocol === 'https:' ? https : http;
+
+  client.get(url, (upstream) => {
+    res.setHeader('Content-Type', upstream.headers['content-type'] || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    upstream.pipe(res);
+  }).on('error', () => res.status(502).send('Failed to fetch icon'));
+});
 
 app.use((req, res) =>
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` })
