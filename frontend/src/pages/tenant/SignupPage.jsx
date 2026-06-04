@@ -268,7 +268,7 @@ export default function SignupPage() {
       tokenStore.set(accessToken);
       login(accessToken, user);
       toast.success('Your shop is live! 🎉');
-      navigate(`/s/${user.slug}/admin/dashboard`, { replace: true });
+      navigate(`/s/${user.slug}/admin/dashboard/home`, { replace: true });
     } catch (err) {
       const msg = err?.response?.data?.message || 'Signup failed. Please try again.';
       if (msg.toLowerCase().includes('slug') || msg.toLowerCase().includes('url'))
