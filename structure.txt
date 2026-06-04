@@ -93,6 +93,8 @@ ARTSPACE
 │   ├── public/
 │   │   ├── _redirects
 │   │   ├── artspace-logo.png
+│   │   ├── artspace-logo_wb.png
+│   │   ├── sw.js 
 │   │
 │   ├── scripts/
 │   │   ├── generate-icons.js

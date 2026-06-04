@@ -111,29 +111,31 @@ const getTenantPWAManifest = async (req, res) => {
     const icon512 = logoUrl ? resizeCloudinaryUrl(logoUrl, 512) : FALLBACK_ICON;
 
     const manifest = {
-      name: `${businessName} Admin`,
-      short_name: shortName,
-      description: `Admin dashboard for ${businessName}`,
-      start_url: `/s/${slug}/admin/dashboard`,
-      display: 'standalone',
-      background_color: '#ffffff',
-      theme_color: themeColor,
-      orientation: 'portrait',
-      icons: [
-        {
-          src: icon192,
-          sizes: '192x192',
-          type: 'image/png',
-          purpose: 'any maskable',
-        },
-        {
-          src: icon512,
-          sizes: '512x512',
-          type: 'image/png',
-          purpose: 'any maskable',
-        },
-      ],
-    };
+  id: `/s/${slug}/admin`,           // ← add this — unique app identity
+  name: `${businessName} Admin`,
+  short_name: shortName,
+  description: `Admin dashboard for ${businessName}`,
+  start_url: `/s/${slug}/admin/dashboard`,
+  scope: `/s/${slug}/admin/`,       // ← add this — restricts SW scope
+  display: 'standalone',
+  background_color: '#ffffff',
+  theme_color: themeColor,
+  orientation: 'portrait',
+  icons: [
+    {
+      src: icon192,
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'any maskable',
+    },
+    {
+      src: icon512,
+      sizes: '512x512',
+      type: 'image/png',
+      purpose: 'any maskable',
+    },
+  ],
+};
 
     res.setHeader('Content-Type', 'application/manifest+json');
     res.setHeader('Cache-Control', 'public, max-age=3600');
