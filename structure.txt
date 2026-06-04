@@ -132,6 +132,7 @@ ARTSPACE
 │       │   │   │ 
 │       │   │   ├── settings/
 │       │   │   │   ├── BrandingSection.jsx
+│       │   │   │   ├── BusinessTypeSection.jsx
 │       │   │   │   ├── CredentialsSection.jsx
 │       │   │   │   ├── GeneralSettingsSection.jsx
 │       │   │   │   ├── SliderSection.jsx

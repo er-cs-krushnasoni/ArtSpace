@@ -26,10 +26,11 @@ const getSettings = async (req, res) => {
   const tenant = await Tenant.findById(req.user.tenantId).lean();
   if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
 
-  res.json({
+   res.json({
     success: true,
     data: {
       businessName: tenant.businessName,
+      businessType: tenant.businessType,
       ownerName: tenant.ownerName,
       email: tenant.email,
       mobile: tenant.mobile,
@@ -427,6 +428,42 @@ const updatePassword = async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 };
 
+// ─── PUT /api/tenant/settings/business-type ───────────────────────────────────
+const VALID_BUSINESS_TYPES = [
+  'nail_art','mehendi','jewellery','cake','makeup_artist','handmade_jewellery',
+  'artificial_jewellery','boutique_clothing','saree_boutique','lehenga_boutique',
+  'ethnic_wear','tattoo_artist','personalized_gifts','wedding_decorator','home_baker',
+  'hair_stylist','eyelash_artist','bridal_stylist','handmade_crafts','resin_art',
+  'crochet','candle_brand','handmade_soap','handmade_skincare','balloon_decoration',
+  'florist','event_planner','chocolate_bouquet','return_gifts','invitation_designer',
+  'custom_nameplate','pottery','clay_art','digital_portrait','home_decor','wall_decor',
+  'macrame','furniture_decor','fashion_accessories','handbag_brand','bridal_accessories',
+  'custom_footwear','watch_accessories','dessert_business','donut_shop','macaron_business',
+  'mithai_sweets','gift_hamper','festival_gifts','rakhi_business','diwali_hamper',
+  'scrapbook','memory_album','handmade_toys','pet_accessories','acrylic_art',
+  'handmade_stationery','phone_case','tumbler_mug','keychain','fridge_magnet',
+  'wedding_favors','kids_accessories','baby_gifts','custom_led_gifts','handmade_perfume',
+  'organic_beauty','handmade_bags','beaded_jewellery','silver_jewellery',
+  'bridal_jewellery_rental','artificial_flower_decor','festive_decor','home_styling',
+  'diy_craft_kits','embroidery_art','fabric_painting','handmade_bookmarks','miniature_art',
+  'bottle_art','handmade_frames','couple_gifts','anime_merchandise','handmade_plushies',
+  'wedding_hamper','luxury_gift_box','car_decor','spiritual_decor','puja_decor',
+  'resin_gifts','handmade_trinkets','aesthetic_lifestyle','luxury_boutique','generic',
+];
+
+const updateBusinessType = async (req, res) => {
+  const { businessType } = req.body;
+  if (!businessType) {
+    return res.status(400).json({ success: false, message: 'Business type is required' });
+  }
+  if (!VALID_BUSINESS_TYPES.includes(businessType)) {
+    return res.status(400).json({ success: false, message: 'Invalid business type' });
+  }
+  await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: { businessType } });
+  res.json({ success: true, message: 'Business type updated successfully' });
+};
+
+
 module.exports = {
   getSettings,
   updateGeneral,
@@ -441,6 +478,7 @@ module.exports = {
   reorderSliders,
   updateSlider,
   deleteSlider,
-   updateEmail,      
+  updateEmail,
   updatePassword,
+  updateBusinessType,
 };
