@@ -12,6 +12,7 @@ ARTSPACE
 │       ├── server.js
 │       │
 │       ├── config/
+│       │   ├── businessTypes.js
 │       │   ├── cloudinary.js
 │       │   └── db.js
 │       │
