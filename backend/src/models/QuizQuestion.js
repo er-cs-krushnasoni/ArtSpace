@@ -11,11 +11,19 @@ const quizQuestionSchema = new mongoose.Schema(
     questionText: { type: String, required: [true, 'Question text is required'] },
     order: { type: Number, default: 0 },
     options: [
+  {
+    text: { type: String, required: true },
+    // legacy flat category mapping (kept for backwards compat)
+    categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+    // new: per-value mapping
+    categoryLinks: [
       {
-        text: { type: String, required: true },
-        categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+        categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
+        values: [{ type: String, trim: true }],
       },
     ],
+  },
+],
   },
   { timestamps: true }
 );

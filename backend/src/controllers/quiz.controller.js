@@ -47,9 +47,17 @@ const saveTenantQuiz = async (req, res) => {
       questionText: q.questionText.trim(),
       order: idx,
       options: q.options.map((opt) => ({
-        text: opt.text.trim(),
-        categoryIds: Array.isArray(opt.categoryIds) ? opt.categoryIds : [],
-      })),
+  text: opt.text.trim(),
+  categoryIds: Array.isArray(opt.categoryIds) ? opt.categoryIds : [],
+  categoryLinks: Array.isArray(opt.categoryLinks)
+    ? opt.categoryLinks
+        .filter((cl) => cl.categoryId)
+        .map((cl) => ({
+          categoryId: cl.categoryId,
+          values: Array.isArray(cl.values) ? cl.values.filter(Boolean) : [],
+        }))
+    : [],
+})),
     }));
     await QuizQuestion.insertMany(docs);
   }
