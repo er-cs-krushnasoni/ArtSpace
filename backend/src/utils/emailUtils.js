@@ -197,10 +197,72 @@ const sendSlugChangedEmail = async ({ to, ownerName, businessName, newSlug }) =>
   return data;
 };
 
+// ─── Email 6: Tenant Credentials Updated by Super Admin ──────────────────────
+const sendCredentialsUpdatedEmail = async ({ to, ownerName, businessName, slug, newEmail, newPassword }) => {
+  const shopUrl = buildShopUrl(slug);
+  const adminUrl = buildAdminUrl(slug);
+  const changesBlock = `
+    <div style="background: #f5f3ff; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+      <p style="font-size: 0.8rem; color: #7c3aed; font-weight: 600; margin: 0 0 12px;">🔑 Your Updated Login Credentials</p>
+      ${newEmail ? `<p style="margin: 0 0 6px; font-size: 0.95rem;"><span style="color: #888;">New Email:</span> <strong>${newEmail}</strong></p>` : ''}
+      ${newPassword ? `<p style="margin: 0; font-size: 0.95rem;"><span style="color: #888;">New Password:</span> <strong>${newPassword}</strong></p>` : ''}
+    </div>
+  `;
+  const { data, error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    to: newEmail || to,
+    subject: `Your ${businessName} login credentials have been updated`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; color: #111;">
+        <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Login credentials updated</h1>
+        <p style="color: #555; margin-bottom: 24px;">
+          Hi ${ownerName}, your login credentials for <strong>${businessName}</strong> on ArtSpace have been updated by an administrator.
+        </p>
+        ${changesBlock}
+        ${buildUrlBlock(shopUrl, adminUrl)}
+        <a href="${adminUrl}" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none;">
+          Login to Dashboard →
+        </a>
+        <p style="margin-top: 24px; font-size: 0.875rem; color: #f59e0b;">⚠️ Please change your password after logging in.</p>
+        <p style="margin-top: 8px; font-size: 0.8rem; color: #999;">If you didn't expect this change, please contact support immediately.</p>
+      </div>
+    `,
+  });
+  if (error) { console.error('❌ Credentials updated email error:', error); throw error; }
+  return data;
+};
+
+// ─── Email 7: Super Admin Own Credentials Updated ────────────────────────────
+const sendSuperAdminCredentialsUpdatedEmail = async ({ to, newEmail }) => {
+  const { data, error } = await getResend().emails.send({
+    from: FROM_EMAIL,
+    to: newEmail || to,
+    subject: 'Your Super Admin credentials have been updated',
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; color: #111;">
+        <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Credentials updated</h1>
+        <p style="color: #555; margin-bottom: 24px;">
+          Your ArtSpace Super Admin ${newEmail ? 'email address and/or password have' : 'password has'} been updated successfully.
+        </p>
+        ${newEmail ? `
+        <div style="background: #f5f3ff; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+          <p style="font-size: 0.8rem; color: #7c3aed; font-weight: 600; margin: 0 0 8px;">📧 New Login Email</p>
+          <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">${newEmail}</p>
+        </div>` : ''}
+        <p style="font-size: 0.875rem; color: #999;">If you didn't make this change, contact your system administrator immediately.</p>
+      </div>
+    `,
+  });
+  if (error) { console.error('❌ SA credentials updated email error:', error); throw error; }
+  return data;
+};
+
 module.exports = {
   sendWelcomeEmail,
   sendCredentialsEmail,
   sendManualApprovalEmail,
   sendPasswordResetEmail,
   sendSlugChangedEmail,
+  sendCredentialsUpdatedEmail,
+  sendSuperAdminCredentialsUpdatedEmail,
 };

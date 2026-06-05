@@ -154,4 +154,61 @@ const getStats = async (req, res) => {
   });
 };
 
-module.exports = { login, logout, getMe, getStats };
+/**
+ * PATCH /api/superadmin/auth/credentials
+ * Super admin updates their own email and/or password.
+ * Requires current password for confirmation.
+ */
+const updateOwnCredentials = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({ success: false, errors: errors.array() });
+
+  const { currentPassword, newEmail, newPassword } = req.body;
+  if (!newEmail && !newPassword)
+    return res.status(400).json({ success: false, message: 'Provide at least a new email or new password' });
+
+  const superAdmin = await SuperAdmin.findById(req.user.id).select('+passwordHash');
+  if (!superAdmin)
+    return res.status(404).json({ success: false, message: 'Super admin not found' });
+
+  const valid = await bcrypt.compare(currentPassword, superAdmin.passwordHash);
+  if (!valid)
+    return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+
+  const oldEmail = superAdmin.email;
+
+  if (newEmail) {
+    const normalised = newEmail.toLowerCase().trim();
+    if (normalised !== superAdmin.email) {
+      const taken = await SuperAdmin.findOne({ email: normalised });
+      if (taken) return res.status(409).json({ success: false, message: 'Email already in use' });
+      superAdmin.email = normalised;
+    }
+  }
+
+  if (newPassword) {
+    superAdmin.passwordHash = newPassword; // pre-save hook re-hashes
+  }
+
+  await superAdmin.save();
+
+  // Notify via email
+  try {
+    const { sendSuperAdminCredentialsUpdatedEmail } = require('../utils/emailUtils');
+    await sendSuperAdminCredentialsUpdatedEmail({
+      to: oldEmail,
+      newEmail: newEmail && newEmail.toLowerCase().trim() !== oldEmail ? newEmail.toLowerCase().trim() : null,
+    });
+  } catch (e) {
+    console.error('SA credentials email failed:', e.message);
+  }
+
+  return res.json({
+    success: true,
+    message: 'Credentials updated successfully',
+    user: { id: superAdmin._id, email: superAdmin.email, role: 'superadmin' },
+  });
+};
+
+module.exports = { login, logout, getMe, getStats, updateOwnCredentials };

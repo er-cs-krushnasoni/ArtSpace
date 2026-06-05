@@ -173,8 +173,10 @@ ARTSPACE
 │       │       ├── ChangeSlugModal.jsx
 │       │       ├── ConfirmDialog.jsx
 │       │       ├── CreateTenantModal.jsx
+│       │       ├── SuperAdminSettingsModal.jsx
 │       │       ├── SuperAdminSidebar.jsx
 │       │       ├── TenantDetailDrawer.jsx
+│       │       ├── UpdateTenantCredentialsModal.jsx
 │       │
 │       ├── config/
 │       │   ├── quizTemplates.js

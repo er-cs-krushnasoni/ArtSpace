@@ -2,13 +2,13 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const router = express.Router();
 
-const { login, logout, getMe, getStats } = require('../controllers/superAdminAuth.controller');
+const { login, logout, getMe, getStats,updateOwnCredentials } = require('../controllers/superAdminAuth.controller');
 const {
   listTenants, getTenant, updateTenantStatus, updateTenantSlug,
   updateTenantPlan, adjustDays, bypassPayment,
   pauseTenantAdmin, unpauseTenantAdmin, createTenant,
   getPricing, updatePricing, getAuditLog, checkSlug,
-  deleteTenant, togglePlan, getPayments,
+  deleteTenant, togglePlan, getPayments,updateTenantCredentials 
 } = require('../controllers/superAdmin.controller');
 const { authenticateSuperAdmin } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -20,6 +20,13 @@ router.post('/auth/login', authLimiter, [
 ], login);
 router.post('/auth/logout', logout);
 router.get('/auth/me', authenticateSuperAdmin, getMe);
+
+// ─── Super admin own credentials ──────────────────────────────────────────────
+router.patch('/auth/credentials', authenticateSuperAdmin, [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newEmail').optional({ checkFalsy: true }).isEmail().withMessage('Valid email required'),
+  body('newPassword').optional({ checkFalsy: true }).isLength({ min: 6 }).withMessage('Min 6 characters'),
+], updateOwnCredentials);
 
 // ─── Dashboard stats ──────────────────────────────────────────────────────────
 router.get('/stats', authenticateSuperAdmin, getStats);
@@ -106,6 +113,13 @@ router.delete('/tenants/:tenantId', authenticateSuperAdmin, [
   param('tenantId').isMongoId(),
   body('reason').optional().isString(),
 ], deleteTenant);
+
+// ─── Tenant credentials (email / password) ────────────────────────────────────
+router.patch('/tenants/:tenantId/credentials', authenticateSuperAdmin, [
+  param('tenantId').isMongoId(),
+  body('newEmail').optional({ checkFalsy: true }).isEmail().withMessage('Valid email required'),
+  body('newPassword').optional({ checkFalsy: true }).isLength({ min: 6 }).withMessage('Min 6 characters'),
+], updateTenantCredentials);
 
 // ─── Plan toggle (enable/disable) ─────────────────────────────────────────────
 router.patch('/pricing/toggle', authenticateSuperAdmin, [

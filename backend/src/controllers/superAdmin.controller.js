@@ -545,10 +545,65 @@ const getPayments = async (req, res) => {
   return res.json({ success: true, payments, total, page: Number(page), limit: Number(limit) });
 };
 
+// ─── PATCH /api/superadmin/tenants/:tenantId/credentials ─────────────────────
+const updateTenantCredentials = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+
+  const { newEmail, newPassword, reason } = req.body;
+  if (!newEmail && !newPassword)
+    return res.status(400).json({ success: false, message: 'Provide at least a new email or new password' });
+
+  const tenant = await Tenant.findById(req.params.tenantId);
+  if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
+
+  const oldEmail = tenant.email;
+
+  if (newEmail) {
+    const normalised = newEmail.toLowerCase().trim();
+    const taken = await Tenant.findOne({ email: normalised, _id: { $ne: tenant._id } });
+    if (taken) return res.status(409).json({ success: false, message: 'Email already in use by another tenant' });
+    tenant.email = normalised;
+  }
+
+  if (newPassword) {
+    // pre-save hook will re-hash
+    tenant.passwordHash = newPassword;
+  }
+
+  await tenant.save();
+
+  await audit('CREDENTIALS_CHANGE', req.user.id, tenant._id, {
+    targetField: newEmail && newPassword ? 'email + password' : newEmail ? 'email' : 'password',
+    oldValue: newEmail ? oldEmail : '(password)',
+    newValue: newEmail ? tenant.email : '(new password set)',
+    reason: reason || null,
+  });
+
+  // Notify tenant — send to NEW email if changed, otherwise existing
+  try {
+    const { sendCredentialsUpdatedEmail } = require('../utils/emailUtils');
+    await sendCredentialsUpdatedEmail({
+      to: oldEmail,
+      ownerName: tenant.ownerName,
+      businessName: tenant.businessName,
+      slug: tenant.slug,
+      newEmail: newEmail ? tenant.email : null,
+      newPassword: newPassword || null,
+    });
+  } catch (e) {
+    console.error('Credentials update email failed:', e.message);
+  }
+
+  return res.json({ success: true, message: 'Tenant credentials updated', tenant: {
+    _id: tenant._id, email: tenant.email, businessName: tenant.businessName,
+  }});
+};
+
 module.exports = {
   listTenants, getTenant, updateTenantStatus, updateTenantSlug,
   updateTenantPlan, adjustDays, bypassPayment,
   pauseTenantAdmin, unpauseTenantAdmin, createTenant,
   getPricing, updatePricing, getAuditLog, checkSlug,
-  deleteTenant, togglePlan, getPayments,
+  deleteTenant, togglePlan, getPayments, updateTenantCredentials,
 };
