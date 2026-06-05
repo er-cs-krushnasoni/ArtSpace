@@ -117,8 +117,6 @@ router.delete('/tenants/:tenantId', authenticateSuperAdmin, [
 // ─── Tenant credentials (email / password) ────────────────────────────────────
 router.patch('/tenants/:tenantId/credentials', authenticateSuperAdmin, [
   param('tenantId').isMongoId(),
-  body('newEmail').optional({ checkFalsy: true }).isEmail().withMessage('Valid email required'),
-  body('newPassword').optional({ checkFalsy: true }).isLength({ min: 6 }).withMessage('Min 6 characters'),
 ], updateTenantCredentials);
 
 // ─── Plan toggle (enable/disable) ─────────────────────────────────────────────
