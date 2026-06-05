@@ -554,7 +554,7 @@ const updateTenantCredentials = async (req, res) => {
   if (!newEmail && !newPassword)
     return res.status(400).json({ success: false, message: 'Provide at least a new email or new password' });
 
-  const tenant = await Tenant.findById(req.params.tenantId);
+  const tenant = await Tenant.findById(req.params.tenantId).select('+passwordHash');
   if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
 
   const oldEmail = tenant.email;
