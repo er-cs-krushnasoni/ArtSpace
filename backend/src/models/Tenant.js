@@ -1,3 +1,4 @@
+// backend/src/models/Tenant.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { BUSINESS_TYPES } = require('../config/businessTypes');
@@ -16,13 +17,14 @@ const subscriptionHistorySchema = new mongoose.Schema({
 const websiteConfigSchema = new mongoose.Schema({
   logo: { type: String, default: null },
   logoPublicId: { type: String, default: null },
-  primaryColor: { type: String, default: '#8b5cf6' },
-  accentColor: { type: String, default: '#ec4899' },
-  bgColor: { type: String, default: '#ffffff' },
+  primaryColor: { type: String, default: '#7c3aed' },
+  accentColor: { type: String, default: '#f59e0b' },
+  bgColor: { type: String, default: '#fafaf9' },
   navBg: { type: String, default: null },
-navText: { type: String, default: null },
-cardBg: { type: String, default: null },
-btnText: { type: String, default: null }, 
+  navText: { type: String, default: null },
+  cardBg: { type: String, default: null },
+  btnText: { type: String, default: null },
+  publicTheme: { type: String, enum: ['light', 'dark'], default: 'light' },
   whatsapp: { type: String, default: null },
   instagram: { type: String, default: null },
   address: { type: String, default: '' },
@@ -31,8 +33,6 @@ btnText: { type: String, default: null },
   blogEnabled: { type: Boolean, default: false },
   deliveryEnabled: { type: Boolean, default: true },
   appointmentEnabled: { type: Boolean, default: true },
-  // When true: customers see "At Home" option on appointment page (artist visits them)
-  // When false: only "At Shop" shown (customer comes to shop)
   appointmentAtHome: { type: Boolean, default: true },
   shopVisible: { type: Boolean, default: true },
   tutorialVideoUrl: { type: String, default: null },
@@ -113,7 +113,6 @@ const tenantSchema = new mongoose.Schema(
 
 tenantSchema.pre('save', async function () {
   if (!this.isModified('passwordHash')) return;
-  // Skip if already a bcrypt hash (Super Admin creates tenant with pre-hashed value)
   if (this.passwordHash.startsWith('$2')) return;
   this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
 });
