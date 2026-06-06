@@ -4,18 +4,10 @@ export function usePWAInstall() {
   const [installPrompt, setInstallPrompt] = useState(null);
 
   useEffect(() => {
-    // Register service worker — required for beforeinstallprompt to fire
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
-        .catch((err) => console.warn('SW registration failed:', err));
-    }
-
     const handler = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
     };
-
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);

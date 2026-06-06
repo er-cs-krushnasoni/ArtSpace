@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Paintbrush } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
 import CountryCodeDropdown from '../../components/public/CountryCodeDropdown';
@@ -17,14 +18,17 @@ const todayIST = () => {
 
 const Field = ({ label, required, error, children }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {children}
-    {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    {error && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{error}</p>}
   </div>
 );
+
+const inputClass =
+  'w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors';
 
 const CustomOrderPage = () => {
   const { slug } = useParams();
@@ -42,6 +46,7 @@ const CustomOrderPage = () => {
     address: '',
     descriptionText: '',
   });
+
   const [refImages, setRefImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -138,21 +143,37 @@ const CustomOrderPage = () => {
   const showAddress = showDeliveryOptions && form.orderType === 'delivery';
 
   return (
-<div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-semibold text-gray-900"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+
+      <div className="max-w-lg mx-auto px-4 py-10 sm:py-14">
+        {/* Page heading */}
+        <div className="mb-7 flex items-start gap-4">
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ background: 'color-mix(in srgb, var(--tenant-primary) 12%, transparent)' }}
           >
-            {labels.custom_order || 'Custom Order'}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">Share your reference and we'll get back to you</p>
+            <Paintbrush size={20} style={{ color: 'var(--tenant-primary)' }} />
+          </div>
+          <div>
+            <h1
+             className="text-2xl sm:text-3xl font-bold"
+style={{ 
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  color: 'var(--tenant-nav-text, #1c1917)'
+}}
+            >
+              {labels.custom_order || 'Custom Order'}
+            </h1>
+            <p className="text-sm mt-1"
+style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 55%, transparent)' }}>
+              Share your reference and we'll get back to you
+            </p>
+          </div>
         </div>
 
         {submitted ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-md p-6 sm:p-8">
             <OrderConfirmation
               shopName={tenant?.businessName}
               whatsapp={config.whatsapp}
@@ -161,8 +182,10 @@ const CustomOrderPage = () => {
             />
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-3xl shadow-md p-5 sm:p-8 space-y-4"
+            style={{ animation: 'formFadeUp 0.3s ease both' }}
+          >
             {/* Name */}
             <Field label="Your Name" required error={errors.customerName}>
               <input
@@ -170,13 +193,13 @@ const CustomOrderPage = () => {
                 value={form.customerName}
                 onChange={(e) => set('customerName', e.target.value)}
                 placeholder="Full name"
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                className={inputClass}
               />
             </Field>
 
             {/* Mobile */}
             <Field label="WhatsApp Number" required error={errors.mobile}>
-              <div className="flex items-stretch rounded-lg border border-gray-200 h-[42px]">
+              <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 h-[46px] bg-white dark:bg-zinc-800 overflow-hidden">
                 <CountryCodeDropdown
                   value={form.countryCode}
                   onChange={(v) => set('countryCode', v)}
@@ -186,7 +209,8 @@ const CustomOrderPage = () => {
                   value={form.mobile}
                   onChange={(e) => set('mobile', e.target.value.replace(/\D/g, ''))}
                   placeholder="Mobile number"
-                  className="flex-1 px-3 text-sm focus:outline-none bg-white rounded-r-lg"
+                  inputMode="numeric"
+                  className="flex-1 px-3 text-sm focus:outline-none bg-transparent text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500"
                 />
               </div>
             </Field>
@@ -198,7 +222,7 @@ const CustomOrderPage = () => {
                 value={form.instagram}
                 onChange={(e) => set('instagram', e.target.value)}
                 placeholder="@handle"
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                className={inputClass}
               />
             </Field>
 
@@ -210,7 +234,7 @@ const CustomOrderPage = () => {
                   value={form.preferredDate}
                   min={todayIST()}
                   onChange={(e) => set('preferredDate', e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                  className={inputClass}
                 />
               </Field>
               <Field label="Preferred Time (optional)">
@@ -218,7 +242,7 @@ const CustomOrderPage = () => {
                   type="time"
                   value={form.preferredTime}
                   onChange={(e) => set('preferredTime', e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                  className={inputClass}
                 />
               </Field>
             </div>
@@ -232,11 +256,15 @@ const CustomOrderPage = () => {
                       key={opt}
                       type="button"
                       onClick={() => set('orderType', opt)}
-                      className="py-2.5 rounded-xl text-sm font-medium border-2 capitalize transition-all"
+                      className="py-3 rounded-2xl text-sm font-semibold border-2 capitalize transition-all"
                       style={
                         form.orderType === opt
-                          ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                          : { borderColor: '#e5e7eb', color: '#4b5563' }
+                          ? {
+                              borderColor: 'var(--tenant-primary)',
+                              color: 'var(--tenant-primary)',
+                              background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                            }
+                          : { borderColor: '#e5e7eb', color: '#6b7280' }
                       }
                     >
                       {opt === 'delivery' ? 'Delivery' : 'Pickup'}
@@ -254,12 +282,12 @@ const CustomOrderPage = () => {
                   onChange={(e) => set('address', e.target.value)}
                   placeholder="Full address for delivery"
                   rows={2}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors resize-none"
+                  className="w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors resize-none"
                 />
               </Field>
             )}
 
-            {/* Reference images — required */}
+            {/* Reference images */}
             <ImageUploadArea
               slug={slug}
               label="Reference Images"
@@ -278,20 +306,28 @@ const CustomOrderPage = () => {
                 placeholder="Describe your design idea…"
                 rows={3}
                 maxLength={500}
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors resize-none"
+                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors resize-none"
               />
+              <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5 text-right">
+                {form.descriptionText.length}/500
+              </p>
             </Field>
 
             {errors._form && (
-              <p className="text-sm text-center py-2 px-3 bg-red-50 text-red-600 rounded-lg">{errors._form}</p>
+              <p className="text-sm text-center py-2.5 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl">
+                {errors._form}
+              </p>
             )}
 
             <button
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full py-3 rounded-xl text-sm font-semibold  transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
+              className="w-full py-3.5 rounded-2xl text-base font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{
+                background: 'var(--tenant-primary)',
+                color: 'var(--tenant-btn-text, #ffffff)',
+              }}
             >
               {submitting ? 'Sending…' : 'Send Request'}
             </button>
@@ -307,6 +343,13 @@ const CustomOrderPage = () => {
           isUpdating={updatingDup}
         />
       )}
+
+      <style>{`
+        @keyframes formFadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

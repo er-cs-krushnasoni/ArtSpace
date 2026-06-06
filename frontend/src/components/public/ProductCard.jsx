@@ -1,6 +1,8 @@
+// frontend/src/components/public/ProductCard.jsx
 import { ShoppingBag } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 
+// ── Exported utility — used by ProductGrid, ProductDetailModal, etc. ──────────
 export const getEffectivePrices = (product) => {
   const { discount } = product;
   const baseDelivery = discount?.isActive
@@ -10,7 +12,6 @@ export const getEffectivePrices = (product) => {
     ? discount.originalAppointmentPrice
     : product.appointmentPrice;
 
-  // Use the product-level enabled flags as the authoritative gate
   const offersDelivery =
     !!product.deliveryEnabled &&
     baseDelivery !== null &&
@@ -51,34 +52,35 @@ export const getEffectivePrices = (product) => {
   };
 };
 
+// ── Internal price row ────────────────────────────────────────────────────────
 const PriceRow = ({ label, original, effective, hasDiscount, show }) => {
   if (!show) return null;
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-500 text-xs">{label}</span>
+      <span className="text-gray-400 dark:text-zinc-500 text-xs">{label}</span>
       <div className="flex items-center gap-1.5">
         {hasDiscount && original !== null && (
-          <span className="text-gray-400 line-through text-xs">₹{original}</span>
+          <span className="text-gray-300 dark:text-zinc-600 line-through text-xs">
+            ₹{original}
+          </span>
         )}
         <span
-  className="font-semibold text-sm"
-  style={{ color: 'var(--tenant-accent)' }}
->
-  {effective === 0 ? 'Free' : `₹${effective}`}
-</span>
+          className="font-bold text-sm"
+          style={{ color: 'var(--tenant-accent)' }}
+        >
+          {effective === 0 ? 'Free' : `₹${effective}`}
+        </span>
       </div>
     </div>
   );
 };
 
+// ── ProductCard ───────────────────────────────────────────────────────────────
 const ProductCard = ({ product, onClick }) => {
   const { tenant } = useTenant();
   const config = tenant?.websiteConfig || {};
   const prices = getEffectivePrices(product);
 
-  // A price row is shown only if:
-  // 1. Global toggle is enabled AND
-  // 2. This product actually offers that option
   const showDelivery = !!config.deliveryEnabled && prices.offersDelivery;
   const showAppointment = !!config.appointmentEnabled && prices.offersAppointment;
 
@@ -86,84 +88,100 @@ const ProductCard = ({ product, onClick }) => {
 
   return (
     <div
-  className="rounded-xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
-  style={{ background: 'var(--tenant-card-bg, #ffffff)' }}
-  onClick={onClick}
->
+      className="rounded-2xl overflow-hidden cursor-pointer group
+                 hover:-translate-y-1 hover:shadow-xl
+                 transition-all duration-250 ease-out
+                 dark:ring-1 dark:ring-zinc-700/60"
+      style={{
+        background: 'var(--tenant-card-bg, #ffffff)',
+        boxShadow: '0 1px 4px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)',
+      }}
+      onClick={onClick}
+    >
       {/* Photo */}
-      <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
+      <div className="relative w-full aspect-square bg-gray-50 dark:bg-zinc-800 overflow-hidden">
         {coverPhoto ? (
           <img
             src={coverPhoto}
             alt={product.nameVisible ? product.name : 'Product'}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105"
             draggable={false}
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag size={40} className="text-gray-200" />
+            <ShoppingBag size={40} className="text-gray-200 dark:text-zinc-700" />
           </div>
         )}
+
         {/* Discount badge */}
         {prices.hasDiscount && (
           <span
-  className="absolute top-2 left-2 text-white text-xs font-semibold px-2 py-0.5 rounded-full"
-  style={{ background: 'var(--tenant-accent)' }}
->
+            className="absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm"
+            style={{ background: 'var(--tenant-accent)' }}
+          >
             {prices.discountLabel}
           </span>
         )}
-        {/* Hover Order Now overlay — desktop */}
-        <div className="absolute bottom-0 inset-x-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
+
+        {/* Desktop hover overlay — Order Now */}
+        <div className="absolute bottom-0 inset-x-0 p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
-  className="w-full py-2 rounded-full text-xs font-semibold shadow-lg"
-  style={{ background: 'var(--tenant-accent)', color: 'var(--tenant-btn-text, #ffffff)' }}
-  onClick={(e) => { e.stopPropagation(); onClick(); }}
->
+            className="w-full py-2.5 rounded-xl text-xs font-bold shadow-lg transition-opacity hover:opacity-90"
+            style={{
+              background: 'var(--tenant-accent)',
+              color: 'var(--tenant-btn-text, #ffffff)',
+            }}
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+          >
             Order Now
           </button>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-1.5">
+      <div className="p-3.5 space-y-2">
         {product.nameVisible && (
           <p
-            className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2"
+            className="font-semibold text-gray-900 dark:text-zinc-100 text-sm leading-snug line-clamp-2"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             {product.name}
           </p>
         )}
 
-        {/* Description snippet */}
         {product.description && (
-          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-gray-400 dark:text-zinc-500 line-clamp-2 leading-relaxed">
             {product.description}
           </p>
         )}
 
-        <PriceRow
-          label="Delivery"
-          original={prices.originalDelivery}
-          effective={prices.delivery}
-          hasDiscount={prices.hasDiscount}
-          show={showDelivery}
-        />
-        <PriceRow
-          label="Appointment"
-          original={prices.originalAppointment}
-          effective={prices.appointment}
-          hasDiscount={prices.hasDiscount}
-          show={showAppointment}
-        />
+        <div className="space-y-1.5 pt-0.5">
+          <PriceRow
+            label="Delivery"
+            original={prices.originalDelivery}
+            effective={prices.delivery}
+            hasDiscount={prices.hasDiscount}
+            show={showDelivery}
+          />
+          <PriceRow
+            label="Appointment"
+            original={prices.originalAppointment}
+            effective={prices.appointment}
+            hasDiscount={prices.hasDiscount}
+            show={showAppointment}
+          />
+        </div>
 
         {/* Mobile Order Now */}
         <button
-  className="sm:hidden w-full py-2 rounded-full text-xs font-semibold mt-1"
-  style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
-  onClick={(e) => { e.stopPropagation(); onClick(); }}
->
+          className="sm:hidden w-full py-2.5 rounded-xl text-xs font-bold mt-1 transition-opacity hover:opacity-90"
+          style={{
+            background: 'var(--tenant-primary)',
+            color: 'var(--tenant-btn-text, #ffffff)',
+          }}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+        >
           Order Now
         </button>
       </div>

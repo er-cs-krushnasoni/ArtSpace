@@ -9,19 +9,19 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const ShopPage = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
-  const { labels } = useTenant();
+  const { tenant, labels } = useTenant();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const filterProductId = searchParams.get('product');
+  const filterProductId  = searchParams.get('product');
   const filterCategoryId = searchParams.get('category');
-  const filterValue = searchParams.get('value');
+  const filterValue      = searchParams.get('value');
 
   useEffect(() => {
     if (!slug) return;
     const load = async () => {
       try {
-        const res = await fetch(`${API_BASE}/public/${slug}/products`);
+        const res  = await fetch(`${API_BASE}/public/${slug}/products`);
         const json = await res.json();
         if (json.success) setProducts(json.data);
       } catch (err) {
@@ -33,27 +33,60 @@ const ShopPage = () => {
     load();
   }, [slug]);
 
-  const isFiltered = Boolean(filterProductId || filterCategoryId);
-
   return (
     <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-semibold text-gray-900"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+
+      <div className="max-w-6xl mx-auto px-4 py-10">
+
+        {/* Page heading */}
+        <div className="mb-8">
+          <p
+            className="text-xs font-bold uppercase tracking-widest mb-1"
+            style={{ color: 'var(--tenant-primary)' }}
           >
-            {labels.shop || 'Shop'}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {'Browse our full collection'}
+            Browse
+          </p>
+          <div className="flex items-end gap-3 flex-wrap">
+            <h1
+              className="text-2xl sm:text-3xl font-bold leading-tight"
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: 'var(--tenant-nav-text, #1c1917)',
+              }}
+            >
+              {labels.shop || 'Shop'}
+            </h1>
+            {/* Product count badge */}
+            {!loading && products.length > 0 && (
+              <span
+                className="mb-0.5 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                style={{
+                  background: 'color-mix(in srgb, var(--tenant-primary) 12%, transparent)',
+                  color: 'var(--tenant-primary)',
+                }}
+              >
+                {products.length} {products.length === 1 ? 'item' : 'items'}
+              </span>
+            )}
+          </div>
+          <p
+            className="text-sm mt-1"
+            style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 50%, transparent)' }}
+          >
+            {loading ? 'Loading collection…' : 'Browse our full collection'}
           </p>
         </div>
+
+        {/* Loading skeletons */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-gray-100 rounded-xl animate-pulse aspect-square" />
+              <div
+                key={i}
+                className="rounded-2xl animate-pulse aspect-square"
+                style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 7%, transparent)' }}
+              />
             ))}
           </div>
         ) : (
@@ -61,12 +94,14 @@ const ShopPage = () => {
             products={products}
             initialProductId={filterProductId || null}
             initialCategoryId={filterProductId ? null : filterCategoryId}
-            initialValue={filterValue}initialValue={filterValue || undefined}
-
+            initialValue={filterValue || undefined}
           />
         )}
+
       </div>
-      <div className="h-12" />
+
+      {/* Bottom breathing room */}
+      <div className="h-16" />
     </div>
   );
 };

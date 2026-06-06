@@ -47,23 +47,18 @@ const CountryCodeDropdown = ({ value = '+91', onChange, disabled }) => {
   const btnRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Position the dropdown using fixed coords based on button position
-  // This escapes any overflow:hidden parent
-const updatePosition = () => {
-  if (!btnRef.current) return;
-  const rect = btnRef.current.getBoundingClientRect();
-  setDropdownPos({
-    top: rect.bottom + 4,   // viewport-relative, no scrollY needed for fixed
-    left: rect.left,
-  });
-};
+  const updatePosition = () => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+  };
 
   useEffect(() => {
     if (open) updatePosition();
   }, [open]);
 
   useEffect(() => {
-    const handler = (e) => {
+    const handleOutside = (e) => {
       if (
         btnRef.current && !btnRef.current.contains(e.target) &&
         dropdownRef.current && !dropdownRef.current.contains(e.target)
@@ -72,11 +67,12 @@ const updatePosition = () => {
         setSearch('');
       }
     };
-    document.addEventListener('mousedown', handler);
-    window.addEventListener('scroll', () => open && updatePosition(), true);
+    const handleScroll = () => { if (open) updatePosition(); };
+    document.addEventListener('mousedown', handleOutside);
+    window.addEventListener('scroll', handleScroll, true);
     return () => {
-      document.removeEventListener('mousedown', handler);
-      window.removeEventListener('scroll', () => open && updatePosition(), true);
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [open]);
 
@@ -103,55 +99,74 @@ const updatePosition = () => {
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 px-3 h-full text-sm text-gray-700 border-r border-gray-200 bg-gray-50 rounded-l-lg hover:bg-gray-100 transition-colors whitespace-nowrap flex-shrink-0"
-        style={{ minWidth: '80px' }}
+        className="flex items-center gap-1.5 px-3 h-full text-sm text-gray-700 dark:text-zinc-200 border-r border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-700/60 rounded-l-xl hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap flex-shrink-0"
+        style={{ minWidth: '82px' }}
       >
         <span>{selected.flag}</span>
         <span className="font-medium">{selected.code}</span>
-        <ChevronDown size={13} className="text-gray-400" />
+        <ChevronDown
+          size={12}
+          className="text-gray-400 dark:text-zinc-400 transition-transform"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
       </button>
 
       {open && (
         <div
           ref={dropdownRef}
-          className="fixed z-[200] bg-white border border-gray-200 rounded-xl shadow-xl w-64 overflow-hidden"
-          style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          className="fixed z-[200] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-2xl w-64 overflow-hidden"
+          style={{
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            animation: 'dropdownIn 0.18s cubic-bezier(0.34,1.2,0.64,1) both',
+          }}
         >
           {/* Search */}
-          <div className="p-2 border-b border-gray-100">
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg">
-              <Search size={13} className="text-gray-400 flex-shrink-0" />
+          <div className="p-2.5 border-b border-gray-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 dark:bg-zinc-800 rounded-xl">
+              <Search size={13} className="text-gray-400 dark:text-zinc-500 flex-shrink-0" />
               <input
                 autoFocus
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search country..."
-                className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
+                placeholder="Search country…"
+                className="flex-1 text-sm bg-transparent outline-none text-gray-700 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500"
               />
             </div>
           </div>
+
           {/* List */}
           <ul className="max-h-52 overflow-y-auto">
             {!search && (
-              <li className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50">
+              <li className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider bg-gray-50 dark:bg-zinc-800/60">
                 Common
               </li>
             )}
             {filtered.length === 0 ? (
-              <li className="px-3 py-3 text-sm text-gray-400 text-center">No results</li>
+              <li className="px-3 py-4 text-sm text-gray-400 dark:text-zinc-500 text-center">
+                No results
+              </li>
             ) : (
               filtered.map((c) => (
                 <li key={c.code}>
                   <button
                     type="button"
                     onClick={() => handleSelect(c.code)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors text-left"
-                    style={value === c.code ? { color: 'var(--tenant-primary)', fontWeight: 600 } : {}}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                    style={
+                      value === c.code
+                        ? { color: 'var(--tenant-primary)', fontWeight: 600 }
+                        : { color: undefined }
+                    }
                   >
                     <span className="text-base">{c.flag}</span>
-                    <span className="flex-1 truncate text-gray-700">{c.name}</span>
-                    <span className="text-gray-400 font-medium">{c.code}</span>
+                    <span className="flex-1 truncate text-gray-700 dark:text-zinc-200">
+                      {c.name}
+                    </span>
+                    <span className="text-gray-400 dark:text-zinc-500 font-medium text-xs">
+                      {c.code}
+                    </span>
                   </button>
                 </li>
               ))
@@ -159,6 +174,13 @@ const updatePosition = () => {
           </ul>
         </div>
       )}
+
+      <style>{`
+        @keyframes dropdownIn {
+          from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </>
   );
 };

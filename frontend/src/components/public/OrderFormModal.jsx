@@ -17,7 +17,7 @@ const todayIST = () => {
 
 const Field = ({ label, required, error, children }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5">
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
@@ -26,12 +26,18 @@ const Field = ({ label, required, error, children }) => (
   </div>
 );
 
-// Block non-numeric key presses on mobile field
 const handleMobileKeyDown = (e) => {
   const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
   if (allowed.includes(e.key)) return;
-  if (e.ctrlKey || e.metaKey) return; // Allow copy/paste/select-all combos
+  if (e.ctrlKey || e.metaKey) return;
   if (!/^\d$/.test(e.key)) e.preventDefault();
+};
+
+const inputClass =
+  'w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors';
+
+const focusStyle = {
+  '--tw-ring-color': 'var(--tenant-primary)',
 };
 
 const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
@@ -62,6 +68,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
     address: '',
     descriptionText: '',
   });
+
   const [descImages, setDescImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -173,29 +180,34 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
     <>
       <div
         className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-        style={{ background: 'rgba(0,0,0,0.5)' }}
+        style={{ background: 'rgba(0,0,0,0.55)' }}
         onClick={onClose}
       >
         <div
-          className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[92vh] overflow-y-auto"
+          className="bg-white dark:bg-zinc-900 w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[92vh] overflow-y-auto shadow-2xl"
+          style={{
+            animation: 'modalSlideUp 0.28s cubic-bezier(0.34,1.2,0.64,1) both',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-zinc-800 sticky top-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md z-10">
             <div>
               <h3
-                className="font-semibold text-gray-900 text-base"
+                className="font-bold text-gray-900 dark:text-zinc-50 text-base"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 Place Order
               </h3>
               {product.nameVisible && (
-                <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[260px]">{product.name}</p>
+                <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5 truncate max-w-[260px]">
+                  {product.name}
+                </p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             >
               <X size={18} />
             </button>
@@ -212,7 +224,6 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
               />
             ) : (
               <div className="space-y-4">
-
                 {/* Name */}
                 <Field label="Your Name" required error={errors.customerName}>
                   <input
@@ -220,13 +231,14 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                     value={form.customerName}
                     onChange={(e) => set('customerName', e.target.value)}
                     placeholder="Full name"
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    className={inputClass}
+                    style={focusStyle}
                   />
                 </Field>
 
                 {/* Mobile */}
                 <Field label="WhatsApp Number" required error={errors.mobile}>
-                  <div className="flex items-stretch rounded-lg border border-gray-200 h-[42px]">
+                  <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 h-[46px] bg-white dark:bg-zinc-800 overflow-hidden">
                     <CountryCodeDropdown
                       value={form.countryCode}
                       onChange={(v) => set('countryCode', v)}
@@ -234,11 +246,11 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                     <input
                       type="tel"
                       value={form.mobile}
-                      onChange={(e) => set('mobile', e.target.value.replace(/\D/g, ''))} // Strip non-digits (handles paste)
-                      onKeyDown={handleMobileKeyDown} // Block non-digit key presses
+                      onChange={(e) => set('mobile', e.target.value.replace(/\D/g, ''))}
+                      onKeyDown={handleMobileKeyDown}
                       inputMode="numeric"
                       placeholder="Mobile number"
-                      className="flex-1 px-3 text-sm focus:outline-none bg-white rounded-r-lg"
+                      className="flex-1 px-3 text-sm focus:outline-none bg-transparent text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500"
                     />
                   </div>
                 </Field>
@@ -250,7 +262,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                     value={form.instagram}
                     onChange={(e) => set('instagram', e.target.value)}
                     placeholder="@handle"
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                    className={inputClass}
                   />
                 </Field>
 
@@ -262,7 +274,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                       value={form.preferredDate}
                       min={todayIST()}
                       onChange={(e) => set('preferredDate', e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                      className={inputClass}
                     />
                   </Field>
                   <Field label="Preferred Time (optional)">
@@ -270,7 +282,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                       type="time"
                       value={form.preferredTime}
                       onChange={(e) => set('preferredTime', e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                      className={inputClass}
                     />
                   </Field>
                 </div>
@@ -284,11 +296,15 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                           <button
                             type="button"
                             onClick={() => set('orderType', 'delivery')}
-                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
                             style={
                               form.orderType === 'delivery'
-                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                                ? {
+                                    borderColor: 'var(--tenant-primary)',
+                                    color: 'var(--tenant-primary)',
+                                    background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                  }
+                                : { borderColor: '#e5e7eb', color: '#6b7280' }
                             }
                           >
                             Delivery · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
@@ -296,11 +312,15 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                           <button
                             type="button"
                             onClick={() => set('orderType', 'pickup')}
-                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
                             style={
                               form.orderType === 'pickup'
-                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                                ? {
+                                    borderColor: 'var(--tenant-primary)',
+                                    color: 'var(--tenant-primary)',
+                                    background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                  }
+                                : { borderColor: '#e5e7eb', color: '#6b7280' }
                             }
                           >
                             Pickup · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
@@ -312,11 +332,15 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                           <button
                             type="button"
                             onClick={() => set('orderType', 'at_shop')}
-                            className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                            className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
                             style={
                               form.orderType === 'at_shop'
-                                ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                                : { borderColor: '#e5e7eb', color: '#4b5563' }
+                                ? {
+                                    borderColor: 'var(--tenant-primary)',
+                                    color: 'var(--tenant-primary)',
+                                    background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                  }
+                                : { borderColor: '#e5e7eb', color: '#6b7280' }
                             }
                           >
                             At Shop · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
@@ -325,11 +349,15 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                             <button
                               type="button"
                               onClick={() => set('orderType', 'at_home')}
-                              className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
+                              className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
                               style={
                                 form.orderType === 'at_home'
-                                  ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                                  : { borderColor: '#e5e7eb', color: '#4b5563' }
+                                  ? {
+                                      borderColor: 'var(--tenant-primary)',
+                                      color: 'var(--tenant-primary)',
+                                      background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                    }
+                                  : { borderColor: '#e5e7eb', color: '#6b7280' }
                               }
                             >
                               At Home · {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
@@ -344,7 +372,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                 {/* Single option price banner */}
                 {!showSelector && displayPrice() && (
                   <div
-                    className="flex items-center justify-between p-3 rounded-xl"
+                    className="flex items-center justify-between p-3.5 rounded-2xl"
                     style={{ background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }}
                   >
                     <span className="text-sm font-medium" style={{ color: 'var(--tenant-primary)' }}>
@@ -364,7 +392,7 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                       onChange={(e) => set('address', e.target.value)}
                       placeholder="Full address for delivery"
                       rows={2}
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors resize-none"
+                      className="w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors resize-none"
                     />
                   </Field>
                 )}
@@ -372,7 +400,9 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                 {/* Tutorial video */}
                 {showAddress && config.tutorialVideoUrl && (
                   <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1.5">Watch before ordering</p>
+                    <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">
+                      Watch before ordering
+                    </p>
                     <video
                       src={config.tutorialVideoUrl}
                       controls
@@ -390,9 +420,11 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                     placeholder="Any specific instructions or requests…"
                     rows={3}
                     maxLength={500}
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-colors resize-none"
+                    className="w-full px-3.5 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none transition-colors resize-none"
                   />
-                  <p className="text-xs text-gray-400 mt-0.5 text-right">{form.descriptionText.length}/500</p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5 text-right">
+                    {form.descriptionText.length}/500
+                  </p>
                 </Field>
 
                 {/* Description images */}
@@ -405,15 +437,20 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                 />
 
                 {errors._form && (
-                  <p className="text-sm text-center py-2 px-3 bg-red-50 text-red-600 rounded-lg">{errors._form}</p>
+                  <p className="text-sm text-center py-2.5 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl">
+                    {errors._form}
+                  </p>
                 )}
 
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
+                  className="w-full py-3.5 rounded-2xl text-base font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+                  style={{
+                    background: 'var(--tenant-primary)',
+                    color: 'var(--tenant-btn-text, #ffffff)',
+                  }}
                 >
                   {submitting ? 'Sending…' : 'Send Request'}
                 </button>
@@ -431,6 +468,13 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
           isUpdating={updatingDup}
         />
       )}
+
+      <style>{`
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(32px) scale(0.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </>
   );
 };

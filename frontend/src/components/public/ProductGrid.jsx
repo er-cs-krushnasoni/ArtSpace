@@ -1,3 +1,4 @@
+// frontend/src/components/public/ProductGrid.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
 import ProductCard from './ProductCard';
@@ -5,7 +6,6 @@ import ProductDetailModal from './ProductDetailModal';
 import { useTenant } from '../../context/TenantContext';
 import { getEffectivePrices } from './ProductCard';
 
-// Sentinel value used internally for simple-tag categories (no sub-values)
 const SIMPLE_TAG_SENTINEL = '__tag__';
 
 const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, initialValue }) => {
@@ -19,9 +19,6 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
   const [initialProductOpened, setInitialProductOpened] = useState(false);
 
   // ── Build category groups from products ───────────────────────────────────
-  // Each group is: { name, values[], isSimpleTag }
-  // isSimpleTag = true when a category has no values defined anywhere —
-  // the group name itself acts as the filter chip.
   const categoryGroups = useMemo(() => {
     const groups = {};
     products.forEach((p) => {
@@ -29,21 +26,16 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         if (!categoryId?.groupName) return;
         const name = categoryId.groupName;
         if (!groups[name]) groups[name] = { values: new Set(), isSimpleTag: false };
-
         const hasDefinedValues  = categoryId.values?.length > 0;
         const hasSelectedValues = selectedValues?.length > 0;
-
         if (!hasDefinedValues && !hasSelectedValues) {
-          // No values anywhere — mark as simple tag
           groups[name].isSimpleTag = true;
         } else {
-          // Value-based category — collect all visible values
           const vals = hasSelectedValues ? selectedValues : categoryId.values;
           vals.forEach((v) => groups[name].values.add(v));
         }
       });
     });
-
     return Object.entries(groups).map(([name, { values, isSimpleTag }]) => ({
       name,
       values: [...values],
@@ -55,7 +47,6 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
   useEffect(() => {
     if (initialFilterApplied) return;
     if (!initialCategoryId || !products.length) return;
-
     let groupName = null;
     for (const p of products) {
       for (const entry of (p.categories || [])) {
@@ -69,20 +60,16 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
       if (groupName) break;
     }
     if (!groupName) return;
-
     const group = categoryGroups.find((g) => g.name === groupName);
-
     if (group?.isSimpleTag) {
       setActiveCategories({ [groupName]: new Set([SIMPLE_TAG_SENTINEL]) });
     } else if (initialValue) {
       setActiveCategories({ [groupName]: new Set([initialValue]) });
     } else {
-      // No specific value — select all values in this group
       if (group?.values.length) {
         setActiveCategories({ [groupName]: new Set(group.values) });
       }
     }
-
     setInitialFilterApplied(true);
   }, [initialCategoryId, initialValue, products, initialFilterApplied, categoryGroups]);
 
@@ -126,12 +113,11 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
     priceMin !== '' ||
     priceMax !== '';
 
-  // ── Active chips for display ──────────────────────────────────────────────
+  // ── Active chips ──────────────────────────────────────────────────────────
   const activeChips = useMemo(() => {
     const chips = [];
     Object.entries(activeCategories).forEach(([group, vals]) => {
       vals.forEach((val) => {
-        // For simple tags, show the group name as the chip label
         const label = val === SIMPLE_TAG_SENTINEL ? group : val;
         chips.push({ type: 'category', group, val, label });
       });
@@ -144,18 +130,15 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
   // ── Filtered products ─────────────────────────────────────────────────────
   const filteredProducts = useMemo(() => {
     let result = products;
-
     const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
     if (activeCatEntries.length > 0) {
       result = result.filter((p) =>
         activeCatEntries.every(([group, vals]) => {
-          // Simple tag: just check if product has this category attached at all
           if (vals.has(SIMPLE_TAG_SENTINEL)) {
             return (p.categories || []).some(
               ({ categoryId }) => categoryId?.groupName === group
             );
           }
-          // Value-based filter: product must have at least one matching value
           return (p.categories || []).some(({ categoryId, selectedValues }) => {
             if (categoryId?.groupName !== group) return false;
             const checkVals = selectedValues?.length > 0
@@ -166,8 +149,6 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         })
       );
     }
-
-    // Price filter
     const min = parseFloat(priceMin);
     const max = parseFloat(priceMax);
     if (!isNaN(min) || !isNaN(max)) {
@@ -181,7 +162,6 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         return true;
       });
     }
-
     if (limit) result = result.slice(0, limit);
     return result;
   }, [products, activeCategories, priceMin, priceMax, limit]);
@@ -198,25 +178,44 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
     else if (chip.type === 'price_max') setPriceMax('');
   };
 
+  // ── Active filter chip style helpers ─────────────────────────────────────
+  const chipOn  = { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' };
+  const chipOff = { background: 'transparent', color: 'var(--tenant-nav-text, #374151)', borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 20%, transparent)' };
+
   return (
     <div>
-      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
+      {/* ── Toolbar ──────────────────────────────────────────────────────── */}
       {!limit && (
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <p className="text-sm text-gray-500">
-            Showing <span className="font-medium text-gray-900">{filteredProducts.length}</span>{' '}
+        <div className="flex items-center justify-between mb-5 gap-3">
+          <p className="text-sm dark:text-zinc-400" style={{ color: 'var(--tenant-nav-text, #6b7280)' }}>
+            Showing{' '}
+            <span className="font-semibold dark:text-zinc-200" style={{ color: 'var(--tenant-nav-text, #111827)' }}>
+              {filteredProducts.length}
+            </span>{' '}
             {labels.products || 'products'}
           </p>
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-150"
+            style={
+              showFilters
+                ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
+                : {
+                    background: 'var(--tenant-card-bg, #fff)',
+                    color: 'var(--tenant-nav-text, #374151)',
+                    borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 18%, transparent)',
+                  }
+            }
           >
-            <SlidersHorizontal size={15} />
+            <SlidersHorizontal size={14} />
             Filters
             {hasActiveFilters && (
               <span
-                className="w-4 h-4 rounded-full text-white text-xs flex items-center justify-center"
-                style={{ background: 'var(--tenant-primary)', fontSize: '10px' }}
+                className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold"
+                style={{
+                  background: showFilters ? 'rgba(255,255,255,0.3)' : 'var(--tenant-primary)',
+                  fontSize: '10px',
+                }}
               >
                 {activeChips.length}
               </span>
@@ -225,45 +224,48 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         </div>
       )}
 
-      {/* ── Filter panel ────────────────────────────────────────────────── */}
+      {/* ── Filter panel ─────────────────────────────────────────────────── */}
       {!limit && showFilters && (
-        <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-4">
+        <div
+          className="mb-6 p-5 rounded-2xl border space-y-5 dark:border-zinc-700/60"
+          style={{
+            background: 'color-mix(in srgb, var(--tenant-card-bg, #fff) 60%, var(--tenant-bg, #fafaf9))',
+            borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 10%, transparent)',
+          }}
+        >
           {categoryGroups.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">No category filters available</p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 italic">No category filters available</p>
           ) : (
             categoryGroups.map((group) => (
               <div key={group.name}>
-                <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <p
+                  className="text-xs font-bold mb-2.5 uppercase tracking-widest dark:text-zinc-400"
+                  style={{ color: 'var(--tenant-nav-text, #6b7280)', opacity: 0.7 }}
+                >
                   {group.name}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {group.isSimpleTag ? (
-                    // Simple tag category — one chip, group name is the label
                     <button
                       onClick={() => toggleSimpleTag(group.name)}
-                      className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150"
                       style={
                         activeCategories[group.name]?.has(SIMPLE_TAG_SENTINEL)
-                          ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
-                          : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
+                          ? chipOn
+                          : chipOff
                       }
                     >
                       {group.name}
                     </button>
                   ) : (
-                    // Value-based category — one chip per value
                     group.values.map((val) => {
                       const isOn = activeCategories[group.name]?.has(val);
                       return (
                         <button
                           key={val}
                           onClick={() => toggleCategoryValue(group.name, val)}
-                          className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150"
-                          style={
-                            isOn
-                              ? { background: 'var(--tenant-primary)', color: '#fff', borderColor: 'var(--tenant-primary)' }
-                              : { background: '#fff', color: '#4b5563', borderColor: '#e5e7eb' }
-                          }
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150"
+                          style={isOn ? chipOn : chipOff}
                         >
                           {val}
                         </button>
@@ -277,29 +279,35 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
 
           {/* Price range */}
           <div>
-            <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+            <p
+              className="text-xs font-bold mb-2.5 uppercase tracking-widest dark:text-zinc-400"
+              style={{ color: 'var(--tenant-nav-text, #6b7280)', opacity: 0.7 }}
+            >
               Price Range (₹)
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <input
                 type="number"
                 placeholder="Min"
                 value={priceMin}
                 onChange={(e) => setPriceMin(e.target.value)}
-                className="w-24 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400"
+                className="w-24 px-3 py-2 rounded-xl border text-sm focus:outline-none transition-colors dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600"
+                style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 18%, transparent)' }}
               />
-              <span className="text-gray-400 text-sm">—</span>
+              <span className="text-gray-300 dark:text-zinc-600 text-sm font-light">—</span>
               <input
                 type="number"
                 placeholder="Max"
                 value={priceMax}
                 onChange={(e) => setPriceMax(e.target.value)}
-                className="w-24 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400"
+                className="w-24 px-3 py-2 rounded-xl border text-sm focus:outline-none transition-colors dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600"
+                style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 18%, transparent)' }}
               />
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
-                  className="ml-auto text-xs text-gray-400 hover:text-gray-700 underline"
+                  className="ml-auto text-xs font-medium underline underline-offset-2 opacity-60 hover:opacity-100 transition-opacity dark:text-zinc-400"
+                  style={{ color: 'var(--tenant-nav-text, #6b7280)' }}
                 >
                   Clear all
                 </button>
@@ -309,17 +317,20 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         </div>
       )}
 
-      {/* ── Active filter chips ──────────────────────────────────────────── */}
+      {/* ── Active filter chips ───────────────────────────────────────────── */}
       {!limit && activeChips.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-2 mb-5">
           {activeChips.map((chip, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold text-white"
               style={{ background: 'var(--tenant-primary)' }}
             >
               {chip.label}
-              <button onClick={() => removeChip(chip)} className="ml-0.5 hover:opacity-70">
+              <button
+                onClick={() => removeChip(chip)}
+                className="ml-0.5 hover:opacity-70 transition-opacity"
+              >
                 <X size={11} />
               </button>
             </span>
@@ -327,34 +338,52 @@ const ProductGrid = ({ products, limit, initialProductId, initialCategoryId, ini
         </div>
       )}
 
-      {/* ── Product grid ─────────────────────────────────────────────────── */}
+      {/* ── Product grid ──────────────────────────────────────────────────── */}
       {filteredProducts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Search size={40} className="text-gray-200 mb-3" />
-          <p className="text-sm font-medium text-gray-500">No products found</p>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }}
+          >
+            <Search size={28} style={{ color: 'var(--tenant-primary)', opacity: 0.5 }} />
+          </div>
+          <p
+            className="text-base font-semibold mb-1 dark:text-zinc-300"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-nav-text, #374151)' }}
+          >
+            No products found
+          </p>
+          <p className="text-sm text-gray-400 dark:text-zinc-500 mb-4">
+            Try adjusting your filters
+          </p>
           {hasActiveFilters && (
             <button
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ background: 'var(--tenant-primary)', color: '#fff' }}
               onClick={clearAllFilters}
-              className="mt-2 text-sm underline"
-              style={{ color: 'var(--tenant-primary)' }}
             >
               Clear filters
             </button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filteredProducts.map((product) => (
-            <ProductCard
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          {filteredProducts.map((product, index) => (
+            <div
               key={product._id}
-              product={product}
-              onClick={() => setSelectedProduct(product)}
-            />
+              className="animate-fadeUp"
+              style={{ animationDelay: `${Math.min(index * 40, 300)}ms`, animationFillMode: 'both' }}
+            >
+              <ProductCard
+                product={product}
+                onClick={() => setSelectedProduct(product)}
+              />
+            </div>
           ))}
         </div>
       )}
 
-      {/* ── Product detail modal ─────────────────────────────────────────── */}
+      {/* ── Product detail modal ──────────────────────────────────────────── */}
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}
