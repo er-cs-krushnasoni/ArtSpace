@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate ,useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
@@ -133,9 +133,10 @@ const TenantPublicSite = () => {
 
 // ─── Root Router ──────────────────────────────────────────────────────────────
 const AppRouter = () => {
-  const isSuperAdmin = isSuperAdminPath();
-  const tenantSlug   = getTenantSlug();
-
+  
+  const location = useLocation();                         
+  const isSuperAdmin = isSuperAdminPath(location.pathname); 
+  const tenantSlug   = getTenantSlug(location.pathname);    
   if (isSuperAdmin) return <SuperAdminPanel />;
 
   if (tenantSlug) {

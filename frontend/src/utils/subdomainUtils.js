@@ -5,8 +5,8 @@
  * /superadmin/... → null
  * / → null
  */
-export const getTenantSlug = () => {
-  const path = window.location.pathname;
+export const getTenantSlug = (pathname) => {
+  const path = pathname ?? window.location.pathname;
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 's' && parts[1]) return parts[1];
   return null;
@@ -15,8 +15,9 @@ export const getTenantSlug = () => {
 /**
  * Returns true if current path is under /superadmin
  */
-export const isSuperAdminPath = () => {
-  return window.location.pathname.startsWith('/superadmin');
+export const isSuperAdminPath = (pathname) => {
+  const path = pathname ?? window.location.pathname;
+  return path.startsWith('/superadmin');
 };
 
 /**

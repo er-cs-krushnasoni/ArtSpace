@@ -158,33 +158,35 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
           </div>
         )}
         {/* Actions */}
-        <div className="flex items-center gap-1.5 mt-auto pt-2 border-t border-gray-50">
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(product); }}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-            Edit
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDiscount(product); }}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
-            style={
-              discountActive
-                ? { background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }
-                : { color: '#6d28d9', borderColor: '#ede9fe', background: '#ede9fe' }
-            }
-          >
-            <Percent className="w-3.5 h-3.5" />
-            Discount
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(product); }}
-            className="p-1.5 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-          </button>
-        </div>
+        <div className="mt-auto pt-2 border-t border-gray-50 space-y-1.5">
+  <div className="flex gap-1.5">
+    <button
+      onClick={(e) => { e.stopPropagation(); onEdit(product); }}
+      className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
+    >
+      <Edit2 className="w-3 h-3" />
+      Edit
+    </button>
+    <button
+      onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+      className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all"
+    >
+      <Trash2 className="w-3 h-3" />
+    </button>
+  </div>
+  <button
+    onClick={(e) => { e.stopPropagation(); onDiscount(product); }}
+    className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg border transition-all"
+    style={
+      discountActive
+        ? { background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }
+        : { color: '#6d28d9', borderColor: '#ede9fe', background: '#ede9fe' }
+    }
+  >
+    <Percent className="w-3 h-3" />
+    {discountActive ? 'Edit Discount' : 'Add Discount'}
+  </button>
+</div>
       </div>
     </div>
   );

@@ -198,30 +198,30 @@ export default function BulkDiscountModal({
           )}
 
           {/* Date range */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Start Date & Time (optional)</label>
-              <input
-                type="datetime-local"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                disabled={applying}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 disabled:bg-gray-50"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">End Date & Time (optional)</label>
-              <input
-                type="datetime-local"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                disabled={applying}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 disabled:bg-gray-50"
-              />
-            </div>
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div>
+    <label className="block text-xs font-medium text-gray-600 mb-1.5">Start Date & Time (optional)</label>
+    <input
+      type="datetime-local"
+      value={startDate}
+      onChange={(e) => setStartDate(e.target.value)}
+      min={new Date().toISOString().slice(0, 16)}
+      disabled={applying}
+      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 disabled:bg-gray-50"
+    />
+  </div>
+  <div>
+    <label className="block text-xs font-medium text-gray-600 mb-1.5">End Date & Time (optional)</label>
+    <input
+      type="datetime-local"
+      value={endDate}
+      onChange={(e) => setEndDate(e.target.value)}
+      min={new Date().toISOString().slice(0, 16)}
+      disabled={applying}
+      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 disabled:bg-gray-50"
+    />
+  </div>
+</div>
 
           {/* Note about fixed discount */}
           {type === 'fixed' && (

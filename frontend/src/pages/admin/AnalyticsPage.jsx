@@ -7,11 +7,10 @@ Chart.register(...registerables);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const RANGES = [
-  { label: '7 Days',     value: '7d' },
-  { label: '30 Days',    value: '30d' },
-  { label: '90 Days',    value: '90d' },
-  { label: 'This Month', value: 'thismonth' },
-  { label: 'All Time',   value: 'all' },
+  { label: '7 Days',  value: '7d' },
+  { label: '30 Days', value: '30d' },
+  { label: '90 Days', value: '90d' },
+  { label: 'All Time', value: 'all' },
 ];
 
 const C = {

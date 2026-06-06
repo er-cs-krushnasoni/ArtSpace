@@ -107,46 +107,97 @@ const TemplatePickerModal = ({ templates, onSelect, onClose }) => {
 // categories: [{ _id, groupName, values }]
 // selected:   [categoryId, ...]
 const CategoryPicker = ({ categories, selected, onChange }) => {
+  // selected: [{ categoryId, values: [] }]
   const [open, setOpen] = useState(false);
+  const [expandedCat, setExpandedCat] = useState(null);
   const ref = useRef(null);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const toggle = (id) => {
-    const strId = String(id);
-    const already = selected.map(String).includes(strId);
-    onChange(already ? selected.filter(s => String(s) !== strId) : [...selected, id]);
+  // Helpers
+  const getLink = (catId) =>
+    selected.find((s) => String(s.categoryId) === String(catId));
+
+  const isGroupLinked = (catId) => !!getLink(catId);
+
+  const isValueLinked = (catId, val) => {
+    const link = getLink(catId);
+    return link ? link.values.includes(val) : false;
   };
 
-  const selectedNames = categories
-    .filter(c => selected.map(String).includes(String(c._id)))
-    .map(c => c.groupName);
+  const toggleGroup = (cat) => {
+    const linked = isGroupLinked(cat._id);
+    if (linked) {
+      // remove entire group
+      onChange(selected.filter((s) => String(s.categoryId) !== String(cat._id)));
+    } else {
+      // add group with all values pre-selected
+      onChange([...selected, { categoryId: cat._id, values: [...(cat.values || [])] }]);
+      setExpandedCat(String(cat._id));
+    }
+  };
+
+  const toggleValue = (cat, val) => {
+    const link = getLink(cat._id);
+    if (!link) {
+      // add group with just this value
+      onChange([...selected, { categoryId: cat._id, values: [val] }]);
+    } else {
+      const newValues = link.values.includes(val)
+        ? link.values.filter((v) => v !== val)
+        : [...link.values, val];
+      if (newValues.length === 0) {
+        // remove group entirely if no values left
+        onChange(selected.filter((s) => String(s.categoryId) !== String(cat._id)));
+      } else {
+        onChange(selected.map((s) =>
+          String(s.categoryId) === String(cat._id) ? { ...s, values: newValues } : s
+        ));
+      }
+    }
+  };
+
+  // Build pill labels
+  const pills = selected.flatMap((link) => {
+    const cat = categories.find((c) => String(c._id) === String(link.categoryId));
+    if (!cat) return [];
+    if (link.values.length === 0 || link.values.length === (cat.values || []).length) {
+      return [{ label: cat.groupName, catId: cat._id, value: null }];
+    }
+    return link.values.map((v) => ({ label: `${cat.groupName}: ${v}`, catId: cat._id, value: v }));
+  });
+
+  const removePill = (catId, value) => {
+    if (value === null) {
+      onChange(selected.filter((s) => String(s.categoryId) !== String(catId)));
+    } else {
+      toggleValue(categories.find((c) => String(c._id) === String(catId)), value);
+    }
+  };
 
   if (categories.length === 0) return null;
 
   return (
     <div className="relative mt-1.5" ref={ref}>
-      {/* Selected pills */}
-      {selected.length > 0 && (
+      {/* Pills */}
+      {pills.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1.5">
-          {selectedNames.map((name, i) => (
+          {pills.map((pill, i) => (
             <span
               key={i}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-700 border border-violet-100"
             >
-              {name}
+              {pill.label}
               <button
                 type="button"
-                onClick={() => {
-                  const cat = categories.find(c => c.groupName === name);
-                  if (cat) toggle(cat._id);
-                }}
+                onClick={() => removePill(pill.catId, pill.value)}
                 className="text-violet-400 hover:text-violet-700 transition-colors"
               >
                 <X size={10} />
@@ -159,7 +210,7 @@ const CategoryPicker = ({ categories, selected, onChange }) => {
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-600 transition-colors"
       >
         <Tag size={11} />
@@ -169,40 +220,74 @@ const CategoryPicker = ({ categories, selected, onChange }) => {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-xl shadow-lg w-64 py-1.5 max-h-52 overflow-y-auto">
+        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-xl shadow-lg w-72 max-w-[calc(100vw-2rem)] py-1.5 max-h-64 overflow-y-auto">
           <p className="px-3 pb-1.5 pt-0.5 text-xs text-gray-400 font-medium border-b border-gray-100 mb-1">
-            Select which categories match this answer
+            Select categories &amp; subcategories
           </p>
           {categories.map((cat) => {
-            const isSelected = selected.map(String).includes(String(cat._id));
+            const linked = isGroupLinked(cat._id);
+            const isExp = expandedCat === String(cat._id);
+            const hasValues = cat.values?.length > 0;
             return (
-              <button
-                key={cat._id}
-                type="button"
-                onClick={() => toggle(cat._id)}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors text-left ${
-                  isSelected
-                    ? 'bg-violet-50 text-violet-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <div>
-                  <span className="font-medium">{cat.groupName}</span>
-                  {cat.values?.length > 0 && (
-                    <span className="ml-1.5 text-gray-400">
-                      {cat.values.slice(0, 3).join(', ')}
-                      {cat.values.length > 3 ? '…' : ''}
-                    </span>
-                  )}
+              <div key={cat._id}>
+                {/* Group row */}
+                <div className={`flex items-center justify-between px-3 py-2 transition-colors ${linked ? 'bg-violet-50' : 'hover:bg-gray-50'}`}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(cat)}
+                    className={`flex-1 text-xs font-semibold text-left transition-colors ${linked ? 'text-violet-700' : 'text-gray-700'}`}
+                  >
+                    {cat.groupName}
+                    {linked && (
+                      <span className="ml-1.5 font-normal text-violet-500">
+                        ({getLink(cat._id)?.values.length || 0}/{(cat.values || []).length})
+                      </span>
+                    )}
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {linked && (
+                      <span className="w-3.5 h-3.5 rounded-full bg-violet-500 flex items-center justify-center flex-shrink-0">
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M1.5 4L3 5.5L6.5 2.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                    )}
+                    {hasValues && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCat(isExp ? null : String(cat._id))}
+                        className="p-0.5 text-gray-400 hover:text-violet-600 transition-colors"
+                      >
+                        <ChevronDownSm size={11} className={`transition-transform ${isExp ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {isSelected && (
-                  <span className="w-3.5 h-3.5 rounded-full bg-violet-500 flex items-center justify-center flex-shrink-0">
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                      <path d="M1.5 4L3 5.5L6.5 2.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
+                {/* Values */}
+                {hasValues && isExp && (
+                  <div className="bg-gray-50 border-t border-b border-gray-100 py-1 px-2">
+                    <div className="flex flex-wrap gap-1 py-1">
+                      {cat.values.map((val) => {
+                        const active = isValueLinked(cat._id, val);
+                        return (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => toggleValue(cat, val)}
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                              active
+                                ? 'bg-violet-500 text-white border-violet-500'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:text-violet-600'
+                            }`}
+                          >
+                            {val}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -222,7 +307,7 @@ const OptionRow = ({ opt, onChange, onRemove, canRemove, categories }) => (
         onChange={(e) => onChange({ ...opt, text: e.target.value })}
         placeholder="Answer option…"
         maxLength={120}
-        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-violet-400 transition-colors bg-white"
+        className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-violet-400 transition-colors bg-white"
       />
       {canRemove && (
         <button
@@ -234,14 +319,12 @@ const OptionRow = ({ opt, onChange, onRemove, canRemove, categories }) => (
         </button>
       )}
     </div>
-
-    {/* Category linker — shown when tenant has categories */}
     {categories.length > 0 && (
       <div className="ml-5 mt-1.5">
         <CategoryPicker
           categories={categories}
-          selected={opt.categoryIds || []}
-          onChange={(newIds) => onChange({ ...opt, categoryIds: newIds })}
+          selected={opt.categoryLinks || []}
+          onChange={(newLinks) => onChange({ ...opt, categoryLinks: newLinks })}
         />
       </div>
     )}
@@ -252,7 +335,7 @@ const OptionRow = ({ opt, onChange, onRemove, canRemove, categories }) => (
 const QuestionCard = ({ q, idx, total, onChange, onRemove, onMove, categories }) => {
   const addOption = () => {
     if (q.options.length >= 4) return;
-    onChange({ ...q, options: [...q.options, { text: '', categoryIds: [] }] });
+    onChange({ ...q, options: [...q.options, { text: '', categoryLinks: [] }] });
   };
   const updateOption = (oi, updated) => {
     const opts = q.options.map((o, i) => (i === oi ? updated : o));
@@ -355,7 +438,13 @@ export default function QuizBuilderPage() {
         api.get('/tenant/settings'),
         api.get('/tenant/categories'),
       ]);
-      setQuestions(quizRes.data.data || []);
+      setQuestions((quizRes.data.data || []).map((q) => ({
+  ...q,
+  options: q.options.map((opt) => ({
+    ...opt,
+    categoryLinks: opt.categoryLinks || [],
+  })),
+})));
       setEnabled(settingsRes.data.data?.websiteConfig?.quizEnabled ?? false);
       setCategories(catRes.data.data || []);
     } catch {
@@ -368,12 +457,12 @@ export default function QuizBuilderPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const makeBlankQuestion = () => ({
-    questionText: '',
-    options: [
-      { text: '', categoryIds: [] },
-      { text: '', categoryIds: [] },
-    ],
-  });
+  questionText: '',
+  options: [
+    { text: '', categoryLinks: [] },
+    { text: '', categoryLinks: [] },
+  ],
+});
 
   const addQuestion = () => {
     if (questions.length >= 5) return;
@@ -397,11 +486,17 @@ export default function QuizBuilderPage() {
   };
 
   const loadTemplate = (templateKey) => {
-    const tpl = QUIZ_TEMPLATES[templateKey] || QUIZ_TEMPLATES.generic;
-    setQuestions(tpl.map((q) => ({ ...q })));
-    setShowTemplatePicker(false);
-    toast.success('Template loaded — customise and save');
-  };
+  const tpl = QUIZ_TEMPLATES[templateKey] || QUIZ_TEMPLATES.generic;
+  setQuestions(tpl.map((q) => ({
+    ...q,
+    options: q.options.map((opt) => ({
+      ...opt,
+      categoryLinks: opt.categoryLinks || [],
+    })),
+  })));
+  setShowTemplatePicker(false);
+  toast.success('Template loaded — customise and save');
+};
 
   const handleLoadTemplate = () => {
     if (isOtherType) {
@@ -457,30 +552,30 @@ export default function QuizBuilderPage() {
 
   // Count how many options across all questions have at least one category linked
   const linkedCount = questions.reduce((acc, q) =>
-    acc + q.options.filter(o => o.categoryIds?.length > 0).length, 0
-  );
+  acc + q.options.filter(o => o.categoryLinks?.length > 0).length, 0
+);
   const totalOptions = questions.reduce((acc, q) => acc + q.options.length, 0);
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{quizName} Builder</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Create questions to help customers discover the right products
-          </p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60 transition-opacity hover:opacity-90"
-          style={{ background: 'var(--color-primary)' }}
-        >
-          <Save size={15} />
-          {saving ? 'Saving…' : 'Save Quiz'}
-        </button>
-      </div>
+<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+  <div>
+    <h1 className="text-xl font-semibold text-gray-900">{quizName} Builder</h1>
+    <p className="text-sm text-gray-500 mt-0.5">
+      Create questions to help customers discover the right products
+    </p>
+  </div>
+  <button
+    onClick={handleSave}
+    disabled={saving}
+    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60 transition-opacity hover:opacity-90 sm:flex-shrink-0"
+    style={{ background: 'var(--color-primary)' }}
+  >
+    <Save size={15} />
+    {saving ? 'Saving…' : 'Save Quiz'}
+  </button>
+</div>
 
       {/* Enable toggle card */}
       <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 mb-5 flex items-center justify-between">
@@ -555,28 +650,28 @@ export default function QuizBuilderPage() {
       ) : (
         <>
           {/* Toolbar */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs text-gray-500">
-              {questions.length}/5 questions · minimum 3 to publish
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleLoadTemplate}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                <Wand2 size={13} />
-                {isOtherType ? 'Load Template' : 'Load Default Template'}
-              </button>
-              <button
-                onClick={addQuestion}
-                disabled={questions.length >= 5}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-40 transition-opacity hover:opacity-90"
-                style={{ background: 'var(--color-primary)' }}
-              >
-                <Plus size={13} /> Add Question
-              </button>
-            </div>
-          </div>
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 mb-4">
+  <p className="text-xs text-gray-500">
+    {questions.length}/5 questions · minimum 3 to publish
+  </p>
+  <div className="flex items-center gap-2 w-full xs:w-auto">
+    <button
+      onClick={handleLoadTemplate}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
+    >
+      <Wand2 size={13} />
+      {isOtherType ? 'Template' : 'Load Template'}
+    </button>
+    <button
+      onClick={addQuestion}
+      disabled={questions.length >= 5}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-40 transition-opacity hover:opacity-90 whitespace-nowrap"
+      style={{ background: 'var(--color-primary)' }}
+    >
+      <Plus size={13} /> Add Question
+    </button>
+  </div>
+</div>
 
           {/* Questions */}
           {questions.length === 0 ? (

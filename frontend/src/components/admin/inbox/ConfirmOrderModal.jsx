@@ -4,30 +4,30 @@ import api from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 const TYPE_BADGE = {
-  SHOP_ORDER: { label: 'Shop Order', className: 'bg-violet-100 text-violet-800' },
+  SHOP_ORDER:   { label: 'Shop Order',   className: 'bg-violet-100 text-violet-800' },
   CUSTOM_ORDER: { label: 'Custom Order', className: 'bg-pink-100 text-pink-800' },
-  APPOINTMENT: { label: 'Appointment', className: 'bg-blue-100 text-blue-800' },
+  APPOINTMENT:  { label: 'Appointment',  className: 'bg-blue-100 text-blue-800' },
 };
 
 const ORDER_TYPE_OPTIONS = {
-  SHOP_ORDER: [
+  SHOP_ORDER:   [
     { value: 'delivery', label: 'Delivery' },
-    { value: 'pickup', label: 'Pickup' },
-    { value: 'at_shop', label: 'At Shop' },
-    { value: 'at_home', label: 'At Home' },
+    { value: 'pickup',   label: 'Pickup' },
+    { value: 'at_shop',  label: 'At Shop' },
+    { value: 'at_home',  label: 'At Home' },
   ],
   CUSTOM_ORDER: [
     { value: 'delivery', label: 'Delivery' },
-    { value: 'pickup', label: 'Pickup' },
+    { value: 'pickup',   label: 'Pickup' },
   ],
-  APPOINTMENT: [
+  APPOINTMENT:  [
     { value: 'at_shop', label: 'At Shop' },
     { value: 'at_home', label: 'At Home' },
   ],
 };
 
 const inputClass =
-  'w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition';
+  'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition';
 
 const Field = ({ label, children }) => (
   <div>
@@ -38,18 +38,16 @@ const Field = ({ label, children }) => (
   </div>
 );
 
-// Block non-numeric key presses
 const handleMobileKeyDown = (e) => {
   const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
   if (allowed.includes(e.key)) return;
-  if (e.ctrlKey || e.metaKey) return; // Allow copy/paste/select-all combos
+  if (e.ctrlKey || e.metaKey) return;
   if (!/^\d$/.test(e.key)) e.preventDefault();
 };
 
 export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
   const badge = TYPE_BADGE[query.type] || TYPE_BADGE.SHOP_ORDER;
 
-  // Derive default price from query
   const defaultPrice = (() => {
     const { orderType, lockedDeliveryPrice, lockedAppointmentPrice, type } = query;
     if (type === 'CUSTOM_ORDER' || type === 'APPOINTMENT') return '';
@@ -62,24 +60,23 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
     return '';
   })();
 
-  // Editable fields — pre-filled from query
-  const [customerName, setCustomerName] = useState(query.customerName || '');
-  const [mobile, setMobile] = useState(query.mobile || '');
-  const [countryCode, setCountryCode] = useState(query.countryCode || '+91');
-  const [instagram, setInstagram] = useState(query.instagram || '');
-  const [orderType, setOrderType] = useState(query.orderType || '');
-  const [address, setAddress] = useState(query.address || '');
-  const [preferredDate, setPreferredDate] = useState(
+  const [customerName,   setCustomerName]   = useState(query.customerName || '');
+  const [mobile,         setMobile]         = useState(query.mobile || '');
+  const [countryCode,    setCountryCode]    = useState(query.countryCode || '+91');
+  const [instagram,      setInstagram]      = useState(query.instagram || '');
+  const [orderType,      setOrderType]      = useState(query.orderType || '');
+  const [address,        setAddress]        = useState(query.address || '');
+  const [preferredDate,  setPreferredDate]  = useState(
     query.preferredDate ? new Date(query.preferredDate).toISOString().split('T')[0] : ''
   );
-  const [preferredTime, setPreferredTime] = useState(query.preferredTime || '');
+  const [preferredTime,  setPreferredTime]  = useState(query.preferredTime || '');
   const [descriptionText, setDescriptionText] = useState(query.descriptionText || '');
-  const [scheduledDate, setScheduledDate] = useState(
+  const [scheduledDate,  setScheduledDate]  = useState(
     query.preferredDate ? new Date(query.preferredDate).toISOString().split('T')[0] : ''
   );
-  const [scheduledTime, setScheduledTime] = useState(query.preferredTime || '');
-  const [finalPrice, setFinalPrice] = useState(defaultPrice);
-  const [loading, setLoading] = useState(false);
+  const [scheduledTime,  setScheduledTime]  = useState(query.preferredTime || '');
+  const [finalPrice,     setFinalPrice]     = useState(defaultPrice);
+  const [loading,        setLoading]        = useState(false);
 
   const needsAddress = orderType === 'delivery' || orderType === 'at_home';
   const orderTypeOptions = ORDER_TYPE_OPTIONS[query.type] || [];
@@ -88,20 +85,17 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
     setLoading(true);
     try {
       await api.post(`/tenant/inbox/${query._id}/confirm`, {
-        // Schedule
-        scheduledDate: scheduledDate || undefined,
-        scheduledTime: scheduledTime || undefined,
-        // Final price (optional)
-        finalPrice: finalPrice !== '' ? Number(finalPrice) : undefined,
-        // Editable query fields
-        customerName: customerName.trim(),
-        mobile: mobile.trim(),
+        scheduledDate:   scheduledDate || undefined,
+        scheduledTime:   scheduledTime || undefined,
+        finalPrice:      finalPrice !== '' ? Number(finalPrice) : undefined,
+        customerName:    customerName.trim(),
+        mobile:          mobile.trim(),
         countryCode,
-        instagram: instagram.trim() || undefined,
+        instagram:       instagram.trim() || undefined,
         orderType,
-        address: needsAddress ? address.trim() : '',
-        preferredDate: preferredDate || undefined,
-        preferredTime: preferredTime || undefined,
+        address:         needsAddress ? address.trim() : '',
+        preferredDate:   preferredDate || undefined,
+        preferredTime:   preferredTime || undefined,
         descriptionText: descriptionText.trim() || undefined,
       });
       toast.success('Order confirmed and moved to calendar');
@@ -115,26 +109,32 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      {/* Sheet on mobile (slides up from bottom), centered dialog on sm+ */}
+      <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-xl flex flex-col max-h-[92dvh] sm:max-h-[90vh]">
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 sm:px-5 sm:py-5 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
             <CalendarCheck className="w-5 h-5 text-violet-600" />
             <h2 className="text-base font-semibold text-gray-900">Confirm Order</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1 rounded-lg"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Query type */}
-          <div className="flex items-center gap-2">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5 space-y-4">
+
+          {/* Query type badge */}
+          <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
               {badge.label}
             </span>
@@ -145,40 +145,43 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
             )}
           </div>
 
-          {/* ── Customer details ─────────────────────────────────────── */}
+          {/* ── Customer Details ─────────────────────────────── */}
           <div className="p-3 bg-gray-50 rounded-xl space-y-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer Details</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Name">
+
+            {/* Name — full width on mobile */}
+            <Field label="Name">
+              <input
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className={inputClass}
+                placeholder="Customer name"
+              />
+            </Field>
+
+            {/* Mobile number — stacked on mobile, side-by-side on sm+ */}
+            <Field label="Mobile">
+              <div className="flex gap-1.5">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="flex-shrink-0 w-[4.5rem] px-2 py-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-400"
+                >
+                  {['+91', '+1', '+44', '+971', '+65', '+61', '+60'].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
                 <input
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={handleMobileKeyDown}
+                  inputMode="numeric"
                   className={inputClass}
-                  placeholder="Customer name"
+                  placeholder="Mobile number"
                 />
-              </Field>
-              <Field label="Mobile">
-                <div className="flex gap-1">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="px-2 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none w-20 flex-shrink-0"
-                  >
-                    {['+91','+1','+44','+971','+65','+61','+60'].map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <input
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} // Strip non-digits (handles paste)
-                    onKeyDown={handleMobileKeyDown} // Block non-digit key presses
-                    inputMode="numeric"
-                    className={inputClass}
-                    placeholder="Mobile"
-                  />
-                </div>
-              </Field>
-            </div>
+              </div>
+            </Field>
+
             <Field label="Instagram (optional)">
               <input
                 value={instagram}
@@ -189,11 +192,10 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
             </Field>
           </div>
 
-          {/* ── Order details ────────────────────────────────────────── */}
+          {/* ── Order Details ─────────────────────────────────── */}
           <div className="p-3 bg-gray-50 rounded-xl space-y-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Order Details</p>
 
-            {/* Order type */}
             <Field label="Order Type">
               <div className="flex flex-wrap gap-2">
                 {orderTypeOptions.map(({ value, label }) => (
@@ -204,7 +206,7 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
                       setOrderType(value);
                       if (value !== 'delivery' && value !== 'at_home') setAddress('');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                       orderType === value
                         ? 'border-violet-400 bg-violet-50 text-violet-700'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -216,7 +218,6 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
               </div>
             </Field>
 
-            {/* Address — conditional */}
             {needsAddress && (
               <Field label="Address">
                 <textarea
@@ -229,7 +230,6 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
               </Field>
             )}
 
-            {/* Description */}
             <Field label="Description">
               <textarea
                 value={descriptionText}
@@ -241,12 +241,15 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
             </Field>
           </div>
 
-          {/* ── Schedule ─────────────────────────────────────────────── */}
+          {/* ── Schedule ──────────────────────────────────────── */}
           <div className="p-3 bg-gray-50 rounded-xl space-y-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Schedule <span className="normal-case font-normal text-gray-400">(optional)</span>
+              Schedule{' '}
+              <span className="normal-case font-normal text-gray-400">(optional)</span>
             </p>
-            <div className="grid grid-cols-2 gap-3">
+
+            {/* Stack on mobile, 2-col on sm+ */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Scheduled Date">
                 <input
                   type="date"
@@ -267,20 +270,23 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
             </div>
           </div>
 
-          {/* ── Pricing ──────────────────────────────────────────────── */}
+          {/* ── Pricing ───────────────────────────────────────── */}
           <div className="p-3 bg-violet-50 border border-violet-100 rounded-xl space-y-2">
             <p className="text-xs font-semibold text-violet-700 uppercase tracking-wide">
-              Final Price <span className="normal-case font-normal text-violet-400">(optional — set now or later)</span>
+              Final Price{' '}
+              <span className="normal-case font-normal text-violet-400">(optional — set now or later)</span>
             </p>
-            {/* Show locked price as reference for shop orders */}
+
             {query.type === 'SHOP_ORDER' && defaultPrice !== '' && (
               <p className="text-xs text-gray-500">
-                Product price: <span className="font-semibold text-gray-700">₹{defaultPrice}</span>
+                Product price:{' '}
+                <span className="font-semibold text-gray-700">₹{defaultPrice}</span>
                 {query.productId?.discount?.isActive && (
                   <span className="ml-1 text-green-600">(discounted)</span>
                 )}
               </p>
             )}
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-600 flex-shrink-0">₹</span>
               <input
@@ -290,6 +296,7 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
                 onChange={(e) => setFinalPrice(e.target.value)}
                 className={inputClass}
                 placeholder="Enter final price"
+                inputMode="decimal"
               />
             </div>
             <p className="text-xs text-gray-400">
@@ -299,17 +306,17 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-5 pt-0 flex-shrink-0">
+        <div className="flex gap-3 px-4 py-4 sm:px-5 pt-0 flex-shrink-0 border-t border-gray-100">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
+            className="flex-1 py-3 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
             style={{ background: 'var(--color-primary)' }}
           >
             {loading ? 'Confirming…' : 'Confirm Order'}

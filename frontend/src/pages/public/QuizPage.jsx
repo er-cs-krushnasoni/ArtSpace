@@ -11,78 +11,86 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Matching algorithm ────────────────────────────────────────────────────────
 function matchProducts(questions, answers, products) {
-  // Collect all selected option texts (lowercased)
   const selectedTexts = answers.map((ai, qi) =>
     questions[qi]?.options[ai]?.text?.toLowerCase().trim() || ''
   ).filter(Boolean);
 
-  // Also collect categoryIds if admin mapped them
+  // Tally category group hits (legacy categoryIds)
   const talliedIds = {};
+  // Tally specific value hits (new categoryLinks)
+  const talliedValues = {}; // key: "categoryId::value"
+
   answers.forEach((answerIdx, qIdx) => {
     const opt = questions[qIdx]?.options[answerIdx];
+    // legacy
     (opt?.categoryIds || []).forEach((cid) => {
       const key = String(cid);
       talliedIds[key] = (talliedIds[key] || 0) + 1;
+    });
+    // new
+    (opt?.categoryLinks || []).forEach((cl) => {
+      const cidKey = String(cl.categoryId);
+      talliedIds[cidKey] = (talliedIds[cidKey] || 0) + 1;
+      (cl.values || []).forEach((v) => {
+        const vKey = `${cidKey}::${v.toLowerCase()}`;
+        talliedValues[vKey] = (talliedValues[vKey] || 0) + 1;
+      });
     });
   });
 
   const scored = products.map((p) => {
     let score = 0;
 
-    // 1. Category value text matching (fuzzy) — works without admin config
     (p.categories || []).forEach((cat) => {
+      const catIdKey = String(cat._id);
+
       (cat.values || []).forEach((val) => {
         const valLower = val.toLowerCase();
+        const vKey = `${catIdKey}::${valLower}`;
+
+        // specific value match via categoryLinks (+3 per vote)
+        if (talliedValues[vKey]) score += talliedValues[vKey] * 3;
+
+        // fuzzy text match
         selectedTexts.forEach((text) => {
-          // exact word match scores higher than partial
           if (valLower === text) score += 3;
           else if (valLower.includes(text) || text.includes(valLower)) score += 1.5;
-          // word-level partial match
           else {
             const textWords = text.split(/\s+/);
             const valWords = valLower.split(/\s+/);
             textWords.forEach((tw) => {
-              if (tw.length > 3 && valWords.some((vw) => vw.includes(tw) || tw.includes(vw))) {
+              if (tw.length > 3 && valWords.some((vw) => vw.includes(tw) || tw.includes(vw)))
                 score += 0.75;
-              }
             });
           }
         });
       });
+
+      // category group match (legacy + new)
+      const catScore = talliedIds[catIdKey] || 0;
+      score += catScore * 2;
     });
 
-    // 2. Product name matching
+    // product name text match
     const nameLower = (p.name || '').toLowerCase();
     selectedTexts.forEach((text) => {
       if (nameLower.includes(text)) score += 1;
-      else {
-        text.split(/\s+/).forEach((word) => {
-          if (word.length > 3 && nameLower.includes(word)) score += 0.5;
-        });
-      }
-    });
-
-    // 3. Category ID matching (if admin configured — bonus points)
-    (p.categories || []).forEach((cat) => {
-      const catIdScore = talliedIds[String(cat._id)] || 0;
-      score += catIdScore * 2;
+      else text.split(/\s+/).forEach((word) => {
+        if (word.length > 3 && nameLower.includes(word)) score += 0.5;
+      });
     });
 
     return { product: p, score };
   });
 
   scored.sort((a, b) => b.score - a.score);
-
   const withScore = scored.filter((s) => s.score > 0).map((s) => s.product);
   const withoutScore = scored.filter((s) => s.score === 0).map((s) => s.product);
-
-  // Pad up to 6 with unmatched products if needed
   const results = [...withScore];
   for (const p of withoutScore) {
     if (results.length >= 6) break;
     results.push(p);
   }
-
   return results.slice(0, 6);
 }
 

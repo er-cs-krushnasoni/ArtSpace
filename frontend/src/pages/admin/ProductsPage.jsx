@@ -30,7 +30,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedValues, setSelectedValues] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   // ── Selection state ────────────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -75,13 +75,13 @@ export default function ProductsPage() {
       const minPrice = prices.length ? Math.min(...prices) : 0;
       if (priceMin !== '' && minPrice < parseFloat(priceMin)) return false;
       if (priceMax !== '' && minPrice > parseFloat(priceMax)) return false;
-      if (selectedCategories.length > 0) {
-        const productCatIds = (p.categories || []).map((c) => c._id);
-        if (!selectedCategories.some((cid) => productCatIds.includes(cid))) return false;
-      }
+      if (selectedValues.length > 0) {
+  const productValues = (p.categories || []).flatMap((c) => c.selectedValues || []);
+  if (!selectedValues.some((v) => productValues.includes(v))) return false;
+}
       return true;
     });
-  }, [products, filter, search, priceMin, priceMax, selectedCategories, deliveryEnabled, appointmentEnabled]);
+    }, [products, filter, search, priceMin, priceMax, selectedValues, deliveryEnabled, appointmentEnabled]);
 
   const stats = {
     total: products.length,
@@ -89,21 +89,20 @@ export default function ProductsPage() {
     onDiscount: products.filter((p) => p.discount?.isActive).length,
   };
 
-  const hasActiveFilters = search || priceMin || priceMax || selectedCategories.length > 0;
+  const hasActiveFilters = search || priceMin || priceMax || selectedValues.length > 0;
+const clearFilters = () => {
+  setSearch('');
+  setPriceMin('');
+  setPriceMax('');
+  setSelectedValues([]);
+};
 
-  const clearFilters = () => {
-    setSearch('');
-    setPriceMin('');
-    setPriceMax('');
-    setSelectedCategories([]);
-  };
-
-  // ── Category pill toggle ───────────────────────────────────────────────────
-  const toggleCategory = (catId) => {
-    setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
-    );
-  };
+  // ── Value pill toggle ─────────────────────────────────────────────────────────
+const toggleValue = (val) => {
+  setSelectedValues((prev) =>
+    prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+  );
+};
 
   // ── Selection helpers ──────────────────────────────────────────────────────
   const toggleSelect = (product) => {
@@ -249,7 +248,7 @@ export default function ProductsPage() {
           Filters
           {hasActiveFilters && (
             <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
-              {[search, priceMin || priceMax, selectedCategories.length > 0].filter(Boolean).length}
+              {[search, priceMin || priceMax, selectedValues.length > 0].filter(Boolean).length}
             </span>
           )}
         </button>
@@ -287,26 +286,37 @@ export default function ProductsPage() {
             </div>
           </div>
           {categories.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">Categories</label>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat._id}
-                    onClick={() => toggleCategory(cat._id)}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
-                    style={
-                      selectedCategories.includes(cat._id)
-                        ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
-                        : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
-                    }
-                  >
-                    {cat.groupName}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+  <div className="space-y-3">
+    {categories.map((cat) => {
+      // Show group even if values is empty (acts as a simple tag)
+      const pills = cat.values.length > 0 ? cat.values : [cat.groupName];
+      const isSimpleTag = cat.values.length === 0;
+      return (
+        <div key={cat._id}>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            {cat.groupName}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {pills.map((val) => (
+              <button
+                key={val}
+                onClick={() => toggleValue(val)}
+                className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                style={
+                  selectedValues.includes(val)
+                    ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                    : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
+                }
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -376,34 +386,43 @@ export default function ProductsPage() {
 
       {/* Floating bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-gray-900 text-white rounded-2xl shadow-2xl">
-          <span className="text-sm font-medium">{selectedIds.size} selected</span>
-          <div className="w-px h-4 bg-white/20" />
-          <button
-            onClick={() => setBulkStatusModal(true)}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all"
-          >
-            Set Status
-          </button>
-          <button
-            onClick={() => setBulkDiscountModal(true)}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg transition-all"
-          >
-            Apply Discount
-          </button>
-          <button
-            onClick={() => setBulkRemoveModal(true)}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 bg-red-600 hover:bg-red-500 rounded-lg transition-all"
-          >
-            Remove Discount
-          </button>
-          <button
-            onClick={clearSelection}
-            className="text-gray-400 hover:text-white transition-all"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <div className="fixed bottom-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto z-40 bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3">
+  {/* Top row: count + close */}
+  <div className="flex items-center justify-between mb-2.5 sm:hidden">
+    <span className="text-sm font-medium">{selectedIds.size} selected</span>
+    <button onClick={clearSelection} className="text-gray-400 hover:text-white transition-all p-1">
+      <X className="w-4 h-4" />
+    </button>
+  </div>
+  {/* Buttons row */}
+  <div className="flex items-center gap-2">
+    {/* Count badge — desktop only */}
+    <span className="hidden sm:block text-sm font-medium whitespace-nowrap">{selectedIds.size} selected</span>
+    <div className="hidden sm:block w-px h-4 bg-white/20" />
+    <button
+      onClick={() => setBulkStatusModal(true)}
+      className="flex-1 sm:flex-none flex items-center justify-center text-xs sm:text-sm font-medium px-2.5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all whitespace-nowrap"
+    >
+      Set Status
+    </button>
+    <button
+      onClick={() => setBulkDiscountModal(true)}
+      className="flex-1 sm:flex-none flex items-center justify-center text-xs sm:text-sm font-medium px-2.5 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg transition-all whitespace-nowrap"
+    >
+      Apply Discount
+    </button>
+    <button
+      onClick={() => setBulkRemoveModal(true)}
+      className="flex-1 sm:flex-none flex items-center justify-center text-xs sm:text-sm font-medium px-2.5 py-2 bg-red-600 hover:bg-red-500 rounded-lg transition-all whitespace-nowrap"
+    >
+      Remove
+    </button>
+    {/* Close — desktop only */}
+    <button onClick={clearSelection} className="hidden sm:block text-gray-400 hover:text-white transition-all ml-1">
+      <X className="w-4 h-4" />
+    </button>
+  </div>
+</div>
       )}
 
       {/* Delete confirm modal */}

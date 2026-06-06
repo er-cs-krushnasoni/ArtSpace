@@ -16,6 +16,7 @@ import BypassPaymentModal from '../../components/superadmin/BypassPaymentModal';
 import CreateTenantModal from '../../components/superadmin/CreateTenantModal';
 import TenantDetailDrawer from '../../components/superadmin/TenantDetailDrawer';
 import ConfirmDialog from '../../components/superadmin/ConfirmDialog';
+import UpdateTenantCredentialsModal from '../../components/superadmin/UpdateTenantCredentialsModal';
 
 // ─── Pill helpers (exported for reuse in drawer) ──────────────────────────────
 export const StatusPill = ({ status }) => {
@@ -484,40 +485,41 @@ export default function SuperAdminTenantsPage() {
       {/* Table */}
       <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
         {/* Bulk action bar — shown when items selected */}
-      {selectedIds.size > 0 && (
-        <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
-          <p className="text-sm font-medium text-violet-700" style={{ fontFamily: "'Inter', sans-serif" }}>
-            {selectedIds.size} tenant{selectedIds.size > 1 ? 's' : ''} selected
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-1.5 text-xs rounded-lg border border-violet-200 text-violet-600 hover:bg-violet-100 transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              Clear selection
-            </button>
-            <button
-              onClick={handleBulkPause}
-              disabled={bulkPausing}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              {bulkPausing && <Loader2 size={12} className="animate-spin" />}
-              Pause Selected
-            </button>
-            <button
-  onClick={handleBulkUnpause}
-  disabled={bulkUnpausing}
-  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 transition-colors"
-  style={{ fontFamily: "'Inter', sans-serif" }}
->
-  {bulkUnpausing && <Loader2 size={12} className="animate-spin" />}
-  Unpause Selected
-</button>
+        {selectedIds.size > 0 && (
+          <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3 mb-4 flex items-center justify-between flex-wrap gap-2">
+            <p className="text-sm font-medium text-violet-700" style={{ fontFamily: "'Inter', sans-serif" }}>
+              {selectedIds.size} tenant{selectedIds.size > 1 ? 's' : ''} selected
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="px-3 py-1.5 text-xs rounded-lg border border-violet-200 text-violet-600 hover:bg-violet-100 transition-colors"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleBulkPause}
+                disabled={bulkPausing}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                {bulkPausing && <Loader2 size={12} className="animate-spin" />}
+                Pause
+              </button>
+              <button
+                onClick={handleBulkUnpause}
+                disabled={bulkUnpausing}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 transition-colors"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                {bulkUnpausing && <Loader2 size={12} className="animate-spin" />}
+                Unpause
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="animate-spin text-violet-500" size={22} />
@@ -529,9 +531,60 @@ export default function SuperAdminTenantsPage() {
             <p className="text-xs text-gray-400 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Try adjusting your filters</p>
           </div>
         ) : (
-          /* No overflow-x-auto here — moved to inner div to prevent dropdown clipping */
           <div>
-            <div className="overflow-x-auto">
+            {/* ── Mobile card list (hidden on lg+) ── */}
+            <div className="lg:hidden divide-y divide-gray-100">
+              {tenants.map(tenant => {
+                const days = daysRemaining(tenant.planExpiryDate);
+                return (
+                  <div
+                    key={tenant._id}
+                    className={`px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50/60 transition-colors ${selectedIds.has(tenant._id) ? 'bg-violet-50/40' : ''}`}
+                    onClick={() => setDrawerTenant(tenant)}
+                  >
+                    {/* Checkbox */}
+                    <div onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(tenant._id)}
+                        onChange={() => toggleSelect(tenant._id)}
+                        className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-400 cursor-pointer"
+                      />
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium text-gray-900 truncate" style={{ fontFamily: "'Inter', sans-serif" }}>
+                          {tenant.businessName}
+                        </p>
+                        <PlanPill plan={tenant.plan} />
+                        <StatusPill status={tenant.status} />
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate font-mono">/s/{tenant.slug}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        {days !== null && (
+                          <span className={`text-xs font-medium ${days <= 7 ? 'text-red-600' : days <= 30 ? 'text-amber-600' : 'text-gray-500'}`}>
+                            {days}d left
+                          </span>
+                        )}
+                        {tenant.planExpiryDate && (
+                          <span className="text-xs text-gray-400">
+                            {new Date(tenant.planExpiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Action menu */}
+                    <div onClick={e => e.stopPropagation()}>
+                      <ActionDropdown tenant={tenant} onAction={handleAction} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Desktop table (hidden below lg) ── */}
+            <div className="hidden lg:block">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -606,7 +659,7 @@ export default function SuperAdminTenantsPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex items-center justify-between">
             <p className="text-xs text-gray-400" style={{ fontFamily: "'Inter', sans-serif" }}>
               Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of {total}
             </p>
@@ -630,6 +683,7 @@ export default function SuperAdminTenantsPage() {
       {activeModal?.type === 'changePlan' && <ChangePlanModal tenant={activeModal.tenant} onClose={closeModal} onSuccess={onSuccess} />}
       {activeModal?.type === 'bypassPayment' && <BypassPaymentModal tenant={activeModal.tenant} onClose={closeModal} onSuccess={onSuccess} />}
       {activeModal?.type === 'createTenant' && <CreateTenantModal onClose={closeModal} onSuccess={onSuccess} />}
+      {activeModal?.type === 'updateCredentials' && <UpdateTenantCredentialsModal tenant={activeModal.tenant} onClose={closeModal} onSuccess={onSuccess} />}
       {drawerTenant && <TenantDetailDrawer tenant={drawerTenant} onClose={() => setDrawerTenant(null)} onAction={handleAction} onRefresh={fetchTenants} />}
       {deleteModal && <DeleteTenantModal tenant={deleteModal} onClose={() => setDeleteModal(null)} onConfirm={handleDeleteConfirm} />}
       {confirmDialog && (
