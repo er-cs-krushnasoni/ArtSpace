@@ -420,7 +420,7 @@ const HomePage = () => {
   faqEnabled: {String(tenant?.faqEnabled)} | config.faqEnabled: {String(config.faqEnabled)}
 </div>
 
-      <FAQSection slug={slug} faqEnabled={tenant?.faqEnabled ?? config.faqEnabled} />
+      <FAQSection slug={slug} faqEnabled={config.faqEnabled} />
 
       <ShopFooter tenant={tenant} labels={labels} slug={slug} />
     </div>

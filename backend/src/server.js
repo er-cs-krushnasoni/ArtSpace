@@ -93,7 +93,8 @@ app.use('/api/tenant/analytics', analyticsRoutes);
 app.get('/api/public/:slug/blog', getPublicBlogList);
 app.get('/api/public/:slug/blog/:postSlug', getPublicBlogPost);
 app.use('/api/tenant/faq', faqRoutes);
-app.get('/api/public/:slug/faq', getPublicFAQs);
+const { tenantResolver } = require('./middleware/tenantResolver');
+app.get('/api/public/:slug/faq', tenantResolver, getPublicFAQs);
 
 // ── PWA icon proxy (serves Cloudinary images same-origin for PWA manifest) ──
 app.get('/api/proxy-icon', (req, res) => {
