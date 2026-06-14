@@ -19,7 +19,7 @@ const todayIST = () => {
 // ── Shared field wrapper ──────────────────────────────────────────────────────
 const Field = ({ label, required, error, children }) => (
   <div>
-    <label className="block text-sm font-medium mb-1.5 dark:text-zinc-300" style={{ color: 'var(--tenant-nav-text, #374151)' }}>
+    <label className="block text-sm font-medium mb-1.5 dark:text-zinc-300" style={{ color: 'var(--tenant-text, #374151)' }}>
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
@@ -32,7 +32,7 @@ const Field = ({ label, required, error, children }) => (
 const inputCls =
   'w-full px-3.5 py-3 rounded-xl border text-sm focus:outline-none transition-colors dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 dark:placeholder-zinc-500';
 const inputStyle = {
-  borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 18%, transparent)',
+  borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 18%, transparent)',
 };
 
 // ─── Delivery Form Modal ──────────────────────────────────────────────────────
@@ -161,15 +161,15 @@ const DeliveryFormModal = ({ product, onClose }) => {
             className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10 dark:border-zinc-700"
             style={{
               background: 'var(--tenant-card-bg, #ffffff)',
-              borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 10%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 10%, transparent)',
             }}
           >
             <div>
               <h3
                 className="font-bold text-base dark:text-zinc-100"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-nav-text, #111827)' }}
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-text, #111827)' }}
               >
-                Order / Delivery
+                {config.deliveryEnabled ? 'Buy' : 'Buy'}
               </h3>
               {product.nameVisible && (
                 <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5 truncate max-w-[260px]">
@@ -255,7 +255,7 @@ const DeliveryFormModal = ({ product, onClose }) => {
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { value: 'pickup',   label: 'Pickup',   sub: 'You collect from us' },
-                      { value: 'delivery', label: 'Delivery', sub: 'We deliver to you' },
+                      ...(config.deliveryEnabled ? [{ value: 'delivery', label: 'Delivery', sub: 'We deliver to you' }] : []),
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -265,7 +265,7 @@ const DeliveryFormModal = ({ product, onClose }) => {
                         style={
                           form.orderType === opt.value
                             ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                            : { borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 15%, transparent)', color: 'var(--tenant-nav-text, #6b7280)' }
+                            : { borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 15%, transparent)', color: 'var(--tenant-text, #6b7280)' }
                         }
                       >
                         <div>{opt.label}</div>
@@ -510,13 +510,13 @@ const AppointmentFormModal = ({ product, onClose }) => {
             className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10 dark:border-zinc-700"
             style={{
               background: 'var(--tenant-card-bg, #ffffff)',
-              borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 10%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 10%, transparent)',
             }}
           >
             <div>
               <h3
                 className="font-bold text-base dark:text-zinc-100"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-nav-text, #111827)' }}
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-text, #111827)' }}
               >
                 Book Appointment
               </h3>
@@ -615,7 +615,7 @@ const AppointmentFormModal = ({ product, onClose }) => {
                           style={
                             form.orderType === opt.value
                               ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                              : { borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 15%, transparent)', color: 'var(--tenant-nav-text, #6b7280)' }
+                              : { borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 15%, transparent)', color: 'var(--tenant-text, #6b7280)' }
                           }
                         >
                           <div>{opt.label}</div>
@@ -731,7 +731,8 @@ const ProductDetailModal = ({ product, onClose }) => {
   const prices = getEffectivePrices(product);
   const photos = product.photos || [];
 
-  const canDelivery    = !!config.deliveryEnabled    && product.deliveryEnabled    && prices.offersDelivery;
+  const canPickup      = product.deliveryEnabled && prices.offersDelivery; // always available
+  const canDelivery    = !!config.deliveryEnabled && product.deliveryEnabled && prices.offersDelivery;
   const canAppointment = !!config.appointmentEnabled && product.appointmentEnabled && prices.offersAppointment;
 
   const categoryTags = [];
@@ -762,12 +763,12 @@ const ProductDetailModal = ({ product, onClose }) => {
           className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10 dark:border-zinc-700"
           style={{
             background: 'var(--tenant-card-bg, #ffffff)',
-            borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #374151) 10%, transparent)',
+            borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 10%, transparent)',
           }}
         >
           <h3
             className="font-bold text-base dark:text-zinc-100"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-nav-text, #111827)' }}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--tenant-text, #111827)' }}
           >
             {product.nameVisible ? product.name : 'Product Details'}
           </h3>
@@ -812,20 +813,22 @@ const ProductDetailModal = ({ product, onClose }) => {
 
           {/* Description */}
           {product.description && (
-            <p className="text-sm leading-relaxed dark:text-zinc-400" style={{ color: 'var(--tenant-nav-text, #6b7280)' }}>
+            <p className="text-sm leading-relaxed dark:text-zinc-400" style={{ color: 'var(--tenant-text, #6b7280)' }}>
               {product.description}
             </p>
           )}
 
           {/* Prices */}
           <div className="space-y-2">
-            {canDelivery && (
+            {canPickup && (
               <div
                 className="flex items-center justify-between p-4 rounded-2xl dark:border dark:border-zinc-700"
                 style={{ background: 'color-mix(in srgb, var(--tenant-bg, #fafaf9) 60%, var(--tenant-card-bg, #fff))' }}
               >
                 <div>
-                  <p className="text-xs text-gray-400 dark:text-zinc-500 mb-1">Delivery / Pickup Price</p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mb-1">
+                    {canDelivery ? 'Price' : 'Price'}
+                  </p>
                   <div className="flex items-center gap-2">
                     {prices.hasDiscount && (
                       <span className="text-gray-400 dark:text-zinc-500 line-through text-sm">
@@ -834,7 +837,7 @@ const ProductDetailModal = ({ product, onClose }) => {
                     )}
                     <span
                       className="font-bold text-lg"
-                      style={{ color: 'var(--tenant-nav-text, #111827)' }}
+                      style={{ color: 'var(--tenant-text, #111827)' }}
                     >
                       {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
                     </span>
@@ -866,7 +869,7 @@ const ProductDetailModal = ({ product, onClose }) => {
                     )}
                     <span
                       className="font-bold text-lg"
-                      style={{ color: 'var(--tenant-nav-text, #111827)' }}
+                      style={{ color: 'var(--tenant-text, #111827)' }}
                     >
                       {prices.appointment === 0 ? 'Free' : `₹${prices.appointment}`}
                     </span>
@@ -905,13 +908,13 @@ const ProductDetailModal = ({ product, onClose }) => {
 
           {/* Action buttons */}
           <div className="flex gap-3 pt-1">
-            {canDelivery && (
+            {canPickup && (
               <button
                 className="flex-1 py-3.5 rounded-2xl text-sm font-bold transition-opacity hover:opacity-90"
                 style={{ background: 'var(--tenant-primary)', color: 'var(--tenant-btn-text, #ffffff)' }}
                 onClick={() => setActiveForm('delivery')}
               >
-                Order / Delivery
+                {canDelivery ? 'Buy' : 'Buy'}
               </button>
             )}
             {canAppointment && (

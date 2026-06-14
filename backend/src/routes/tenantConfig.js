@@ -75,6 +75,7 @@ router.get('/config', tenantResolver, async (req, res) => {
     appointmentEnabled: cfg.appointmentEnabled !== false,
     appName: cfg.appName || tenant.businessName,
     pwaIcon: cfg.pwaIcon || cfg.logo || null,
+    faqEnabled: cfg.faqEnabled || false,
   });
 });
 

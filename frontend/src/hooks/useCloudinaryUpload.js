@@ -6,13 +6,22 @@ import api from '../api/axiosInstance';
  * Flow: get signature from backend → upload directly to Cloudinary → return { secure_url, public_id }
  */
 const useCloudinaryUpload = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null);
+  let isUploading, setIsUploading, error, setError;
+  try {
+    [isUploading, setIsUploading] = useState(false); // eslint-disable-line react-hooks/rules-of-hooks
+    [error, setError] = useState(null);               // eslint-disable-line react-hooks/rules-of-hooks
+  } catch {
+    // HMR-induced duplicate React instance — return safe no-op defaults
+    return {
+      upload: async () => { throw new Error('Upload unavailable, please refresh'); },
+      isUploading: false,
+      error: null,
+    };
+  }
 
   const upload = async (file, uploadType) => {
     setIsUploading(true);
     setError(null);
-
     try {
       // Step 1: Get signed upload params from backend
       const sigRes = await api.post('/tenant/settings/upload-signature', { uploadType });
@@ -28,17 +37,14 @@ const useCloudinaryUpload = () => {
 
       const resourceType = uploadType === 'tutorial_video' ? 'video' : 'image';
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-
       const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });
-
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.error?.message || 'Cloudinary upload failed');
       }
-
       const data = await response.json();
       return { secure_url: data.secure_url, public_id: data.public_id };
     } catch (err) {

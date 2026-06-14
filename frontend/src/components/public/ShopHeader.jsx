@@ -42,6 +42,7 @@ const ShopHeader = () => {
       ? [{ label: labels.book_appointment || 'Book Appointment', to: `/s/${slug}/appointment` }]
       : []),
     ...(config.quizEnabled ? [{ label: labels.quiz_name || 'Style Quiz', to: `/s/${slug}/quiz` }] : []),
+      ...(config.faqEnabled ? [{ label: 'FAQ', to: `/s/${slug}/faq` }] : []),
     ...(config.blogEnabled ? [{ label: 'Blog', to: `/s/${slug}/blog` }] : []),
   ];
 
@@ -51,185 +52,198 @@ const ShopHeader = () => {
   };
 
   const activeLinkStyle = (to) => ({
-    color: isActive(to) ? 'var(--tenant-primary)' : 'var(--tenant-nav-text, #1c1917)',
-    background: isActive(to)
-      ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)'
-      : 'transparent',
-  });
+  color: 'var(--tenant-nav-text, #1c1917)',
+  background: isActive(to)
+    ? 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 15%, transparent)'
+    : 'transparent',
+  fontWeight: isActive(to) ? '700' : '500',
+  opacity: isActive(to) ? 1 : 0.65,
+});
 
   const mobileActiveLinkStyle = (to) => ({
-    color: isActive(to) ? 'var(--tenant-primary)' : 'var(--tenant-nav-text, #1c1917)',
-    background: isActive(to)
-      ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)'
-      : 'transparent',
-    borderLeft: isActive(to) ? '3px solid var(--tenant-primary)' : '3px solid transparent',
-  });
+  color: 'var(--tenant-nav-text, #1c1917)',
+  background: isActive(to)
+    ? 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 15%, transparent)'
+    : 'transparent',
+  fontWeight: isActive(to) ? '700' : '500',
+  opacity: isActive(to) ? 1 : 0.65,
+  borderLeft: isActive(to)
+    ? '3px solid var(--tenant-nav-text, #1c1917)'
+    : '3px solid transparent',
+});
 
   return (
-    <header
-      className="sticky top-0 z-50 transition-all duration-300"
-      style={{
-        background: scrolled
-          ? 'color-mix(in srgb, var(--tenant-nav-bg, var(--tenant-bg)) 95%, transparent)'
-          : 'var(--tenant-nav-bg, var(--tenant-bg))',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
-        borderBottom: '1px solid color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent)',
-        boxShadow: scrolled ? '0 1px 16px 0 rgba(0,0,0,0.07)' : 'none',
-      }}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
+  <header
+    className="sticky top-0 z-50 transition-all duration-300"
+    style={{
+      background: scrolled
+        ? 'color-mix(in srgb, var(--tenant-nav-bg, var(--tenant-bg)) 95%, transparent)'
+        : 'var(--tenant-nav-bg, var(--tenant-bg))',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: '1px solid color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent)',
+      boxShadow: scrolled ? '0 1px 16px 0 rgba(0,0,0,0.07)' : 'none',
+    }}
+  >
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
-          {/* Logo + Business Name */}
-          <Link
-            to={`/s/${slug}`}
-            className="flex items-center gap-3 min-w-0 flex-shrink-0 group"
-          >
-            {config.logo && (
-              <img
-                src={config.logo}
-                alt={businessName}
-                className="w-14 h-14 sm:w-[72px] sm:h-[72px] rounded-2xl object-contain flex-shrink-0 border border-gray-100 dark:border-zinc-700 shadow-sm transition-transform duration-200 group-hover:scale-105"
-              />
-            )}
-            <div className="flex flex-col min-w-0">
-              <span
-                className="font-bold truncate leading-tight dark:text-zinc-100"
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontSize: 'clamp(1.1rem, 3vw, 1.5rem)',
-                  letterSpacing: '-0.02em',
-                  color: 'var(--tenant-nav-text, #1c1917)',
-                }}
-              >
-                {businessName}
-              </span>
-              {config.address && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <MapPin size={10} className="text-gray-400 dark:text-zinc-500 flex-shrink-0" />
-                  <span className="text-xs text-gray-400 dark:text-zinc-500 truncate max-w-[160px]">
-                    {config.address}
-                  </span>
-                </div>
-              )}
-            </div>
-          </Link>
-
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-150 whitespace-nowrap"
-                style={activeLinkStyle(link.to)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop Social Buttons */}
-          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            {config.whatsapp && (<a
-              
-                href={`https://wa.me/${config.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 hover:scale-105 border border-white/20"
-                style={{ background: '#25D366' }}
-              >
-                <MessageCircle size={13} />
-                WhatsApp
-              </a>
-            )}
-            {config.instagram && (<a
-              
-                href={`https://instagram.com/${config.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 hover:scale-105 border border-white/20"
-                style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
-              >
-                <InstagramIcon size={13} />
-                Instagram
-              </a>
-            )}
-          </div>
-
-          {/* Mobile Right: Social Icons + Hamburger */}
-          <div className="md:hidden flex items-center gap-2 flex-shrink-0">
-            {config.whatsapp && (<a
-              
-                href={`https://wa.me/${config.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 transition-transform hover:scale-105"
-                style={{ background: '#25D366' }}
-                aria-label="WhatsApp"
-              >
-                <MessageCircle size={16} />
-              </a>
-            )}
-            {config.instagram && (<a
-              
-                href={`https://instagram.com/${config.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 transition-transform hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
-                aria-label="Instagram"
-              >
-                <InstagramIcon size={16} />
-              </a>
-            )}
-            <button
-              className="p-2 rounded-xl transition-colors duration-150 dark:text-zinc-300"
+      {/* ── Row 1: Logo + Name + Social ── */}
+      <div className="flex items-center justify-between py-3 gap-3">
+        {/* Logo + Business Name */}
+        <Link to={`/s/${slug}`} className="flex items-center gap-3 min-w-0 group">
+          {config.logo && (
+            <img
+              src={config.logo}
+              alt={businessName}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-contain flex-shrink-0 border border-gray-100 dark:border-zinc-700 shadow-sm transition-transform duration-200 group-hover:scale-105"
+            />
+          )}
+          <div className="flex flex-col min-w-0">
+            <span
+              className="font-bold leading-tight"
               style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
+                letterSpacing: '-0.02em',
                 color: 'var(--tenant-nav-text, #1c1917)',
-                background: mobileMenuOpen
-                  ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)'
-                  : 'transparent',
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
               }}
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
+              {businessName}
+            </span>
+            {config.address && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <MapPin size={10} style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 40%, transparent)' }} className="flex-shrink-0 mt-0.5 self-start" />
+                <span
+                  className="text-xs leading-tight max-w-[260px] line-clamp-1"
+                  style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 45%, transparent)' }}
+                >
+                  {config.address}
+                </span>
+              </div>
+            )}
           </div>
+        </Link>
+
+        {/* Right: Social buttons + Mobile hamburger */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {config.whatsapp && (<a
+            
+              href={`https://wa.me/${config.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 hover:scale-105 border border-white/20"
+              style={{ background: '#25D366' }}
+            >
+              <MessageCircle size={13} />
+              WhatsApp
+            </a>
+          )}
+          {config.whatsapp && (<a
+            
+              href={`https://wa.me/${config.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 transition-transform hover:scale-105"
+              style={{ background: '#25D366' }}
+              aria-label="WhatsApp"
+            >
+              <MessageCircle size={16} />
+            </a>
+          )}
+          {config.instagram && (<a
+            
+              href={`https://instagram.com/${config.instagram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 hover:scale-105 border border-white/20"
+              style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+            >
+              <InstagramIcon size={13} />
+              Instagram
+            </a>
+          )}
+          {config.instagram && (<a
+            
+              href={`https://instagram.com/${config.instagram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 transition-transform hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
+              aria-label="Instagram"
+            >
+              <InstagramIcon size={16} />
+            </a>
+          )}
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-xl transition-colors duration-150"
+            style={{
+              color: 'var(--tenant-nav-text, #1c1917)',
+              background: mobileMenuOpen
+                ? 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)'
+                : 'transparent',
+            }}
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Menu — slide down */}
-      <div
-        className="md:hidden overflow-hidden transition-all duration-300 ease-in-out"
+      {/* ── Row 2: Desktop Nav (hidden on mobile) ── */}
+      <nav
+        className="hidden md:flex items-center gap-0.5 pb-1.5"
         style={{
-          maxHeight: mobileMenuOpen ? '480px' : '0px',
-          opacity: mobileMenuOpen ? 1 : 0,
+          borderTop: '1px solid color-mix(in srgb, var(--tenant-nav-text, #1c1917) 6%, transparent)',
         }}
       >
-        <div
-          className="px-4 pb-5 pt-2"
-          style={{ background: 'var(--tenant-nav-bg, var(--tenant-bg))' }}
-        >
-          <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150"
-                style={mobileActiveLinkStyle(link.to)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+        <div className="flex items-center gap-0.5 pt-1.5">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="px-3.5 py-1.5 rounded-xl text-sm transition-all duration-150 whitespace-nowrap"
+              style={activeLinkStyle(link.to)}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
+      </nav>
+    </div>
+
+    {/* ── Mobile Menu ── */}
+    <div
+      className="md:hidden overflow-hidden transition-all duration-300 ease-in-out"
+      style={{
+        maxHeight: mobileMenuOpen ? '480px' : '0px',
+        opacity: mobileMenuOpen ? 1 : 0,
+      }}
+    >
+      <div
+        className="px-4 pb-5 pt-2"
+        style={{ background: 'var(--tenant-nav-bg, var(--tenant-bg))' }}
+      >
+        <nav className="flex flex-col gap-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-4 py-3 rounded-xl text-sm transition-all duration-150"
+              style={mobileActiveLinkStyle(link.to)}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
-    </header>
-  );
+    </div>
+  </header>
+);
 };
 
 export default ShopHeader;

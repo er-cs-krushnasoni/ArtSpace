@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const Tenant = require('../models/Tenant');
 const { deleteFromCloudinary, extractPublicId } = require('../config/cloudinary');
 const mongoose = require('mongoose');
+const FAQ = require('../models/FAQ');
 
 let Query, Task;
 const loadModels = () => {
@@ -194,6 +195,7 @@ const purgeExpiredTrials = cron.schedule('0 2 * * *', async () => {
         await BlogPost.deleteMany({ tenantId });
         await QuizQuestion.deleteMany({ tenantId });
         await Category.deleteMany({ tenantId });
+        await FAQ.deleteMany({ tenantId }); 
 
         // 6. Analytics snapshots
         await AnalyticsSnapshot.deleteMany({ tenantId });

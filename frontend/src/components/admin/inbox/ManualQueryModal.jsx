@@ -376,24 +376,22 @@ export default function ManualQueryModal({ slug, onClose, onCreated }) {
     const wc = tenantConfig.websiteConfig || {};
     const opts = [];
     if (queryType === 'SHOP_ORDER' || queryType === 'CUSTOM_ORDER') {
-      if (wc.deliveryEnabled !== false) {
-        opts.push({ value: 'delivery', label: 'Delivery' });
-        opts.push({ value: 'pickup', label: 'Pickup' });
-      }
+      opts.push({ value: 'pickup', label: 'Pickup' });
+      if (wc.deliveryEnabled) opts.push({ value: 'delivery', label: 'Delivery' });
     }
     if (queryType === 'SHOP_ORDER') {
       if (wc.appointmentEnabled !== false) {
-        opts.push({ value: 'at_shop', label: 'At Shop' });
+        opts.push({ value: 'at_shop', label: 'Appt. at Shop' });
         if (wc.appointmentAtHome !== false) {
-          opts.push({ value: 'at_home', label: 'At Home' });
+          opts.push({ value: 'at_home', label: 'Appt. at Home' });
         }
       }
     }
     if (queryType === 'APPOINTMENT') {
       if (wc.appointmentEnabled !== false) {
-        opts.push({ value: 'at_shop', label: 'At Shop' });
+        opts.push({ value: 'at_shop', label: 'Appt. at Shop' });
         if (wc.appointmentAtHome !== false) {
-          opts.push({ value: 'at_home', label: 'At Home' });
+          opts.push({ value: 'at_home', label: 'Appt. at Home' });
         }
       }
     }
@@ -518,9 +516,21 @@ export default function ManualQueryModal({ slug, onClose, onCreated }) {
           {/* Body */}
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {step === 1 ? (
-              <div className="space-y-3">
+             <div className="space-y-3">
                 <p className="text-sm text-gray-500 mb-4">What type of query would you like to create?</p>
-                {TYPE_OPTIONS.map(({ key, icon: Icon, label, desc, border, text, iconBg }) => (
+                {!tenantConfig ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : null}
+                {TYPE_OPTIONS.filter(({ key }) => {
+                  if (!tenantConfig) return false;
+                  const wc = tenantConfig.websiteConfig || {};
+                  if (key === 'APPOINTMENT' && wc.appointmentEnabled === false) return false;
+                  return true;
+                }).map(({ key, icon: Icon, label, desc, border, text, iconBg }) => (
                   <button
                     key={key}
                     onClick={() => { setQueryType(key); setOrderType(''); setStep(2); }}

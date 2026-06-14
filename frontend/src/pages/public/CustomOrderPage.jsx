@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Paintbrush } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
+import usePublicTheme from '../../hooks/usePublicTheme';
 import CountryCodeDropdown from '../../components/public/CountryCodeDropdown';
 import ImageUploadArea from '../../components/public/ImageUploadArea';
 import DuplicateDialog from '../../components/public/DuplicateDialog';
@@ -33,6 +34,7 @@ const inputClass =
 const CustomOrderPage = () => {
   const { slug } = useParams();
   const { tenant, labels } = useTenant();
+  const themeClass = usePublicTheme();
   const config = tenant?.websiteConfig || {};
 
   const [form, setForm] = useState({
@@ -143,7 +145,7 @@ const CustomOrderPage = () => {
   const showAddress = showDeliveryOptions && form.orderType === 'delivery';
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+    <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
 
       <div className="max-w-lg mx-auto px-4 py-10 sm:py-14">
@@ -160,13 +162,13 @@ const CustomOrderPage = () => {
              className="text-2xl sm:text-3xl font-bold"
 style={{ 
   fontFamily: "'Plus Jakarta Sans', sans-serif",
-  color: 'var(--tenant-nav-text, #1c1917)'
+  color: 'var(--tenant-text, #1c1917)'
 }}
             >
               {labels.custom_order || 'Custom Order'}
             </h1>
             <p className="text-sm mt-1"
-style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 55%, transparent)' }}>
+style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 55%, transparent)' }}>
               Share your reference and we'll get back to you
             </p>
           </div>

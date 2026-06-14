@@ -20,6 +20,7 @@ ARTSPACE
 │       │   ├── analytics.controller.js
 │       │   ├── blog.controller.js
 │       │   ├── category.controller.js
+│       │   ├── faq.controller.js
 │       │   ├── inbox.controller.js
 │       │   ├── product.controller.js
 │       │   ├── publicShop.controller.js
@@ -45,6 +46,7 @@ ARTSPACE
 │       │   ├── AuditLog.js
 │       │   ├── BlogPost.js
 │       │   ├── Category.js
+│       │   ├── FAQ.js
 │       │   ├── PaymentRecord.js
 │       │   ├── Product.js
 │       │   ├── Query.js
@@ -61,6 +63,7 @@ ARTSPACE
 │       │   ├── auth.js
 │       │   ├── blog.js
 │       │   ├── category.js
+│       │   ├── faq.js
 │       │   ├── inbox.js
 │       │   ├── product.js
 │       │   ├── publicShop.js
@@ -189,6 +192,7 @@ ARTSPACE
 │       ├── hooks/
 │       │   ├── useCloudinaryUpload.js
 │       │   ├── usePublicCloudinaryUpload.js
+│       │   ├── usePublicTheme.js
 │       │   ├── usePWAInstall.js
 │       │   ├── useSuperAdminAuth.js
 │       │   ├── useTenantAuth.js
@@ -203,6 +207,7 @@ ARTSPACE
 │       │   │   ├── BlogManagerPage.jsx
 │       │   │   ├── CategoriesPage.jsx
 │       │   │   ├── ExpiredPage.jsx
+│       │   │   ├── FAQManagerPage.jsx
 │       │   │   ├── ForgotPasswordPage.jsx
 │       │   │   ├── InboxPage.jsx
 │       │   │   ├── PausedPage.jsx
@@ -220,6 +225,7 @@ ARTSPACE
 │       │   │   ├── BlogIndexPage.jsx
 │       │   │   ├── BlogPostPage.jsx
 │       │   │   ├── CustomOrderPage.jsx
+│       │   │   ├── FAQPage.jsx
 │       │   │   ├── HomePage.jsx
 │       │   │   ├── PlatformLandingPage.jsx
 │       │   │   ├── QuizPage.jsx

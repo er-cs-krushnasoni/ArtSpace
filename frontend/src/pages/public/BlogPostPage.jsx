@@ -4,6 +4,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
+import usePublicTheme from '../../hooks/usePublicTheme';
 import { generateHTML } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -31,6 +32,7 @@ export default function BlogPostPage() {
   const { slug, postSlug } = useParams();
   const navigate           = useNavigate();
   const { tenant }         = useTenant();
+    const themeClass = usePublicTheme();
   const config             = tenant?.websiteConfig || {};
 
   const [post,     setPost]     = useState(null);
@@ -53,7 +55,7 @@ export default function BlogPostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+      <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-2xl mx-auto px-4 py-14">
           {[...Array(7)].map((_, i) => (
@@ -61,7 +63,7 @@ export default function BlogPostPage() {
               key={i}
               className="h-4 rounded-lg mb-4 animate-pulse"
               style={{
-                background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 7%, transparent)',
+                background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 7%, transparent)',
                 width: i === 0 ? '40%' : i === 1 ? '70%' : `${90 - i * 4}%`,
               }}
             />
@@ -73,22 +75,22 @@ export default function BlogPostPage() {
 
   if (notFound || !post) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+      <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-2xl mx-auto px-4 py-24 text-center">
           <AlertCircle
             className="w-10 h-10 mx-auto mb-3"
-            style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 25%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 25%, transparent)' }}
           />
           <h2
             className="text-lg font-bold mb-2"
-            style={{ color: 'var(--tenant-nav-text, #1c1917)' }}
+            style={{ color: 'var(--tenant-text, #1c1917)' }}
           >
             Post not found
           </h2>
           <p
             className="text-sm mb-7"
-            style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 50%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 50%, transparent)' }}
           >
             This post may have been removed or the link is incorrect.
           </p>
@@ -109,7 +111,7 @@ export default function BlogPostPage() {
   const metaDesc  = post.seo?.metaDescription || '';
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+    <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
       <Helmet>
         <title>{metaTitle} — {tenant?.businessName}</title>
         {metaDesc && <meta name="description" content={metaDesc} />}
@@ -158,7 +160,7 @@ export default function BlogPostPage() {
             className="text-2xl sm:text-3xl font-bold leading-snug"
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: 'var(--tenant-nav-text, #1c1917)',
+              color: 'var(--tenant-text, #1c1917)',
             }}
           >
             {post.title}
@@ -166,7 +168,7 @@ export default function BlogPostPage() {
           {post.excerpt && (
             <p
               className="text-base mt-3 leading-relaxed"
-              style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 60%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 60%, transparent)' }}
             >
               {post.excerpt}
             </p>
@@ -176,7 +178,7 @@ export default function BlogPostPage() {
         {/* Divider */}
         <div
           className="mb-10 h-px"
-          style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 10%, transparent)' }}
+          style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 10%, transparent)' }}
         />
 
         {/* Article content */}
@@ -184,7 +186,7 @@ export default function BlogPostPage() {
           className="prose prose-lg max-w-none blog-content"
           style={{
             lineHeight: '1.9',
-            color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 80%, transparent)',
+            color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 80%, transparent)',
           }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
@@ -201,7 +203,7 @@ export default function BlogPostPage() {
         .blog-content h2,
         .blog-content h3 {
           font-family: 'Plus Jakarta Sans', sans-serif;
-          color: var(--tenant-nav-text, #1c1917);
+          color: var(--tenant-text, #1c1917);
           font-weight: 700;
           line-height: 1.3;
           margin-top: 2em;
@@ -231,13 +233,13 @@ export default function BlogPostPage() {
           text-underline-offset: 3px;
         }
         .blog-content code {
-          background: color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent);
+          background: color-mix(in srgb, var(--tenant-text, #1c1917) 8%, transparent);
           padding: 0.15em 0.4em;
           border-radius: 6px;
           font-size: 0.875em;
         }
         .blog-content strong {
-          color: var(--tenant-nav-text, #1c1917);
+          color: var(--tenant-text, #1c1917);
           font-weight: 700;
         }
       `}</style>

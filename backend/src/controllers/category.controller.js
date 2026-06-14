@@ -75,11 +75,32 @@ const deleteCategory = async (req, res) => {
   if (!category) {
     return res.status(404).json({ success: false, message: 'Category not found' });
   }
-  // Remove this categoryId from all products of this tenant
+
+  // Remove from products
   await Product.updateMany(
     { tenantId: req.user.tenantId },
     { $pull: { categories: { categoryId: category._id } } }
   );
+
+  // Remove orphaned categoryLinks from quiz questions
+  const QuizQuestion = require('../models/QuizQuestion');
+  const questions = await QuizQuestion.find({ tenantId: req.user.tenantId });
+  for (const q of questions) {
+    let modified = false;
+    q.options = q.options.map((opt) => {
+      const before = opt.categoryLinks?.length || 0;
+      opt.categoryLinks = (opt.categoryLinks || []).filter(
+        (cl) => String(cl.categoryId) !== String(category._id)
+      );
+      opt.categoryIds = (opt.categoryIds || []).filter(
+        (cid) => String(cid) !== String(category._id)
+      );
+      if (opt.categoryLinks.length !== before) modified = true;
+      return opt;
+    });
+    if (modified) await q.save();
+  }
+
   await category.deleteOne();
   res.json({ success: true, message: 'Category deleted' });
 };

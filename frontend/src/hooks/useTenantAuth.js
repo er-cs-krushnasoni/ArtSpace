@@ -9,18 +9,35 @@ import { tokenStore } from '../api/tokenStore';
  * Provides login + logout helpers for tenant admin pages.
  */
 const useTenantAuth = () => {
-  const { user, login, logout, isAuthenticated, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const { slug } = useParams();
+  // Guard against HMR-induced React null reference (duplicate React instance in dev)
+  // All hooks must be inside try/catch because useContext → null during HMR reload
+  let authState, navigate, slug;
+  try {
+    authState = useAuth();                    // eslint-disable-line react-hooks/rules-of-hooks
+    navigate  = useNavigate();                // eslint-disable-line react-hooks/rules-of-hooks
+    slug      = useParams().slug;             // eslint-disable-line react-hooks/rules-of-hooks
+  } catch {
+    // HMR edge case — React module reference is null mid-reload.
+    // Return safe no-op defaults; component will re-render cleanly once HMR settles.
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: true,
+      tenantLogin: async () => {},
+      tenantLogout: async () => {},
+    };
+  }
 
-  const tenantLogin = useCallback(async (email, password) => {
+  const { user, login, logout, isAuthenticated, isLoading } = authState;
+
+  const tenantLogin = useCallback(async (email, password) => { // eslint-disable-line react-hooks/rules-of-hooks
     const response = await api.post('/tenantauth/login', { email, password });
     const { accessToken, user: userData, statusCode } = response.data;
     login(accessToken, userData);
     return { userData, statusCode };
   }, [login]);
 
-  const tenantLogout = useCallback(async () => {
+  const tenantLogout = useCallback(async () => { // eslint-disable-line react-hooks/rules-of-hooks
     try {
       await api.post('/tenantauth/logout');
     } catch {

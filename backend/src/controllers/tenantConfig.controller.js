@@ -43,8 +43,7 @@ const updateGeneral = async (req, res) => {
   const err = handleValidationErrors(req, res);
   if (err) return;
 
-  const { businessName, address, whatsapp, instagram, primaryColor, accentColor, bgColor, navBg, navText, cardBg, btnText } = req.body;
-
+const { businessName, address, whatsapp, instagram, primaryColor, accentColor, bgColor, navBg, navText, textColor, cardBg, btnText } = req.body;
   if (primaryColor && !isValidHex(primaryColor)) {
     return res.status(400).json({ success: false, message: 'Invalid primary color hex code' });
   }
@@ -59,6 +58,9 @@ const updateGeneral = async (req, res) => {
   }
   if (navText && !isValidHex(navText)) {
     return res.status(400).json({ success: false, message: 'Invalid navbar text color hex code' });
+  }
+  if (textColor && !isValidHex(textColor)) {
+    return res.status(400).json({ success: false, message: 'Invalid page text color hex code' });
   }
   if (cardBg && !isValidHex(cardBg)) {
     return res.status(400).json({ success: false, message: 'Invalid card background color hex code' });
@@ -77,6 +79,7 @@ const updateGeneral = async (req, res) => {
   if (bgColor !== undefined) update['websiteConfig.bgColor'] = bgColor;
   if (navBg !== undefined) update['websiteConfig.navBg'] = navBg || null;
   if (navText !== undefined) update['websiteConfig.navText'] = navText || null;
+  if (textColor !== undefined) update['websiteConfig.textColor'] = textColor || null;
   if (cardBg !== undefined) update['websiteConfig.cardBg'] = cardBg || null;
   if (btnText !== undefined) update['websiteConfig.btnText'] = btnText || null;
 
@@ -95,6 +98,7 @@ const updateToggles = async (req, res) => {
     appointmentAtHome,
     shopVisible,
     publicTheme,
+    faqEnabled
   } = req.body;
 
   const update = {};
@@ -105,6 +109,7 @@ const updateToggles = async (req, res) => {
   if (typeof appointmentEnabled === 'boolean') update['websiteConfig.appointmentEnabled'] = appointmentEnabled;
   if (typeof appointmentAtHome === 'boolean') update['websiteConfig.appointmentAtHome'] = appointmentAtHome;
   if (typeof shopVisible === 'boolean') update['websiteConfig.shopVisible'] = shopVisible;
+  if (typeof faqEnabled === 'boolean') update['websiteConfig.faqEnabled'] = faqEnabled;
   if (publicTheme === 'light' || publicTheme === 'dark') {
     update['websiteConfig.publicTheme'] = publicTheme;
   }

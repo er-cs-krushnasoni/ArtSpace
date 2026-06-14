@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
+import usePublicTheme from '../../hooks/usePublicTheme';
 import ProductGrid from '../../components/public/ProductGrid';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -10,6 +11,7 @@ const ShopPage = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const { tenant, labels } = useTenant();
+  const themeClass = usePublicTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +36,8 @@ const ShopPage = () => {
   }, [slug]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
-      <ShopHeader />
+<div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
+        <ShopHeader />
 
       <div className="max-w-6xl mx-auto px-4 py-10">
 
@@ -52,7 +54,7 @@ const ShopPage = () => {
               className="text-2xl sm:text-3xl font-bold leading-tight"
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                color: 'var(--tenant-nav-text, #1c1917)',
+                color: 'var(--tenant-text, #1c1917)',
               }}
             >
               {labels.shop || 'Shop'}
@@ -72,7 +74,7 @@ const ShopPage = () => {
           </div>
           <p
             className="text-sm mt-1"
-            style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 50%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 50%, transparent)' }}
           >
             {loading ? 'Loading collection…' : 'Browse our full collection'}
           </p>
@@ -85,7 +87,7 @@ const ShopPage = () => {
               <div
                 key={i}
                 className="rounded-2xl animate-pulse aspect-square"
-                style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 7%, transparent)' }}
+                style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 7%, transparent)' }}
               />
             ))}
           </div>

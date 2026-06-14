@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
 
 export function usePWAInstall() {
-  const [installPrompt, setInstallPrompt] = useState(null);
+  let installPrompt, setInstallPrompt;
+  try {
+    [installPrompt, setInstallPrompt] = useState(null); // eslint-disable-line react-hooks/rules-of-hooks
+  } catch {
+    // HMR-induced duplicate React instance — return safe no-op defaults
+    return { canInstall: false, install: async () => {} };
+  }
 
-  useEffect(() => {
+  useEffect(() => { // eslint-disable-line react-hooks/rules-of-hooks
     const handler = (e) => {
       e.preventDefault();
       setInstallPrompt(e);

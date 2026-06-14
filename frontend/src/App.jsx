@@ -24,6 +24,7 @@ import QuizPage                from './pages/public/QuizPage';
 import BlogIndexPage           from './pages/public/BlogIndexPage';
 import BlogPostPage            from './pages/public/BlogPostPage';
 import NotFoundPage            from './pages/NotFoundPage';
+import FAQPage from './pages/public/FAQPage';
 
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
@@ -124,6 +125,7 @@ const TenantPublicSite = () => {
       <Route path="custom-order"   element={<CustomOrderPage />} />
       <Route path="appointment"    element={<AppointmentPage />} />
       <Route path="quiz"           element={<QuizPage />} />
+      <Route path="faq"            element={<FAQPage />} />
       <Route path="blog"           element={<BlogIndexPage />} />
       <Route path="blog/:postSlug" element={<BlogPostPage />} />
       <Route path="*"              element={<Navigate to="" replace />} />

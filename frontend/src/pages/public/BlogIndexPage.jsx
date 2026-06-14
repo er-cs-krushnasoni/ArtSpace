@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowRight, Clock } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
+import usePublicTheme from '../../hooks/usePublicTheme';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -14,6 +15,7 @@ const formatDateShort = (d) =>
 
 export default function BlogIndexPage() {
   const { tenant } = useTenant();
+    const themeClass = usePublicTheme();
   const navigate   = useNavigate();
   const slug       = tenant?.slug;
   const config     = tenant?.websiteConfig || {};
@@ -39,19 +41,19 @@ export default function BlogIndexPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+      <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
         <ShopHeader />
         <div className="max-w-3xl mx-auto px-4 py-12">
           <div
             className="h-8 rounded-xl w-40 mb-10 animate-pulse"
-            style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent)' }}
+            style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 8%, transparent)' }}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 className="h-52 rounded-2xl animate-pulse"
-                style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 6%, transparent)' }}
+                style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 6%, transparent)' }}
               />
             ))}
           </div>
@@ -61,7 +63,7 @@ export default function BlogIndexPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+    <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
 
       <div className="max-w-3xl mx-auto px-4 py-12">
@@ -78,14 +80,14 @@ export default function BlogIndexPage() {
             className="text-2xl sm:text-3xl font-bold"
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: 'var(--tenant-nav-text, #1c1917)',
+              color: 'var(--tenant-text, #1c1917)',
             }}
           >
             Blog
           </h1>
           <p
             className="text-sm mt-1.5"
-            style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 50%, transparent)' }}
+            style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 50%, transparent)' }}
           >
             Stories, tips &amp; updates from {tenant?.businessName}
           </p>
@@ -102,13 +104,13 @@ export default function BlogIndexPage() {
             </div>
             <p
               className="text-base font-semibold mb-1"
-              style={{ color: 'var(--tenant-nav-text, #1c1917)' }}
+              style={{ color: 'var(--tenant-text, #1c1917)' }}
             >
               No posts yet
             </p>
             <p
               className="text-sm"
-              style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 45%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 45%, transparent)' }}
             >
               Check back soon!
             </p>
@@ -154,7 +156,7 @@ export default function BlogIndexPage() {
                     className="text-base font-bold mb-2 leading-snug flex-1"
                     style={{
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      color: 'var(--tenant-nav-text, #1c1917)',
+                      color: 'var(--tenant-text, #1c1917)',
                     }}
                   >
                     {post.title}
@@ -164,7 +166,7 @@ export default function BlogIndexPage() {
                   {post.excerpt && (
                     <p
                       className="text-sm leading-relaxed line-clamp-2 mb-4"
-                      style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 55%, transparent)' }}
+                      style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 55%, transparent)' }}
                     >
                       {post.excerpt}
                     </p>

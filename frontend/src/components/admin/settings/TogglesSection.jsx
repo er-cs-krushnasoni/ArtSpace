@@ -26,8 +26,9 @@ const BASE_TOGGLES = [
   { key: 'shopVisible', label: 'Public Shop Visible', desc: 'When off, your shop shows "temporarily unavailable" to customers' },
   { key: 'sliderEnabled', label: 'Hero Slider', desc: 'Show image slideshow at top of public site' },
   { key: 'quizEnabled', label: 'Style Quiz', desc: 'Let customers take a quiz to find products' },
+  { key: 'faqEnabled', label: 'FAQ Section', desc: 'Show a FAQ section on your public site' },
   { key: 'blogEnabled', label: 'Blog', desc: 'Publish articles visible on your public site' },
-  { key: 'deliveryEnabled', label: 'Delivery / Pickup', desc: 'Allow delivery and pickup orders' },
+  { key: 'deliveryEnabled', label: 'Home Delivery', desc: 'Allow delivery to customer\'s address. Pickup is always available.' },
   { key: 'appointmentEnabled', label: 'Appointment Booking', desc: 'Allow customers to book appointments' },
 ];
 
@@ -38,7 +39,7 @@ export default function TogglesSection({ initialData, onSaved }) {
     sliderEnabled: cfg.sliderEnabled ?? false,
     quizEnabled: cfg.quizEnabled ?? false,
     blogEnabled: cfg.blogEnabled ?? false,
-    deliveryEnabled: cfg.deliveryEnabled ?? true,
+    deliveryEnabled: cfg.deliveryEnabled ?? false,
     appointmentEnabled: cfg.appointmentEnabled ?? true,
     appointmentAtHome: cfg.appointmentAtHome ?? true,
   });
@@ -81,7 +82,6 @@ export default function TogglesSection({ initialData, onSaved }) {
               </div>
             </div>
 
-            {/* Sub-toggle: At Home service — only shown when appointmentEnabled is on */}
             {key === 'appointmentEnabled' && toggles.appointmentEnabled && (
               <div className="mt-3 ml-2 pl-3 border-l-2 border-gray-100">
                 <div className="flex items-start justify-between gap-3">

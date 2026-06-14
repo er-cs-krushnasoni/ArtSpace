@@ -7,6 +7,7 @@ import CountryCodeDropdown from '../../components/public/CountryCodeDropdown';
 import ImageUploadArea from '../../components/public/ImageUploadArea';
 import DuplicateDialog from '../../components/public/DuplicateDialog';
 import OrderConfirmation from '../../components/public/OrderConfirmation';
+import usePublicTheme from '../../hooks/usePublicTheme';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -33,6 +34,7 @@ const inputClass =
 const AppointmentPage = () => {
   const { slug } = useParams();
   const { tenant, labels } = useTenant();
+    const themeClass = usePublicTheme();
   const config = tenant?.websiteConfig || {};
 
   const atHomeEnabled = config.appointmentAtHome !== false;
@@ -145,7 +147,7 @@ const AppointmentPage = () => {
   const showAddress = form.orderType === 'at_home';
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+    <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
 
       <div className="max-w-lg mx-auto px-4 py-10 sm:py-14">
@@ -162,13 +164,13 @@ const AppointmentPage = () => {
               className="text-2xl sm:text-3xl font-bold"
 style={{ 
   fontFamily: "'Plus Jakarta Sans', sans-serif",
-  color: 'var(--tenant-nav-text, #1c1917)'
+  color: 'var(--tenant-text, #1c1917)'
 }}
             >
               {labels.book_appointment || 'Book Appointment'}
             </h1>
             <p className="text-sm mt-1"
-style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 55%, transparent)' }}>
+style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 55%, transparent)' }}>
               Share your reference and we'll confirm shortly
             </p>
           </div>

@@ -22,6 +22,62 @@ import QuizBuilderPage     from './QuizBuilderPage';
 import BlogManagerPage     from './BlogManagerPage';
 import AnalyticsPage       from './AnalyticsPage';
 import PostEditorPage      from './PostEditorPage';
+import FAQManagerPage from './FAQManagerPage';
+
+// ─── Trial Warning Banner ─────────────────────────────────────────────────────
+const TRIAL_PRODUCT_LIMIT = 10;
+
+const TrialBanner = ({ daysRemaining, slug }) => {
+  const navigate = useNavigate();
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
+
+  const isUrgent = daysRemaining <= 2;
+  const accentColor = isUrgent ? '#ef4444' : '#d97706';
+  const bgColor     = isUrgent ? '#fef2f2' : '#fffbeb';
+  const borderColor = isUrgent ? '#fecaca' : '#fde68a';
+  const textColor   = isUrgent ? '#991b1b' : '#92400e';
+
+  const dayLabel =
+    daysRemaining === 0
+      ? 'Your free trial expires today.'
+      : `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} left on your free trial.`;
+
+  return (
+    <div
+      className="flex items-start gap-3 px-4 py-3 text-sm flex-shrink-0"
+      style={{ background: bgColor, borderBottom: `1px solid ${borderColor}` }}
+    >
+      <AlertTriangle
+        className="w-4 h-4 flex-shrink-0 mt-0.5"
+        style={{ color: accentColor }}
+      />
+      <p className="flex-1 leading-snug min-w-0" style={{ color: textColor }}>
+        <span className="font-semibold">{dayLabel} </span>
+        Upgrade now to save your shop and unlock more than {TRIAL_PRODUCT_LIMIT} products —
+when your trial ends, everything gets deleted forever. No backup. No recovery.
+      </p>
+      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+        <button
+          onClick={() => navigate(`/s/${slug}/admin/dashboard/subscription`)}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-90 whitespace-nowrap"
+          style={{ background: accentColor }}
+        >
+          Upgrade Now
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          className="p-1 rounded-lg hover:bg-black/5 transition-colors flex-shrink-0"
+          style={{ color: accentColor }}
+          aria-label="Dismiss trial warning"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount, canInstall, onInstall }) => {
@@ -33,6 +89,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Style Quiz',       icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/quiz` },
+    { label: 'FAQ',          icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/faq` },
     { label: 'Blog',             icon: BookOpen,        to: `/s/${slug}/admin/dashboard/blog` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
@@ -230,6 +287,7 @@ export default function AdminDashboardPage() {
   const [unreadLoading, setUnreadLoading] = useState(true);
   const [taskSummary,   setTaskSummary]   = useState({});
   const [taskLoading,   setTaskLoading]   = useState(true);
+  const [trialInfo,     setTrialInfo]     = useState(null); // { daysRemaining } — only set for trial plan
 
   useEffect(() => {
     if (user && user.slug !== slug)
@@ -250,7 +308,6 @@ export default function AdminDashboardPage() {
 
   useEffect(() => { checkStatus(); }, []);
 
-  // ── Fix #8: dedicated unread-count endpoint ───────────────────────────────
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get('/tenant/inbox/unread-count');
@@ -271,7 +328,14 @@ export default function AdminDashboardPage() {
     if (accountStatus === 'ok') {
       fetchUnreadCount();
       fetchTaskSummary();
-      // ── Fix #11: skip polling when tab is hidden ──────────────────────────
+
+      // Fetch trial info for the banner — reuses the same status endpoint
+      api.get('/subscription/status').then((res) => {
+        if (res.data.plan === 'trial') {
+          setTrialInfo({ daysRemaining: res.data.daysRemaining });
+        }
+      }).catch(() => {});
+
       const interval = setInterval(() => {
         if (!document.hidden) fetchUnreadCount();
       }, 30_000);
@@ -279,7 +343,6 @@ export default function AdminDashboardPage() {
     }
   }, [accountStatus, fetchUnreadCount, fetchTaskSummary]);
 
-  // ── Fix #7: retry on network error, handle pending_manual ─────────────────
   const checkStatus = async (retryCount = 0) => {
     try {
       const res = await api.get('/subscription/status');
@@ -298,7 +361,6 @@ export default function AdminDashboardPage() {
       else if (httpStatus === 401)              setAccountStatus('unauthenticated');
       else if (httpStatus >= 400)               setAccountStatus('ok');
       else {
-        // Network error — retry up to 3 times before showing error screen
         if (retryCount < 3) {
           setTimeout(() => checkStatus(retryCount + 1), 2000);
         } else {
@@ -335,7 +397,7 @@ export default function AdminDashboardPage() {
   // ── Account paused ────────────────────────────────────────────────────────
   if (accountStatus === 'paused')  return <PausedPage  slug={slug} />;
 
-  // ── Fix #7: pending_manual screen ─────────────────────────────────────────
+  // ── Pending manual activation ─────────────────────────────────────────────
   if (accountStatus === 'pending_manual') {
     return (
       <BlockedScreen
@@ -356,7 +418,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // ── Fix #8: network error with retry ──────────────────────────────────────
+  // ── Network error ─────────────────────────────────────────────────────────
   if (accountStatus === 'network_error') {
     return (
       <BlockedScreen
@@ -390,7 +452,13 @@ export default function AdminDashboardPage() {
         canInstall={canInstall}
         onInstall={install}
       />
+
       <div className="lg:ml-60 min-h-screen flex flex-col">
+        {/* Trial warning banner — shown across all pages for trial users */}
+        {trialInfo && (
+          <TrialBanner daysRemaining={trialInfo.daysRemaining} slug={slug} />
+        )}
+
         {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
           <button onClick={() => setMobileOpen(true)} className="text-gray-500 hover:text-gray-700" aria-label="Open menu">
@@ -419,6 +487,7 @@ export default function AdminDashboardPage() {
             <Route path="products"          element={<ProductsPage />} />
             <Route path="categories"        element={<CategoriesPage />} />
             <Route path="quiz"              element={<QuizBuilderPage />} />
+            <Route path="faq"               element={<FAQManagerPage />} />
             <Route path="blog"              element={<BlogManagerPage />} />
             <Route path="blog/new"          element={<PostEditorPage />} />
             <Route path="blog/edit/:postId" element={<PostEditorPage />} />

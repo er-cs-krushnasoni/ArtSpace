@@ -46,15 +46,15 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
   const config = tenant?.websiteConfig || {};
   const prices = getEffectivePrices(product);
 
+const canPickup = prices.offersDelivery; // pickup always available if product has a delivery price
   const canDelivery = !!config.deliveryEnabled && product.deliveryEnabled && prices.offersDelivery;
   const canAppointment = !!config.appointmentEnabled && product.appointmentEnabled && prices.offersAppointment;
 
-  const resolveInitial = () => {
+const resolveInitial = () => {
     if (preSelectedOrderType === 'delivery' && canDelivery) return 'delivery';
     if (preSelectedOrderType === 'appointment' && canAppointment) return 'at_shop';
-    if (canDelivery && !canAppointment) return 'delivery';
-    if (canAppointment && !canDelivery) return 'at_shop';
-    return '';
+    if (canAppointment && !canPickup) return 'at_shop';
+    return 'pickup';
   };
 
   const [form, setForm] = useState({
@@ -87,9 +87,9 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
       errs.customerName = 'Name must be at least 2 characters';
     if (!form.mobile.trim() || !/^\d{7,}$/.test(form.mobile.replace(/\s+/g, '')))
       errs.mobile = 'Enter a valid mobile number';
-    if (!canDelivery && !canAppointment)
+    if (!canPickup && !canAppointment)
       errs.orderType = 'No ordering options available';
-    else if (canDelivery && canAppointment && !form.orderType)
+    else if ((canDelivery || canAppointment) && !form.orderType)
       errs.orderType = 'Please select an option';
     if ((form.orderType === 'delivery' || form.orderType === 'at_home') && !form.address.trim())
       errs.address = 'Address is required for delivery or home service';
@@ -164,8 +164,8 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
     setErrors({ _form: `Your request is already with ${tenant?.businessName}. We'll get back to you soon.` });
   };
 
-  const showSelector = canDelivery || canAppointment;
-  const effectiveOrderType = form.orderType || (canDelivery ? 'delivery' : 'pickup');
+const showSelector = canDelivery || canAppointment; // pickup always shown inside selector
+  const effectiveOrderType = form.orderType || 'pickup';
   const showAddress = effectiveOrderType === 'delivery' || effectiveOrderType === 'at_home';
 
   const displayPrice = () => {
@@ -291,41 +291,41 @@ const OrderFormModal = ({ product, preSelectedOrderType, onClose }) => {
                 {showSelector && (
                   <Field label="How would you like it?" required error={errors.orderType}>
                     <div className="grid grid-cols-2 gap-2">
+                      {(canDelivery || canAppointment || true) && (
+                        <button
+                          type="button"
+                          onClick={() => set('orderType', 'pickup')}
+                          className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
+                          style={
+                            form.orderType === 'pickup'
+                              ? {
+                                  borderColor: 'var(--tenant-primary)',
+                                  color: 'var(--tenant-primary)',
+                                  background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                }
+                              : { borderColor: '#e5e7eb', color: '#6b7280' }
+                          }
+                        >
+                          Pickup{canDelivery ? ` · ${prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}` : ''}
+                        </button>
+                      )}
                       {canDelivery && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => set('orderType', 'delivery')}
-                            className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
-                            style={
-                              form.orderType === 'delivery'
-                                ? {
-                                    borderColor: 'var(--tenant-primary)',
-                                    color: 'var(--tenant-primary)',
-                                    background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
-                                  }
-                                : { borderColor: '#e5e7eb', color: '#6b7280' }
-                            }
-                          >
-                            Delivery · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => set('orderType', 'pickup')}
-                            className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
-                            style={
-                              form.orderType === 'pickup'
-                                ? {
-                                    borderColor: 'var(--tenant-primary)',
-                                    color: 'var(--tenant-primary)',
-                                    background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
-                                  }
-                                : { borderColor: '#e5e7eb', color: '#6b7280' }
-                            }
-                          >
-                            Pickup · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => set('orderType', 'delivery')}
+                          className="py-3 rounded-2xl text-sm font-medium border-2 transition-all"
+                          style={
+                            form.orderType === 'delivery'
+                              ? {
+                                  borderColor: 'var(--tenant-primary)',
+                                  color: 'var(--tenant-primary)',
+                                  background: 'color-mix(in srgb, var(--tenant-primary) 10%, transparent)',
+                                }
+                              : { borderColor: '#e5e7eb', color: '#6b7280' }
+                          }
+                        >
+                          Delivery · {prices.delivery === 0 ? 'Free' : `₹${prices.delivery}`}
+                        </button>
                       )}
                       {canAppointment && (
                         <>

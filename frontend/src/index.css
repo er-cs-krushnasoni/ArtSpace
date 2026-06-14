@@ -21,6 +21,7 @@
   --tenant-bg:       #fafaf9;
   --tenant-nav-bg:   var(--tenant-bg);
   --tenant-nav-text: #1c1917;
+  --tenant-text:     #1c1917;
   --tenant-card-bg:  #ffffff;
   --tenant-btn-text: #ffffff;
 }
@@ -28,11 +29,12 @@
 /* ─── Dark Theme Variable Overrides ─── */
 /* Applied when data-theme="dark" AND admin has not set a custom color        */
 /* (Custom colors are set via inline style on <html>, which wins over this)   */
-[data-theme="dark"] {
+.public-theme-dark {
   --tenant-bg:       #18181b;
   --tenant-card-bg:  #27272a;
   --tenant-nav-bg:   #18181b;
   --tenant-nav-text: #f4f4f5;
+  --tenant-text:     #f4f4f5;
 }
 
 /* ─── Reset ─── */
@@ -49,7 +51,7 @@ html {
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--tenant-bg, #fafaf9);
-  color: var(--tenant-nav-text, #111);
+  color: var(--tenant-text, #111);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -30,6 +30,8 @@ const blogRoutes = require('./routes/blog');
 const analyticsRoutes = require('./routes/analytics');
 const { getPublicBlogList, getPublicBlogPost } = require('./controllers/blog.controller');
 const { getPublicQuiz } = require('./controllers/quiz.controller');   
+const faqRoutes = require('./routes/faq');
+const { getPublicFAQs } = require('./controllers/faq.controller');
 
 const app  = express();
 app.set('trust proxy', 1);
@@ -90,6 +92,8 @@ app.use('/api/tenant/blog', blogRoutes);
 app.use('/api/tenant/analytics', analyticsRoutes);
 app.get('/api/public/:slug/blog', getPublicBlogList);
 app.get('/api/public/:slug/blog/:postSlug', getPublicBlogPost);
+app.use('/api/tenant/faq', faqRoutes);
+app.get('/api/public/:slug/faq', getPublicFAQs);
 
 // ── PWA icon proxy (serves Cloudinary images same-origin for PWA manifest) ──
 app.get('/api/proxy-icon', (req, res) => {

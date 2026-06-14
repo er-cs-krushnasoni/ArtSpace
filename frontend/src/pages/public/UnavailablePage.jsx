@@ -1,13 +1,15 @@
 import { useTenant } from '../../context/TenantContext';
+import usePublicTheme from '../../hooks/usePublicTheme';
 
 const UnavailablePage = () => {
   const { tenant } = useTenant();
   const config = tenant?.websiteConfig || {};
   const primaryColor = config.primaryColor || '#7c3aed';
+  const themeClass = usePublicTheme();
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 text-center relative overflow-hidden"
+      className={`min-h-screen flex flex-col items-center justify-center px-4 text-center relative overflow-hidden ${themeClass}`}
       style={{ background: 'var(--tenant-bg, #fafaf9)', fontFamily: "'Inter', sans-serif" }}
     >
       {/* Decorative background blobs */}
@@ -34,7 +36,7 @@ const UnavailablePage = () => {
             src={config.logo}
             alt={tenant?.businessName}
             className="w-20 h-20 object-contain rounded-2xl mx-auto mb-5 border shadow-sm"
-            style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent)' }}
+            style={{ borderColor: 'color-mix(in srgb, var(--tenant-text, #1c1917) 8%, transparent)' }}
           />
         ) : (
           <div
@@ -50,7 +52,7 @@ const UnavailablePage = () => {
           className="text-2xl font-bold mb-3 leading-snug"
           style={{
             fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: 'var(--tenant-nav-text, #1c1917)',
+            color: 'var(--tenant-text, #1c1917)',
           }}
         >
           {tenant?.businessName || 'This Shop'}
@@ -74,7 +76,7 @@ const UnavailablePage = () => {
         {/* Message */}
         <p
           className="text-sm leading-relaxed"
-          style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 55%, transparent)' }}
+          style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 55%, transparent)' }}
         >
           We're taking a short break. Please check back a little later — we'll be back soon!
         </p>

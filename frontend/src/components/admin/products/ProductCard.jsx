@@ -125,13 +125,15 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
             </div>
           )}
           {discountActive && (
-            <>
-              <div className="text-green-600 font-medium">
-                Save ₹{
-                  (deliveryEnabled ? (discount.originalDeliveryPrice - deliveryPrice) : 0) +
-                  (appointmentEnabled ? (discount.originalAppointmentPrice - appointmentPrice) : 0)
-                }
-              </div>
+  <>
+    <div className="text-green-600 font-medium space-y-0.5">
+      {deliveryEnabled && discount.applyTo !== 'appointment' && (
+        <div>Save ₹{discount.originalDeliveryPrice - deliveryPrice} on delivery</div>
+      )}
+      {appointmentEnabled && discount.applyTo !== 'delivery' && (
+        <div>Save ₹{discount.originalAppointmentPrice - appointmentPrice} on appt</div>
+      )}
+    </div>
               {discount.endDate && (
                 <div className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
                   <span>Until {new Date(discount.endDate).toLocaleString('en-IN', {

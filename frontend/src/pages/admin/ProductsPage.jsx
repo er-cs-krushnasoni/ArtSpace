@@ -30,7 +30,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
-  const [selectedValues, setSelectedValues] = useState([]);
+const [activeCategories, setActiveCategories] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   // ── Selection state ────────────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -60,28 +60,68 @@ export default function ProductsPage() {
     }
   };
 
-  // ── Derived filtered list ──────────────────────────────────────────────────
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (filter === 'active' && !p.isActive) return false;
-      if (filter === 'inactive' && p.isActive) return false;
-      if (search.trim()) {
-        if (!p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+const categoryGroups = useMemo(() => {
+  const groups = {};
+  products.forEach((p) => {
+    (p.categories || []).forEach(({ categoryId, selectedValues: sv }) => {
+      if (!categoryId?.groupName) return;
+      const name = categoryId.groupName;
+      if (!groups[name]) groups[name] = { values: new Set(), isSimpleTag: false };
+      const hasDefinedValues  = categoryId.values?.length > 0;
+      const hasSelectedValues = sv?.length > 0;
+      if (!hasDefinedValues && !hasSelectedValues) {
+        groups[name].isSimpleTag = true;
+      } else {
+        const vals = hasSelectedValues ? sv : categoryId.values;
+        vals.forEach((v) => groups[name].values.add(v));
       }
-      const prices = [
-        deliveryEnabled && p.deliveryPrice != null ? p.deliveryPrice : null,
-        appointmentEnabled && p.appointmentPrice != null ? p.appointmentPrice : null,
-      ].filter((v) => v !== null);
-      const minPrice = prices.length ? Math.min(...prices) : 0;
-      if (priceMin !== '' && minPrice < parseFloat(priceMin)) return false;
-      if (priceMax !== '' && minPrice > parseFloat(priceMax)) return false;
-      if (selectedValues.length > 0) {
-  const productValues = (p.categories || []).flatMap((c) => c.selectedValues || []);
-  if (!selectedValues.some((v) => productValues.includes(v))) return false;
-}
-      return true;
     });
-    }, [products, filter, search, priceMin, priceMax, selectedValues, deliveryEnabled, appointmentEnabled]);
+  });
+  return Object.entries(groups).map(([name, { values, isSimpleTag }]) => ({
+    name,
+    values: [...values],
+    isSimpleTag,
+  }));
+}, [products]);
+
+  // ── Derived filtered list ──────────────────────────────────────────────────
+const filteredProducts = useMemo(() => {
+  return products.filter((p) => {
+    if (filter === 'active' && !p.isActive) return false;
+    if (filter === 'inactive' && p.isActive) return false;
+
+    if (search.trim()) {
+      if (!p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+    }
+
+    // Price filter
+    const prices = [
+      deliveryEnabled && p.deliveryPrice != null ? p.deliveryPrice : null,
+      appointmentEnabled && p.appointmentPrice != null ? p.appointmentPrice : null,
+    ].filter((v) => v !== null);
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    if (priceMin !== '' && minPrice < parseFloat(priceMin)) return false;
+    if (priceMax !== '' && minPrice > parseFloat(priceMax)) return false;
+
+    // Category filter: AND between groups, OR within group
+    const activeCatEntries = Object.entries(activeCategories).filter(([, s]) => s.size > 0);
+    if (activeCatEntries.length > 0) {
+      const match = activeCatEntries.every(([group, vals]) =>
+        (p.categories || []).some(({ categoryId, selectedValues: sv }) => {
+          if (!categoryId) return false;
+          const catGroupName = typeof categoryId === 'object' ? categoryId.groupName : null;
+          if (catGroupName !== group) return false;
+          if (vals.has('__tag__')) return true; // simple tag: presence is enough
+          const checkVals = sv?.length > 0 ? sv : (categoryId.values || []);
+          return checkVals.some((v) => vals.has(v));
+        })
+      );
+      if (!match) return false;
+    }
+
+    return true;
+  });
+}, [products, filter, search, priceMin, priceMax, activeCategories, deliveryEnabled, appointmentEnabled]);
 
   const stats = {
     total: products.length,
@@ -89,19 +129,32 @@ export default function ProductsPage() {
     onDiscount: products.filter((p) => p.discount?.isActive).length,
   };
 
-  const hasActiveFilters = search || priceMin || priceMax || selectedValues.length > 0;
+  const hasActiveFilters =
+  search !== '' || priceMin !== '' || priceMax !== '' ||
+  Object.values(activeCategories).some((s) => s.size > 0);
+
 const clearFilters = () => {
   setSearch('');
   setPriceMin('');
   setPriceMax('');
-  setSelectedValues([]);
+  setActiveCategories({});
 };
 
   // ── Value pill toggle ─────────────────────────────────────────────────────────
-const toggleValue = (val) => {
-  setSelectedValues((prev) =>
-    prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
-  );
+const toggleCategoryValue = (groupName, value) => {
+  setActiveCategories((prev) => {
+    const current = new Set(prev[groupName] || []);
+    if (current.has(value)) current.delete(value); else current.add(value);
+    return { ...prev, [groupName]: current };
+  });
+};
+
+const toggleSimpleTag = (groupName) => {
+  setActiveCategories((prev) => {
+    const current = new Set(prev[groupName] || []);
+    if (current.has('__tag__')) current.delete('__tag__'); else current.add('__tag__');
+    return { ...prev, [groupName]: current };
+  });
 };
 
   // ── Selection helpers ──────────────────────────────────────────────────────
@@ -248,7 +301,11 @@ const toggleValue = (val) => {
           Filters
           {hasActiveFilters && (
             <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
-              {[search, priceMin || priceMax, selectedValues.length > 0].filter(Boolean).length}
+              {[
+  search,
+  priceMin || priceMax,
+  Object.values(activeCategories).some((s) => s.size > 0),
+].filter(Boolean).length}
             </span>
           )}
         </button>
@@ -285,46 +342,88 @@ const toggleValue = (val) => {
               </div>
             </div>
           </div>
-          {categories.length > 0 && (
+          {categoryGroups.length > 0 && (
   <div className="space-y-3">
-    {categories.map((cat) => {
-      // Show group even if values is empty (acts as a simple tag)
-      const pills = cat.values.length > 0 ? cat.values : [cat.groupName];
-      const isSimpleTag = cat.values.length === 0;
+    {categoryGroups.map((group) => {
+      const activeSet = activeCategories[group.name] || new Set();
       return (
-        <div key={cat._id}>
+        <div key={group.name}>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-            {cat.groupName}
+            {group.name}
           </p>
-          <div className="flex flex-wrap gap-1.5">
-            {pills.map((val) => (
+          {group.isSimpleTag ? (
+            <button
+              onClick={() => toggleSimpleTag(group.name)}
+              className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+              style={
+                activeSet.has('__tag__')
+                  ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                  : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
+              }
+            >
+              {group.name}
+            </button>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {/* All pill */}
               <button
-                key={val}
-                onClick={() => toggleValue(val)}
+                onClick={() => {
+                  const allSelected = group.values.every((v) => activeSet.has(v));
+                  if (allSelected) {
+                    setActiveCategories((prev) => ({ ...prev, [group.name]: new Set() }));
+                  } else {
+                    setActiveCategories((prev) => ({ ...prev, [group.name]: new Set(group.values) }));
+                  }
+                }}
                 className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                 style={
-                  selectedValues.includes(val)
+                  group.values.length > 0 && group.values.every((v) => activeSet.has(v))
                     ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
                     : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
                 }
               >
-                {val}
+                All
               </button>
-            ))}
-          </div>
+              {group.values.map((val) => (
+                <button
+                  key={val}
+                  onClick={() => toggleCategoryValue(group.name, val)}
+                  className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                  style={
+                    activeSet.has(val)
+                      ? { background: '#ede9fe', color: '#6d28d9', borderColor: '#c4b5fd' }
+                      : { background: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
+                  }
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       );
     })}
   </div>
 )}
-          {hasActiveFilters && (
+          <div className="flex items-center justify-between pt-1">
+            {hasActiveFilters ? (
+              <button
+                onClick={clearFilters}
+                className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Clear all filters
+              </button>
+            ) : (
+              <span />
+            )}
             <button
-              onClick={clearFilters}
-              className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
+              onClick={() => setShowFilters(false)}
+              className="px-4 py-1.5 text-xs font-semibold text-white rounded-lg transition-all hover:opacity-90"
+              style={{ background: 'var(--color-primary, #8b5cf6)' }}
             >
-              <X className="w-3 h-3" /> Clear all filters
+              Show Results
             </button>
-          )}
+          </div>
         </div>
       )}
 
@@ -415,7 +514,7 @@ const toggleValue = (val) => {
       onClick={() => setBulkRemoveModal(true)}
       className="flex-1 sm:flex-none flex items-center justify-center text-xs sm:text-sm font-medium px-2.5 py-2 bg-red-600 hover:bg-red-500 rounded-lg transition-all whitespace-nowrap"
     >
-      Remove
+      Remove Dis.
     </button>
     {/* Close — desktop only */}
     <button onClick={clearSelection} className="hidden sm:block text-gray-400 hover:text-white transition-all ml-1">

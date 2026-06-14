@@ -259,7 +259,7 @@ export default function DiscountModal({
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all disabled:opacity-60"
             >
               <Trash2 className="w-4 h-4" />
-              {removing ? 'Removing…' : 'Remove'}
+              {removing ? 'Removing…' : 'Remove Dis.'}
             </button>
           )}
           <div className="flex gap-2 ml-auto">

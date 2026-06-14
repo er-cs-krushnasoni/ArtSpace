@@ -9,6 +9,7 @@ const DEFAULT_COLORS = {
   bgColor:      '#fafaf9',
   navBg:        '',
   navText:      '',
+  textColor:    '',
   cardBg:       '',
   btnText:      '',
 };
@@ -24,6 +25,7 @@ export default function GeneralSettingsSection({ initialData, onSaved }) {
     bgColor:      initialData?.websiteConfig?.bgColor      || DEFAULT_COLORS.bgColor,
     navBg:        initialData?.websiteConfig?.navBg        || '',
     navText:      initialData?.websiteConfig?.navText      || '',
+    textColor:    initialData?.websiteConfig?.textColor    || '',
     cardBg:       initialData?.websiteConfig?.cardBg       || '',
     btnText:      initialData?.websiteConfig?.btnText      || '',
   });
@@ -42,8 +44,6 @@ const handleThemeToggle = async (theme) => {
     try {
       await api.put('/tenant/settings/toggles', { publicTheme: theme });
       setPublicTheme(theme);
-      // Apply immediately so the page reflects the change without a reload
-      document.documentElement.setAttribute('data-theme', theme);
       toast.success(`Theme set to ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update theme');
@@ -60,6 +60,7 @@ const handleThemeToggle = async (theme) => {
     document.documentElement.style.setProperty('--tenant-bg',      DEFAULT_COLORS.bgColor);
     document.documentElement.style.removeProperty('--tenant-nav-bg');
     document.documentElement.style.removeProperty('--tenant-nav-text');
+    document.documentElement.style.removeProperty('--tenant-text');
     document.documentElement.style.removeProperty('--tenant-card-bg');
     document.documentElement.style.removeProperty('--tenant-btn-text');
   };
@@ -79,7 +80,7 @@ await api.put('/tenant/settings/general', payload);
       document.documentElement.style.setProperty('--tenant-primary', form.primaryColor);
       document.documentElement.style.setProperty('--tenant-accent',  form.accentColor);
       document.documentElement.style.setProperty('--tenant-bg',      form.bgColor);
-      ['navBg|--tenant-nav-bg', 'navText|--tenant-nav-text', 'cardBg|--tenant-card-bg', 'btnText|--tenant-btn-text'].forEach((pair) => {
+      ['navBg|--tenant-nav-bg', 'navText|--tenant-nav-text', 'textColor|--tenant-text', 'cardBg|--tenant-card-bg', 'btnText|--tenant-btn-text'].forEach((pair) => {
   const [field, cssVar] = pair.split('|');
   if (form[field]) document.documentElement.style.setProperty(cssVar, form[field]);
   else document.documentElement.style.removeProperty(cssVar);
@@ -150,12 +151,16 @@ await api.put('/tenant/settings/general', payload);
               Business Name <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              value={form.businessName}
-              onChange={(e) => handleChange('businessName', e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
-              placeholder="e.g. Glamour Nails Studio"
-            />
+  type="text"
+  value={form.businessName}
+  onChange={(e) => handleChange('businessName', e.target.value.slice(0, 30))}
+  maxLength={30}
+  className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+  placeholder="e.g. Glamour Nails Studio"
+/>
+<p className="text-xs text-gray-400 mt-1 text-right">
+  {form.businessName.length}/30
+</p>
           </div>
 
           {/* Address */}
@@ -263,6 +268,12 @@ await api.put('/tenant/settings/general', payload);
                 label="Navbar Text"
                 value={form.navText}
                 onChange={(v) => handleChange('navText', v)}
+                placeholder="Defaults to #1c1917"
+              />
+              <NullableColorInput
+                label="Page Text Color"
+                value={form.textColor}
+                onChange={(v) => handleChange('textColor', v)}
                 placeholder="Defaults to #1c1917"
               />
               <NullableColorInput

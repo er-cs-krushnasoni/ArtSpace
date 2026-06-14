@@ -1,7 +1,6 @@
 // frontend/src/components/public/ProductCard.jsx
 import { ShoppingBag } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
-
 // ── Exported utility — used by ProductGrid, ProductDetailModal, etc. ──────────
 export const getEffectivePrices = (product) => {
   const { discount } = product;
@@ -11,7 +10,6 @@ export const getEffectivePrices = (product) => {
   const baseAppointment = discount?.isActive
     ? discount.originalAppointmentPrice
     : product.appointmentPrice;
-
   const offersDelivery =
     !!product.deliveryEnabled &&
     baseDelivery !== null &&
@@ -20,7 +18,6 @@ export const getEffectivePrices = (product) => {
     !!product.appointmentEnabled &&
     baseAppointment !== null &&
     baseAppointment !== undefined;
-
   if (!discount?.isActive) {
     return {
       delivery: baseDelivery,
@@ -30,13 +27,11 @@ export const getEffectivePrices = (product) => {
       hasDiscount: false,
     };
   }
-
   const calc = (orig) => {
     if (orig === null || orig === undefined) return null;
     if (discount.type === 'percentage') return Math.round(orig * (1 - discount.value / 100));
     return Math.max(0, orig - discount.value);
   };
-
   return {
     delivery: offersDelivery ? calc(baseDelivery) : null,
     appointment: offersAppointment ? calc(baseAppointment) : null,
@@ -45,19 +40,21 @@ export const getEffectivePrices = (product) => {
     offersDelivery,
     offersAppointment,
     hasDiscount: true,
+    applyTo: discount.applyTo,
     discountLabel:
       discount.type === 'percentage'
         ? `${discount.value}% OFF`
         : `−₹${discount.value}`,
   };
 };
-
 // ── Internal price row ────────────────────────────────────────────────────────
 const PriceRow = ({ label, original, effective, hasDiscount, show }) => {
   if (!show) return null;
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-gray-400 dark:text-zinc-500 text-xs">{label}</span>
+    <div className="flex flex-col gap-0.5">
+      {label && (
+        <span className="text-gray-400 dark:text-zinc-500 text-xs">{label}</span>
+      )}
       <div className="flex items-center gap-1.5">
         {hasDiscount && original !== null && (
           <span className="text-gray-300 dark:text-zinc-600 line-through text-xs">
@@ -74,18 +71,14 @@ const PriceRow = ({ label, original, effective, hasDiscount, show }) => {
     </div>
   );
 };
-
 // ── ProductCard ───────────────────────────────────────────────────────────────
 const ProductCard = ({ product, onClick }) => {
   const { tenant } = useTenant();
   const config = tenant?.websiteConfig || {};
   const prices = getEffectivePrices(product);
-
-  const showDelivery = !!config.deliveryEnabled && prices.offersDelivery;
+  const showDelivery = prices.offersDelivery; 
   const showAppointment = !!config.appointmentEnabled && prices.offersAppointment;
-
   const coverPhoto = product.photos?.[0]?.url;
-
   return (
     <div
       className="rounded-2xl overflow-hidden cursor-pointer group
@@ -113,7 +106,6 @@ const ProductCard = ({ product, onClick }) => {
             <ShoppingBag size={40} className="text-gray-200 dark:text-zinc-700" />
           </div>
         )}
-
         {/* Discount badge */}
         {prices.hasDiscount && (
           <span
@@ -123,7 +115,6 @@ const ProductCard = ({ product, onClick }) => {
             {prices.discountLabel}
           </span>
         )}
-
         {/* Desktop hover overlay — Order Now */}
         <div className="absolute bottom-0 inset-x-0 p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
@@ -138,7 +129,6 @@ const ProductCard = ({ product, onClick }) => {
           </button>
         </div>
       </div>
-
       {/* Info */}
       <div className="p-3.5 space-y-2">
         {product.nameVisible && (
@@ -149,30 +139,37 @@ const ProductCard = ({ product, onClick }) => {
             {product.name}
           </p>
         )}
-
         {product.description && (
           <p className="text-xs text-gray-400 dark:text-zinc-500 line-clamp-2 leading-relaxed">
             {product.description}
           </p>
         )}
-
         <div className="space-y-1.5 pt-0.5">
           <PriceRow
-            label="Delivery"
+            label="Price"
             original={prices.originalDelivery}
             effective={prices.delivery}
             hasDiscount={prices.hasDiscount}
             show={showDelivery}
           />
+          {prices.hasDiscount && showDelivery && prices.applyTo !== 'appointment' && (
+            <p className="text-xs font-medium text-green-600 text-right">
+              Save ₹{prices.originalDelivery - prices.delivery}
+            </p>
+          )}
           <PriceRow
-            label="Appointment"
+            label={showDelivery ? 'Appointment Price' : ''}
             original={prices.originalAppointment}
             effective={prices.appointment}
             hasDiscount={prices.hasDiscount}
             show={showAppointment}
           />
+          {prices.hasDiscount && showAppointment && prices.applyTo !== 'delivery' && (
+            <p className="text-xs font-medium text-green-600 text-right">
+              Save ₹{prices.originalAppointment - prices.appointment}{showDelivery ? ' on appt' : ''}
+            </p>
+          )}
         </div>
-
         {/* Mobile Order Now */}
         <button
           className="sm:hidden w-full py-2.5 rounded-xl text-xs font-bold mt-1 transition-opacity hover:opacity-90"
@@ -188,5 +185,4 @@ const ProductCard = ({ product, onClick }) => {
     </div>
   );
 };
-
 export default ProductCard;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   HelpCircle, Plus, Trash2, ChevronUp, ChevronDown,
   Save, ToggleLeft, ToggleRight, Wand2, X, Tag, ChevronDown as ChevronDownSm,
+  AlertTriangle,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
@@ -167,7 +168,7 @@ const CategoryPicker = ({ categories, selected, onChange }) => {
   // Build pill labels
   const pills = selected.flatMap((link) => {
     const cat = categories.find((c) => String(c._id) === String(link.categoryId));
-    if (!cat) return [];
+    if (!cat) return [{ label: '⚠ Deleted category', catId: link.categoryId, value: null, broken: true }];
     if (link.values.length === 0 || link.values.length === (cat.values || []).length) {
       return [{ label: cat.groupName, catId: cat._id, value: null }];
     }
@@ -192,7 +193,11 @@ const CategoryPicker = ({ categories, selected, onChange }) => {
           {pills.map((pill, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-700 border border-violet-100"
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+              pill.broken
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : 'bg-violet-50 text-violet-700 border-violet-100'
+            }`}
             >
               {pill.label}
               <button
@@ -556,6 +561,15 @@ export default function QuizBuilderPage() {
 );
   const totalOptions = questions.reduce((acc, q) => acc + q.options.length, 0);
 
+  // Detect orphaned category links — categoryId not found in current categories list
+const brokenLinkCount = questions.reduce((acc, q) =>
+  acc + q.options.reduce((oa, opt) =>
+    oa + (opt.categoryLinks || []).filter(
+      (cl) => !categories.find((c) => String(c._id) === String(cl.categoryId))
+    ).length
+  , 0)
+, 0);
+
   return (
     <div className="p-6 max-w-2xl mx-auto">
       {/* Header */}
@@ -599,51 +613,67 @@ export default function QuizBuilderPage() {
       </div>
 
       {/* Info banner — adapts based on whether categories exist */}
-      {!loading && (
-        <div className={`border rounded-xl p-4 mb-5 flex gap-3 ${
-          categories.length === 0
-            ? 'bg-amber-50 border-amber-100'
-            : linkedCount > 0
-              ? 'bg-green-50 border-green-100'
-              : 'bg-blue-50 border-blue-100'
-        }`}>
-          <div className="flex-shrink-0 mt-0.5">
-            <HelpCircle size={16} className={
-              categories.length === 0 ? 'text-amber-400'
-              : linkedCount > 0 ? 'text-green-400'
-              : 'text-blue-400'
-            } />
-          </div>
-          <div>
-            {categories.length === 0 ? (
-              <>
-                <p className="text-xs font-semibold text-amber-800 mb-1">No categories set up yet</p>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  Matching works via answer text — but works best when your products have categories like "Bold", "Minimal", "Wedding".
-                  Set up categories first for more accurate recommendations.
-                </p>
-              </>
-            ) : linkedCount > 0 ? (
-              <>
-                <p className="text-xs font-semibold text-green-800 mb-1">
-                  Category linking active — {linkedCount}/{totalOptions} options linked
-                </p>
-                <p className="text-xs text-green-700 leading-relaxed">
-                  Linked options get stronger matching (+2× per vote). Unlinked options still match via answer text.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold text-blue-800 mb-1">How product matching works</p>
-                <p className="text-xs text-blue-600 leading-relaxed">
-                  Matching uses answer text against your category values automatically.
-                  For stronger results, link each answer to a category using <strong>Link to categories</strong> under each option.
-                </p>
-              </>
-            )}
-          </div>
-        </div>
+      {!loading && brokenLinkCount > 0 && (
+  <div className="border rounded-xl p-4 mb-5 flex gap-3 bg-red-50 border-red-200">
+    <div className="flex-shrink-0 mt-0.5">
+      <AlertTriangle size={16} className="text-red-400" />
+    </div>
+    <div>
+      <p className="text-xs font-semibold text-red-800 mb-1">
+        {brokenLinkCount} option{brokenLinkCount > 1 ? 's are' : ' is'} linked to deleted categories
+      </p>
+      <p className="text-xs text-red-700 leading-relaxed">
+        These links no longer work and will hurt quiz accuracy. Please re-link the affected options
+        using the <strong>Link to categories</strong> button, then save.
+      </p>
+    </div>
+  </div>
+)}
+{!loading && (
+  <div className={`border rounded-xl p-4 mb-5 flex gap-3 ${
+    categories.length === 0
+      ? 'bg-amber-50 border-amber-100'
+      : linkedCount > 0
+        ? 'bg-green-50 border-green-100'
+        : 'bg-blue-50 border-blue-100'
+  }`}>
+    <div className="flex-shrink-0 mt-0.5">
+      <HelpCircle size={16} className={
+        categories.length === 0 ? 'text-amber-400'
+        : linkedCount > 0 ? 'text-green-400'
+        : 'text-blue-400'
+      } />
+    </div>
+    <div>
+      {categories.length === 0 ? (
+        <>
+          <p className="text-xs font-semibold text-amber-800 mb-1">No categories set up yet</p>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            Matching works via answer text — but works best when your products have categories like "Bold", "Minimal", "Wedding".
+            Set up categories first for more accurate recommendations.
+          </p>
+        </>
+      ) : linkedCount > 0 ? (
+        <>
+          <p className="text-xs font-semibold text-green-800 mb-1">
+            Category linking active — {linkedCount}/{totalOptions} options linked
+          </p>
+          <p className="text-xs text-green-700 leading-relaxed">
+            Linked options get stronger matching (+2× per vote). Unlinked options still match via answer text.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-xs font-semibold text-blue-800 mb-1">How product matching works</p>
+          <p className="text-xs text-blue-600 leading-relaxed">
+            Matching uses answer text against your category values automatically.
+            For stronger results, link each answer to a category using <strong>Link to categories</strong> under each option.
+          </p>
+        </>
       )}
+    </div>
+  </div>
+)}
 
       {loading ? (
         <Skeleton />

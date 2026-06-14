@@ -97,15 +97,15 @@ export default function CredentialsSection({ initialData }) {
       <div className="space-y-5">
         {/* ── Email row ── */}
         <div className="border border-gray-100 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-xs font-medium text-gray-500 mb-0.5">Login Email</p>
-              <p className="text-sm text-gray-800 font-mono">{initialData?.email || '—'}</p>
+              <p className="text-sm text-gray-800 font-mono truncate">{initialData?.email || '—'}</p>
             </div>
             {!editingEmail && (
               <button
                 onClick={() => setEditingEmail(true)}
-                className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg text-gray-700 hover:border-violet-400 hover:text-violet-600 transition-all"
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg text-gray-700 hover:border-violet-400 hover:text-violet-600 transition-all"
               >
                 Change
               </button>

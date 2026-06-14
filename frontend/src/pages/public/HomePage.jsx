@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, MapPin, Mail } from 'lucide-react';
+import { ArrowRight, ShoppingBag, MapPin, Mail,ChevronDown, ChevronUp } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import ShopHeader from '../../components/public/ShopHeader';
 import HeroSlider from '../../components/public/HeroSlider';
 import ProductGrid from '../../components/public/ProductGrid';
+import usePublicTheme from '../../hooks/usePublicTheme';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -28,7 +29,7 @@ const ShopFooter = ({ tenant, labels, slug }) => {
   return (
     <footer
       className="mt-16 border-t"
-      style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 10%, transparent)' }}
+      style={{ borderColor: 'color-mix(in srgb, var(--tenant-text, #1c1917) 10%, transparent)' }}
     >
       <div className="max-w-6xl mx-auto px-4 py-14">
         <div className="flex flex-col items-center text-center gap-6">
@@ -39,7 +40,7 @@ const ShopFooter = ({ tenant, labels, slug }) => {
               src={config.logo}
               alt={tenant?.businessName}
               className="w-24 h-24 rounded-2xl object-contain border shadow-sm"
-              style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 10%, transparent)' }}
+              style={{ borderColor: 'color-mix(in srgb, var(--tenant-text, #1c1917) 10%, transparent)' }}
             />
           )}
 
@@ -49,7 +50,7 @@ const ShopFooter = ({ tenant, labels, slug }) => {
               className="text-3xl sm:text-4xl font-bold"
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                color: 'var(--tenant-nav-text, #1c1917)',
+                color: 'var(--tenant-text, #1c1917)',
               }}
             >
               {tenant?.businessName}
@@ -59,11 +60,11 @@ const ShopFooter = ({ tenant, labels, slug }) => {
                 <MapPin
                   size={13}
                   className="flex-shrink-0"
-                  style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 40%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 40%, transparent)' }}
                 />
                 <span
                   className="text-sm"
-                  style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 50%, transparent)' }}
+                  style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 50%, transparent)' }}
                 >
                   {config.address}
                 </span>
@@ -106,14 +107,14 @@ const ShopFooter = ({ tenant, labels, slug }) => {
             <Link
               to={`/s/${slug}`}
               className="text-sm font-medium transition-colors hover:opacity-100"
-              style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 45%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 45%, transparent)' }}
             >
               Home
             </Link>
             <Link
               to={`/s/${slug}/shop`}
               className="text-sm font-medium transition-colors hover:opacity-100"
-              style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 45%, transparent)' }}
+              style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 45%, transparent)' }}
             >
               {labels?.shop || 'Shop'}
             </Link>
@@ -122,13 +123,13 @@ const ShopFooter = ({ tenant, labels, slug }) => {
           {/* Divider + powered by */}
           <div
             className="w-full border-t pt-6 mt-1"
-            style={{ borderColor: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 8%, transparent)' }}
+            style={{ borderColor: 'color-mix(in srgb, var(--tenant-text, #1c1917) 8%, transparent)' }}
           >
             <div
               className="flex flex-col items-center gap-1"
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 25%, transparent)',
+                color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 25%, transparent)',
               }}
             >
               <span className="text-sm font-medium">Powered by ArtSpace</span>
@@ -149,6 +150,116 @@ const ShopFooter = ({ tenant, labels, slug }) => {
   );
 };
 
+// ─── FAQ Section ──────────────────────────────────────────────────────────────
+const FAQSection = ({ slug, faqEnabled }) => {
+  const [faqs,   setFaqs]   = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [openId, setOpenId] = useState(null);
+
+  useEffect(() => {
+    if (!faqEnabled || !slug) return;
+    fetch(`${API_BASE}/public/${slug}/faq`)
+      .then((r) => r.json())
+      .then((json) => { if (json.success) setFaqs(json.data); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [slug, faqEnabled]);
+
+  if (!faqEnabled || (loaded && faqs.length === 0)) return null;
+
+  return (
+    <section className="py-14">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="mb-8 text-center">
+          <p
+            className="text-xs font-bold uppercase tracking-widest mb-1"
+            style={{ color: 'var(--tenant-primary)' }}
+          >
+            FAQ
+          </p>
+          <h2
+            className="text-2xl sm:text-3xl font-bold"
+            style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: 'var(--tenant-text, #1c1917)',
+            }}
+          >
+            Frequently Asked Questions
+          </h2>
+        </div>
+        {!loaded ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-14 rounded-xl animate-pulse"
+                style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 7%, transparent)' }}
+              />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {faqs.map((faq) => {
+                const isOpen = openId === faq._id;
+                return (
+                  <div
+                    key={faq._id}
+                    className="border rounded-xl overflow-hidden transition-all duration-200"
+                    style={{
+                      borderColor: isOpen
+                        ? 'color-mix(in srgb, var(--tenant-primary) 30%, transparent)'
+                        : 'color-mix(in srgb, var(--tenant-text, #1c1917) 10%, transparent)',
+                      background: isOpen
+                        ? 'color-mix(in srgb, var(--tenant-primary) 4%, var(--tenant-bg))'
+                        : 'transparent',
+                    }}
+                  >
+                    <button
+                      onClick={() => setOpenId(isOpen ? null : faq._id)}
+                      className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left"
+                    >
+                      <span
+                        className="text-sm sm:text-base font-semibold leading-snug"
+                        style={{ color: 'var(--tenant-text, #1c1917)' }}
+                      >
+                        {faq.question}
+                      </span>
+                      <span className="flex-shrink-0" style={{ color: 'var(--tenant-primary)' }}>
+                        {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5">
+                        <p
+                          className="text-sm leading-relaxed whitespace-pre-wrap"
+                          style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 65%, transparent)' }}
+                        >
+                          {faq.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                to={`/s/${slug}/faq`}
+                className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70"
+                style={{ color: 'var(--tenant-primary)' }}
+              >
+                View all FAQs
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+};
+
 // ─── Home Page ────────────────────────────────────────────────────────────────
 const HomePage = () => {
   const { slug } = useParams();
@@ -158,6 +269,7 @@ const HomePage = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const navigate = useNavigate();
   const config = tenant?.websiteConfig || {};
+    const themeClass = usePublicTheme();
 
   useEffect(() => {
     if (!slug) return;
@@ -190,8 +302,8 @@ const HomePage = () => {
 
   const showViewAll = products.length > 8;
 
-  return (
-    <div className="min-h-screen" style={{ background: 'var(--tenant-bg)' }}>
+ return (
+    <div className={`min-h-screen ${themeClass}`} style={{ background: 'var(--tenant-bg)' }}>
       <ShopHeader />
 
       {/* Hero slider */}
@@ -223,7 +335,7 @@ const HomePage = () => {
                 className="text-2xl sm:text-3xl font-bold leading-tight"
                 style={{
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  color: 'var(--tenant-nav-text, #1c1917)',
+                  color: 'var(--tenant-text, #1c1917)',
                 }}
               >
                 {labels.products || 'Our Products'}
@@ -247,7 +359,7 @@ const HomePage = () => {
                 <div
                   key={i}
                   className="rounded-2xl animate-pulse aspect-square"
-                  style={{ background: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 7%, transparent)' }}
+                  style={{ background: 'color-mix(in srgb, var(--tenant-text, #1c1917) 7%, transparent)' }}
                 />
               ))}
             </div>
@@ -262,13 +374,13 @@ const HomePage = () => {
               </div>
               <p
                 className="text-base font-semibold mb-1"
-                style={{ color: 'var(--tenant-nav-text, #1c1917)' }}
+                style={{ color: 'var(--tenant-text, #1c1917)' }}
               >
                 No products yet
               </p>
               <p
                 className="text-sm"
-                style={{ color: 'color-mix(in srgb, var(--tenant-nav-text, #1c1917) 45%, transparent)' }}
+                style={{ color: 'color-mix(in srgb, var(--tenant-text, #1c1917) 45%, transparent)' }}
               >
                 Check back soon!
               </p>
@@ -302,6 +414,8 @@ const HomePage = () => {
 
         </div>
       </section>
+
+      <FAQSection slug={slug} faqEnabled={config.faqEnabled} />
 
       <ShopFooter tenant={tenant} labels={labels} slug={slug} />
     </div>

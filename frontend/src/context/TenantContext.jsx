@@ -70,6 +70,7 @@ const vars = {
 '--tenant-card-bg':  (wc.cardBg && wc.cardBg !== '#ffffff') ? wc.cardBg : null,
   '--tenant-nav-bg':   wc.navBg        || null,
   '--tenant-nav-text': wc.navText      || null,
+  '--tenant-text':     wc.textColor    || null,
   '--tenant-btn-text': wc.btnText      || defaults['--tenant-btn-text'],
 };
 

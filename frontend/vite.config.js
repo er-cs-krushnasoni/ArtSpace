@@ -31,11 +31,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-  globPatterns: ['**/*.{js,css,html,ico,svg,webp}'], // ← removed png
-  globIgnores: ['**/artspace-logo.png'],              // ← explicitly exclude
-  navigateFallback: '/index.html',
-  navigateFallbackDenylist: [/^\/api/],
-},
+        globPatterns: ['**/*.{js,css,html,ico,svg,webp}'],
+        globIgnores: ['**/artspace-logo.png'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/],
+      },
       devOptions: {
         enabled: false,
       },
@@ -55,6 +55,7 @@ export default defineConfig({
     alias: {
       '@': '/src',
     },
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     include: ['recharts'],

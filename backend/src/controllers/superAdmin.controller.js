@@ -5,6 +5,7 @@ const AuditLog = require('../models/AuditLog');
 const SubscriptionPricing = require('../models/SubscriptionPricing');
 const TrialBlacklist = require('../models/TrialBlacklist');
 const { sendCredentialsEmail, sendSlugChangedEmail } = require('../utils/emailUtils');
+const FAQ = require('../models/FAQ');
 
 const RESERVED_SLUGS = ['www', 'api', 'admin', 'app', 'mail', 'static', 'assets', 'superadmin', 's'];
 const PLAN_DURATION = { trial: 7, '1m': 30, '3m': 90, '6m': 180, '12m': 365 };
@@ -487,7 +488,8 @@ const deleteTenant = async (req, res) => {
     Category.deleteMany({ tenantId }),
     QuizQuestion.deleteMany({ tenantId }),
     PaymentRecord.deleteMany({ tenantId }),
-    AuditLog.deleteMany({ tenantId }),  // delete action logs for this tenant
+    AuditLog.deleteMany({ tenantId }),
+    FAQ.deleteMany({ tenantId }),
   ]);
 
   // NOTE: TrialBlacklist entry for this mobile is intentionally preserved

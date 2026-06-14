@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, CalendarCheck } from 'lucide-react';
 import api from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
@@ -9,21 +9,19 @@ const TYPE_BADGE = {
   APPOINTMENT:  { label: 'Appointment',  className: 'bg-blue-100 text-blue-800' },
 };
 
-const ORDER_TYPE_OPTIONS = {
-  SHOP_ORDER:   [
-    { value: 'delivery', label: 'Delivery' },
-    { value: 'pickup',   label: 'Pickup' },
-    { value: 'at_shop',  label: 'At Shop' },
-    { value: 'at_home',  label: 'At Home' },
-  ],
-  CUSTOM_ORDER: [
-    { value: 'delivery', label: 'Delivery' },
-    { value: 'pickup',   label: 'Pickup' },
-  ],
-  APPOINTMENT:  [
-    { value: 'at_shop', label: 'At Shop' },
-    { value: 'at_home', label: 'At Home' },
-  ],
+const getOrderTypeOptions = (type, wc) => {
+  const opts = [];
+  if (type === 'SHOP_ORDER' || type === 'CUSTOM_ORDER') {
+    opts.push({ value: 'pickup', label: 'Pickup' });
+    if (wc?.deliveryEnabled) opts.push({ value: 'delivery', label: 'Delivery' });
+  }
+  if (type === 'SHOP_ORDER' || type === 'APPOINTMENT') {
+    if (wc?.appointmentEnabled) {
+      opts.push({ value: 'at_shop', label: 'Appt. at Shop' });
+      if (wc?.appointmentAtHome) opts.push({ value: 'at_home', label: 'Appt. at Home' });
+    }
+  }
+  return opts;
 };
 
 const inputClass =
@@ -78,8 +76,16 @@ export default function ConfirmOrderModal({ query, onClose, onConfirmed }) {
   const [finalPrice,     setFinalPrice]     = useState(defaultPrice);
   const [loading,        setLoading]        = useState(false);
 
+  const [tenantConfig, setTenantConfig] = useState(null);
+  useEffect(() => {
+    import('../../../api/axiosInstance').then(({ default: api }) => {
+      api.get('/tenant/settings')
+        .then((r) => setTenantConfig(r.data?.data?.websiteConfig || null))
+        .catch(() => {});
+    });
+  }, []);
   const needsAddress = orderType === 'delivery' || orderType === 'at_home';
-  const orderTypeOptions = ORDER_TYPE_OPTIONS[query.type] || [];
+  const orderTypeOptions = getOrderTypeOptions(query.type, tenantConfig);
 
   const handleConfirm = async () => {
     setLoading(true);
