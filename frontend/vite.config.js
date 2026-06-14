@@ -58,7 +58,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['recharts'],
+    include: ['recharts', 'react', 'react-dom'],
     force: true,
   },
   build: {

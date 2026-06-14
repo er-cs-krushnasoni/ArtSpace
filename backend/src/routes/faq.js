@@ -1,8 +1,8 @@
 // backend/src/routes/faq.js
 const express = require('express');
 const router  = express.Router();
-const { authenticate } = require('../middleware/auth');
-const { requireActiveSubscription } = require('../middleware/requireActiveSubscription');
+const { authenticateTenantAdmin } = require('../middleware/auth');
+const requireActiveSubscription = require('../middleware/requireActiveSubscription');
 const {
   getFAQs,
   createFAQ,
@@ -12,7 +12,7 @@ const {
 } = require('../controllers/faq.controller');
 
 // All routes require auth + active subscription
-router.use(authenticate, requireActiveSubscription);
+router.use(authenticateTenantAdmin, requireActiveSubscription);
 
 router.get('/',                 getFAQs);
 router.post('/',                createFAQ);
