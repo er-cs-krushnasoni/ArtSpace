@@ -35,14 +35,15 @@ const BASE_TOGGLES = [
 export default function TogglesSection({ initialData, onSaved }) {
   const cfg = initialData?.websiteConfig || {};
   const [toggles, setToggles] = useState({
-    shopVisible: cfg.shopVisible !== false,
-    sliderEnabled: cfg.sliderEnabled ?? false,
-    quizEnabled: cfg.quizEnabled ?? false,
-    blogEnabled: cfg.blogEnabled ?? false,
-    deliveryEnabled: cfg.deliveryEnabled ?? false,
-    appointmentEnabled: cfg.appointmentEnabled ?? true,
-    appointmentAtHome: cfg.appointmentAtHome ?? true,
-  });
+  shopVisible:        cfg.shopVisible !== false,
+  sliderEnabled:      cfg.sliderEnabled ?? false,
+  quizEnabled:        cfg.quizEnabled ?? false,
+  faqEnabled:         cfg.faqEnabled ?? false,
+  blogEnabled:        cfg.blogEnabled ?? false,
+  deliveryEnabled:    cfg.deliveryEnabled ?? false,
+  appointmentEnabled: cfg.appointmentEnabled ?? true,
+  appointmentAtHome:  cfg.appointmentAtHome ?? true,
+});
   const [saving, setSaving] = useState(null);
 
   const handleToggle = async (key, value) => {

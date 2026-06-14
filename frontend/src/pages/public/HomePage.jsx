@@ -415,7 +415,12 @@ const HomePage = () => {
         </div>
       </section>
 
-      <FAQSection slug={slug} faqEnabled={config.faqEnabled} />
+    {/* DEBUG - remove after fix */}
+<div style={{background:'red',color:'white',padding:8}}>
+  faqEnabled: {String(tenant?.faqEnabled)} | config.faqEnabled: {String(config.faqEnabled)}
+</div>
+
+      <FAQSection slug={slug} faqEnabled={tenant?.faqEnabled ?? config.faqEnabled} />
 
       <ShopFooter tenant={tenant} labels={labels} slug={slug} />
     </div>
