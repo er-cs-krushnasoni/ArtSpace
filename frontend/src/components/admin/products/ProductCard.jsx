@@ -91,60 +91,60 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
           )}
         </div>
         {/* Prices */}
-        <div className="flex flex-col gap-1 text-xs text-gray-500">
-          {deliveryEnabled && (
-            <div className="flex items-center gap-1.5">
-              {discountActive ? (
-                <>
-                  <span className="line-through text-gray-400">₹{discount.originalDeliveryPrice}</span>
-                  <span className="font-semibold text-gray-900">₹{deliveryPrice}</span>
-                  <span className="text-green-600 font-medium">delivery</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-gray-800">₹{deliveryPrice}</span>
-                  <span>delivery</span>
-                </>
-              )}
-            </div>
-          )}
-          {appointmentEnabled && (
-            <div className="flex items-center gap-1.5">
-              {discountActive ? (
-                <>
-                  <span className="line-through text-gray-400">₹{discount.originalAppointmentPrice}</span>
-                  <span className="font-semibold text-gray-900">₹{appointmentPrice}</span>
-                  <span className="text-green-600 font-medium">appt</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-gray-800">₹{appointmentPrice}</span>
-                  <span>appt</span>
-                </>
-              )}
-            </div>
-          )}
-          {discountActive && (
-  <>
-    <div className="text-green-600 font-medium space-y-0.5">
-      {deliveryEnabled && discount.applyTo !== 'appointment' && (
-        <div>Save ₹{discount.originalDeliveryPrice - deliveryPrice} on delivery</div>
-      )}
-      {appointmentEnabled && discount.applyTo !== 'delivery' && (
-        <div>Save ₹{discount.originalAppointmentPrice - appointmentPrice} on appt</div>
+<div className="flex flex-col gap-1 text-xs text-gray-500">
+  {product.deliveryEnabled && (
+    <div className="flex items-center gap-1.5">
+      {discountActive ? (
+        <>
+          <span className="line-through text-gray-400">₹{discount.originalDeliveryPrice}</span>
+          <span className="font-semibold text-gray-900">₹{deliveryPrice}</span>
+          <span className="text-green-600 font-medium">price</span>
+        </>
+      ) : (
+        <>
+          <span className="font-medium text-gray-800">₹{deliveryPrice}</span>
+          <span>price</span>
+        </>
       )}
     </div>
-              {discount.endDate && (
-                <div className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
-                  <span>Until {new Date(discount.endDate).toLocaleString('en-IN', {
-                    day: '2-digit', month: 'short', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit', hour12: true,
-                  })}</span>
-                </div>
-              )}
-            </>
-          )}
+  )}
+  {appointmentEnabled && product.appointmentEnabled && (
+    <div className="flex items-center gap-1.5">
+      {discountActive ? (
+        <>
+          <span className="line-through text-gray-400">₹{discount.originalAppointmentPrice}</span>
+          <span className="font-semibold text-gray-900">₹{appointmentPrice}</span>
+          <span className="text-green-600 font-medium">appt</span>
+        </>
+      ) : (
+        <>
+          <span className="font-medium text-gray-800">₹{appointmentPrice}</span>
+          <span>appt</span>
+        </>
+      )}
+    </div>
+  )}
+  {discountActive && (
+    <>
+      <div className="text-green-600 font-medium space-y-0.5">
+        {product.deliveryEnabled && discount.applyTo !== 'appointment' && (
+          <div>Save ₹{discount.originalDeliveryPrice - deliveryPrice} on price</div>
+        )}
+        {appointmentEnabled && product.appointmentEnabled && discount.applyTo !== 'delivery' && (
+  <div>Save ₹{discount.originalAppointmentPrice - appointmentPrice} on appt</div>
+)}
+      </div>
+      {discount.endDate && (
+        <div className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+          <span>Until {new Date(discount.endDate).toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true,
+          })}</span>
         </div>
+      )}
+    </>
+  )}
+</div>
         {/* Categories */}
         {visibleCats.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-0.5">

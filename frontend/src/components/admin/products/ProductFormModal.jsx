@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Loader2, Truck, CalendarClock } from 'lucide-react';
+import { X, Plus, Loader2, Tag, CalendarClock } from 'lucide-react';
 import useCloudinaryUpload from '../../../hooks/useCloudinaryUpload';
 import api from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
@@ -201,59 +201,43 @@ function CategorySelect({ allCategories, selected, onChange }) {
   );
 }
 // ─── Service Toggle Row ───────────────────────────────────────────────────────
-function ServicePriceRow({ icon: Icon, label, enabled, onToggle, price, onPriceChange, disabled }) {
+function ServicePriceRow({ icon: Icon, label, enabled, onToggle, price, onPriceChange, disabled, showToggle = true }) {
   return (
-    <div
-      className={`rounded-xl border transition-all duration-200 ${
-        enabled ? 'border-violet-200 bg-violet-50/40' : 'border-gray-200 bg-gray-50/60'
-      }`}
-    >
+    <div className={`rounded-xl border transition-all duration-200 ${enabled ? 'border-violet-200 bg-violet-50/40' : 'border-gray-200 bg-gray-50/60'}`}>
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <Icon
-            className={`w-4 h-4 transition-colors ${enabled ? 'text-violet-500' : 'text-gray-400'}`}
-          />
-          <span
-            className={`text-sm font-medium transition-colors ${
-              enabled ? 'text-gray-800' : 'text-gray-400'
-            }`}
-          >
+          <Icon className={`w-4 h-4 transition-colors ${enabled ? 'text-violet-500' : 'text-gray-400'}`} />
+          <span className={`text-sm font-medium transition-colors ${enabled ? 'text-gray-800' : 'text-gray-400'}`}>
             {label}
           </span>
-          {enabled ? (
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-violet-500 bg-violet-100 rounded-full px-2 py-0.5">
-              On
-            </span>
-          ) : (
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 bg-gray-200 rounded-full px-2 py-0.5">
-              Off
-            </span>
+          {showToggle && (
+            enabled ? (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-violet-500 bg-violet-100 rounded-full px-2 py-0.5">On</span>
+            ) : (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 bg-gray-200 rounded-full px-2 py-0.5">Off</span>
+            )
           )}
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          disabled={disabled}
-          onClick={onToggle}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50 ${
-            enabled ? 'bg-violet-500 border-violet-500' : 'bg-gray-200 border-gray-200'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              enabled ? 'translate-x-5' : 'translate-x-0.5'
+        {showToggle && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            disabled={disabled}
+            onClick={onToggle}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50 ${
+              enabled ? 'bg-violet-500 border-violet-500' : 'bg-gray-200 border-gray-200'
             }`}
-          />
-        </button>
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          </button>
+        )}
       </div>
 
-      {enabled && (
+      {(showToggle ? enabled : true) && (
         <div className="px-4 pb-3 pt-0">
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium select-none">
-              ₹
-            </span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium select-none">₹</span>
             <input
               type="number"
               min="0"
@@ -287,7 +271,7 @@ export default function ProductFormModal({
 
   // Toggles are only shown when BOTH services are enabled at shop level.
   // If only one is enabled, no choice to make — just show that price input.
-  const showToggles = deliveryEnabled && appointmentEnabled;
+  const showToggles = true;
 
   // ── Toggle initial state ───────────────────────────────────────────────────
   // The ONLY source of truth for whether a service is offered on a product is
@@ -364,11 +348,11 @@ export default function ProductFormModal({
     }
 
     // If toggles are hidden (only one shop service), that service is always offered.
-    const offerDelivery = deliveryEnabled && (showToggles ? deliveryOn : true);
-    const offerAppointment = appointmentEnabled && (showToggles ? appointmentOn : true);
+    const offerDelivery = deliveryOn;
+    const offerAppointment = appointmentEnabled ? appointmentOn : false;
 
     if (!offerDelivery && !offerAppointment) {
-      toast.error('At least one service (delivery or appointment) must be enabled');
+      toast.error('At least one field (price or appointment) must be enabled');
       return;
     }
     if (offerDelivery && deliveryPrice === '') {
@@ -474,94 +458,49 @@ export default function ProductFormModal({
           </div>
 
           {/* Pricing */}
-          {(deliveryEnabled || appointmentEnabled) && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                {showToggles ? 'Services & Pricing' : 'Pricing'}
-              </label>
-
-              {showToggles ? (
-                <>
-                  <p className="text-xs text-gray-400 mb-3">
-                    Toggle off any service this product doesn't support. Enter 0 if the service is free.
-                  </p>
-                  {product?.discount?.isActive && (
-                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
-                      Showing original prices — discount is active and will re-apply on top of these.
-                    </p>
-                  )}
-                  <div className="space-y-3">
-                    <ServicePriceRow
-                      icon={Truck}
-                      label="Delivery"
-                      enabled={deliveryOn}
-                      onToggle={handleDeliveryToggle}
-                      price={deliveryPrice}
-                      onPriceChange={setDeliveryPrice}
-                      disabled={saving}
-                    />
-                    <ServicePriceRow
-                      icon={CalendarClock}
-                      label="Appointment"
-                      enabled={appointmentOn}
-                      onToggle={handleAppointmentToggle}
-                      price={appointmentPrice}
-                      onPriceChange={setAppointmentPrice}
-                      disabled={saving}
-                    />
-                  </div>
-                  {!deliveryOn && !appointmentOn && (
-                    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
-                      <span>⚠</span> At least one service must be enabled.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="text-xs text-gray-400 mb-2">
-                    Enter 0 if this product is free.
-                  </p>
-                  {product?.discount?.isActive && (
-                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
-                      Showing original prices — discount is active and will re-apply on top of these.
-                    </p>
-                  )}
-                  {deliveryEnabled && (
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Delivery Price (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={deliveryPrice}
-                        onChange={(e) => setDeliveryPrice(e.target.value)}
-                        placeholder="0 for free"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                      />
-                      {deliveryPrice === '' && (
-                        <p className="text-[11px] text-amber-600 mt-1.5">⚠ Enter a price (use 0 if free)</p>
-                      )}
-                    </div>
-                  )}
-                  {appointmentEnabled && (
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Appointment Price (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={appointmentPrice}
-                        onChange={(e) => setAppointmentPrice(e.target.value)}
-                        placeholder="0 for free"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400"
-                      />
-                      {appointmentPrice === '' && (
-                        <p className="text-[11px] text-amber-600 mt-1.5">⚠ Enter a price (use 0 if free)</p>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+<div>
+  <label className="block text-xs font-medium text-gray-600 mb-1">
+    Pricing
+  </label>
+  <p className="text-xs text-gray-400 mb-3">
+    {appointmentEnabled
+      ? 'Toggle off any service this product doesn\'t support. Enter 0 if the service is free.'
+      : 'Enter 0 if the service is free.'}
+  </p>
+  {product?.discount?.isActive && (
+    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+      Showing original prices — discount is active and will re-apply on top of these.
+    </p>
+  )}
+  <div className="space-y-3">
+    <ServicePriceRow
+      icon={Tag}
+      label="Price"
+      enabled={deliveryOn}
+      onToggle={handleDeliveryToggle}
+      price={deliveryPrice}
+      onPriceChange={setDeliveryPrice}
+      disabled={saving}
+      showToggle={appointmentEnabled}
+    />
+    {appointmentEnabled && (
+      <ServicePriceRow
+        icon={CalendarClock}
+        label="Appointment"
+        enabled={appointmentOn}
+        onToggle={handleAppointmentToggle}
+        price={appointmentPrice}
+        onPriceChange={setAppointmentPrice}
+        disabled={saving}
+      />
+    )}
+  </div>
+  {appointmentEnabled && !deliveryOn && !appointmentOn && (
+    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+      <span>⚠</span> At least one service must be enabled.
+    </p>
+  )}
+</div>
 
           {/* Description */}
           <div>

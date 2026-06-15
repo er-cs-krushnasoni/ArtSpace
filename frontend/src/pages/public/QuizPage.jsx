@@ -6,7 +6,7 @@ import { getLabels } from '../../config/businessTypeLabels';
 import ShopHeader from '../../components/public/ShopHeader';
 import usePublicTheme from '../../hooks/usePublicTheme';
 import ProductCard from '../../components/public/ProductCard';
-import OrderFormModal from '../../components/public/OrderFormModal';
+import ProductDetailModal from '../../components/public/ProductDetailModal';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -430,11 +430,11 @@ export default function QuizPage() {
 
       {/* Product detail modal triggered from quiz results */}
       {activeProduct && (
-        <OrderFormModal
-          product={activeProduct}
-          onClose={() => setActiveProduct(null)}
-        />
-      )}
+  <ProductDetailModal
+    product={activeProduct}
+    onClose={() => setActiveProduct(null)}
+  />
+)}
 
       <style>{`
         @keyframes resultsFadeIn {

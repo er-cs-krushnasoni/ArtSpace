@@ -3,7 +3,7 @@ import { useNavigate, useParams, Routes, Route, NavLink, Navigate } from 'react-
 import {
   LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
   Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen,
-  BarChart2, Download, AlertTriangle, Mail,
+  BarChart2, Download, AlertTriangle, Mail, MessageSquare,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth }   from '../../context/AuthContext';
@@ -89,7 +89,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Style Quiz',       icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/quiz` },
-    { label: 'FAQ',          icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/faq` },
+    { label: 'FAQ', icon: MessageSquare, to: `/s/${slug}/admin/dashboard/faq` },
     { label: 'Blog',             icon: BookOpen,        to: `/s/${slug}/admin/dashboard/blog` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },

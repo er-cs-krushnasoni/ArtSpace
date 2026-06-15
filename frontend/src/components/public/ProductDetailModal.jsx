@@ -251,29 +251,31 @@ const DeliveryFormModal = ({ product, onClose }) => {
                 </Field>
 
                 {/* Order type */}
-                <Field label="How would you like it?">
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: 'pickup',   label: 'Pickup',   sub: 'You collect from us' },
-                      ...(config.deliveryEnabled ? [{ value: 'delivery', label: 'Delivery', sub: 'We deliver to you' }] : []),
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => set('orderType', opt.value)}
-                        className="py-3 px-3.5 rounded-2xl text-sm font-semibold border-2 transition-all text-left"
-                        style={
-                          form.orderType === opt.value
-                            ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
-                            : { borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 15%, transparent)', color: 'var(--tenant-text, #6b7280)' }
-                        }
-                      >
-                        <div>{opt.label}</div>
-                        <div className="text-xs opacity-55 font-normal mt-0.5">{opt.sub}</div>
-                      </button>
-                    ))}
-                  </div>
-                </Field>
+{config.deliveryEnabled && (
+  <Field label="How would you like it?">
+    <div className="grid grid-cols-2 gap-2">
+      {[
+        { value: 'pickup',   label: 'Pickup',   sub: 'You collect from us' },
+        { value: 'delivery', label: 'Delivery', sub: 'We deliver to you' },
+      ].map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => set('orderType', opt.value)}
+          className="py-3 px-3.5 rounded-2xl text-sm font-semibold border-2 transition-all text-left"
+          style={
+            form.orderType === opt.value
+              ? { borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)', background: 'color-mix(in srgb, var(--tenant-primary) 8%, transparent)' }
+              : { borderColor: 'color-mix(in srgb, var(--tenant-text, #374151) 15%, transparent)', color: 'var(--tenant-text, #6b7280)' }
+          }
+        >
+          <div>{opt.label}</div>
+          <div className="text-xs opacity-55 font-normal mt-0.5">{opt.sub}</div>
+        </button>
+      ))}
+    </div>
+  </Field>
+)}
 
                 {/* Address */}
                 {form.orderType === 'delivery' && (
