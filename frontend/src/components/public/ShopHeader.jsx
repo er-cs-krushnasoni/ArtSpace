@@ -42,7 +42,7 @@ const ShopHeader = () => {
       ? [{ label: labels.book_appointment || 'Book Appointment', to: `/s/${slug}/appointment` }]
       : []),
     ...(config.quizEnabled ? [{ label: labels.quiz_name || 'Style Quiz', to: `/s/${slug}/quiz` }] : []),
-      ...(config.faqEnabled ? [{ label: 'FAQ', to: `/s/${slug}/faq` }] : []),
+      ...(config.faqEnabled ? [{ label: 'FAQs', to: `/s/${slug}/faq` }] : []),
     ...(config.blogEnabled ? [{ label: 'Blog', to: `/s/${slug}/blog` }] : []),
   ];
 

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate ,useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider, useTenant } from './context/TenantContext';
@@ -133,6 +134,13 @@ const TenantPublicSite = () => {
   );
 };
 
+// ─── Scroll To Top ────────────────────────────────────────────────────────────
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
+
 // ─── Root Router ──────────────────────────────────────────────────────────────
 const AppRouter = () => {
   
@@ -167,7 +175,8 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <AppRouter />
+          <ScrollToTop />
+<AppRouter />
           <Toaster
             position="top-right"
             toastOptions={{
