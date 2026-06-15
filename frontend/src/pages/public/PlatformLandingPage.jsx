@@ -515,10 +515,12 @@ function PricingSection() {
         <p className="text-xs font-bold uppercase tracking-widest text-violet-500 text-center mb-2">Pricing</p>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-1 tracking-tight">Simple, honest pricing</h2>
         <p className="text-sm text-gray-400 text-center mb-3">Start free. Upgrade when you're ready. No hidden fees, ever.</p>
-        <p className="text-xs text-center text-gray-400 mb-10 bg-amber-50 border border-amber-100 rounded-full px-4 py-1.5 inline-flex items-center gap-1.5 mx-auto block w-fit">
-          <Star className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-          Remaining days always carry forward when you renew or upgrade
-        </p>
+        <div className="text-center mb-10">
+  <p className="text-xs text-gray-400 bg-amber-50 border border-amber-100 rounded-full px-4 py-1.5 inline-flex items-center gap-1.5">
+    <Star className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+    Remaining days always carry forward when you renew or upgrade
+  </p>
+</div>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
