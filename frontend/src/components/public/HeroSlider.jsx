@@ -69,7 +69,7 @@ const HeroSlider = ({ slides, onSlideClick }) => {
           <img
             src={slide.imageUrl}
             alt={slide.title || `Slide ${i + 1}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-fill"
             draggable={false}
             loading={i === 0 ? 'eager' : 'lazy'}
           />

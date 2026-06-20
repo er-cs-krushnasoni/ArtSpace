@@ -1,5 +1,5 @@
 // frontend/public/sw.js
-const CACHE_NAME = 'artspace-admin-v3'; // bumped to clear old broken cache
+const CACHE_NAME = 'artspace-admin-v4'; // bumped to clear old broken cache
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -21,6 +21,17 @@ self.addEventListener('fetch', (event) => {
   // Never intercept API calls
   if (url.pathname.startsWith('/api/')) return;
 
+  // Never intercept Vite HMR / dev-server requests —
+  // intercepting these during hot reload is what corrupts the React module graph
+  if (
+    url.pathname.includes('/@vite/') ||
+    url.pathname.includes('/@fs/') ||
+    url.pathname.includes('/__vite') ||
+    url.searchParams.has('t') // Vite cache-busted module URLs
+  ) {
+    return;
+  }
+
   // Never cache favicons/logos — always network
   if (
     url.pathname.endsWith('.ico') ||
@@ -41,7 +52,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS/CSS/SVG/WEBP: cache-first, network fallback — NEVER let it throw
+  // JS/CSS/SVG/WEBP: cache-first, network fallback
+  // CRITICAL: no .catch() for JS modules — if a fetch fails, let it throw.
+  // An empty Response body silently corrupts the React module graph,
+  // which is far worse than a recoverable network error.
   const isCacheable =
     url.origin === self.location.origin &&
     (url.pathname.endsWith('.js') ||
@@ -53,24 +67,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
-
-        return fetch(event.request)
-          .then((response) => {
-            if (response.ok) {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            }
-            return response;
-          })
-          .catch(() => {
-            // Critical: never let a JS module fetch throw —
-            // returning a 503 is safer than an unhandled rejection
-            // that corrupts the React module graph
-            return new Response('', {
-              status: 503,
-              statusText: 'Service Unavailable',
-            });
-          });
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+        // No .catch() here intentionally — see note above
       })
     );
     return;

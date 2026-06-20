@@ -4,6 +4,8 @@ import {
   LayoutDashboard, CreditCard, Settings, LogOut, Menu, X,
   Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen,
   BarChart2, Download, AlertTriangle, Mail, MessageSquare,
+  Globe, Copy, Check, ExternalLink, ChevronDown, ChevronUp,
+  Smartphone,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth }   from '../../context/AuthContext';
@@ -22,41 +24,35 @@ import QuizBuilderPage     from './QuizBuilderPage';
 import BlogManagerPage     from './BlogManagerPage';
 import AnalyticsPage       from './AnalyticsPage';
 import PostEditorPage      from './PostEditorPage';
-import FAQManagerPage from './FAQManagerPage';
+import FAQManagerPage      from './FAQManagerPage';
+
+const PROD_BASE = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
 // ─── Trial Warning Banner ─────────────────────────────────────────────────────
 const TRIAL_PRODUCT_LIMIT = 10;
-
 const TrialBanner = ({ daysRemaining, slug }) => {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
-
   if (dismissed) return null;
-
-  const isUrgent = daysRemaining <= 2;
+  const isUrgent    = daysRemaining <= 2;
   const accentColor = isUrgent ? '#ef4444' : '#d97706';
   const bgColor     = isUrgent ? '#fef2f2' : '#fffbeb';
   const borderColor = isUrgent ? '#fecaca' : '#fde68a';
   const textColor   = isUrgent ? '#991b1b' : '#92400e';
-
   const dayLabel =
     daysRemaining === 0
       ? 'Your free trial expires today.'
       : `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} left on your free trial.`;
-
   return (
     <div
       className="flex items-start gap-3 px-4 py-3 text-sm flex-shrink-0"
       style={{ background: bgColor, borderBottom: `1px solid ${borderColor}` }}
     >
-      <AlertTriangle
-        className="w-4 h-4 flex-shrink-0 mt-0.5"
-        style={{ color: accentColor }}
-      />
+      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: accentColor }} />
       <p className="flex-1 leading-snug min-w-0" style={{ color: textColor }}>
         <span className="font-semibold">{dayLabel} </span>
         Upgrade now to save your shop and unlock more than {TRIAL_PRODUCT_LIMIT} products —
-when your trial ends, everything gets deleted forever. No backup. No recovery.
+        when your trial ends, everything gets deleted forever. No backup. No recovery.
       </p>
       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
         <button
@@ -79,21 +75,329 @@ when your trial ends, everything gets deleted forever. No backup. No recovery.
   );
 };
 
+// ─── Copy URL hook ────────────────────────────────────────────────────────────
+function useCopyUrl(url) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return [copied, copy];
+}
+
+// ─── Welcome Modal ────────────────────────────────────────────────────────────
+// Shows once per slug on first dashboard visit (localStorage flag).
+const WelcomeModal = ({ slug, onClose, onAddProduct }) => {
+  const shopUrl = `${PROD_BASE}/s/${slug}`;
+  const [copied, copy] = useCopyUrl(shopUrl);
+
+  const handleCopy = () => {
+    copy();
+    // Mark link as shared
+    localStorage.setItem(`artspace_shared_${slug}`, '1');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Card */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        {/* Top accent */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-violet-500 to-violet-700" />
+
+        <div className="p-6">
+          {/* Close */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {/* Emoji + heading */}
+          <div className="mb-5">
+            <div className="text-3xl mb-3">🎉</div>
+            <h2 className="text-xl font-bold text-gray-900 leading-tight">
+              Your website is live!
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Share your link with customers and start adding products.
+            </p>
+          </div>
+
+          {/* URL display */}
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100 mb-4">
+            <Globe className="w-4 h-4 text-violet-500 flex-shrink-0" />
+            <span className="flex-1 text-xs font-mono text-gray-700 truncate">{shopUrl}</span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2 mb-5">
+            <button
+              onClick={handleCopy}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-700"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Copied!' : 'Copy Link'}
+            </button>
+            <a
+              href={shopUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-700"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View Website
+            </a>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-xs text-gray-400 font-medium">Next step</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          {/* Primary CTA */}
+          <button
+            onClick={onAddProduct}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-white rounded-xl transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-sm"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+          >
+            <Package className="w-4 h-4" />
+            Add Your First Product
+          </button>
+
+          <p className="text-center text-xs text-gray-400 mt-3">
+            Products are visible on your website instantly
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Shop URL Card ────────────────────────────────────────────────────────────
+// Always pinned at top of dashboard home.
+const ShopUrlCard = ({ slug }) => {
+  const shopUrl = `${PROD_BASE}/s/${slug}`;
+  const [copied, copy] = useCopyUrl(shopUrl);
+
+  const handleCopy = () => {
+    copy();
+    localStorage.setItem(`artspace_shared_${slug}`, '1');
+  };
+
+  return (
+    <div className="mb-5 flex items-center gap-3 p-3.5 bg-violet-50 border border-violet-100 rounded-xl">
+      <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+        <Globe className="w-4 h-4 text-violet-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-violet-800 mb-0.5">Your Website</p>
+        <p className="text-xs font-mono text-violet-600 truncate">{shopUrl}</p>
+      </div>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <button
+          onClick={handleCopy}
+          title="Copy link"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-violet-700 bg-white border border-violet-200 rounded-lg hover:bg-violet-50 transition-all"
+        >
+          {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+        <a
+          href={shopUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View website"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-violet-700 bg-white border border-violet-200 rounded-lg hover:bg-violet-50 transition-all"
+        >
+          <ExternalLink className="w-3 h-3" />
+          View
+        </a>
+      </div>
+    </div>
+  );
+};
+
+// ─── Setup Checklist ──────────────────────────────────────────────────────────
+const SetupChecklist = ({ slug, tenant, productCount, canInstall, onInstall }) => {
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+  const hasLogo      = !!tenant?.websiteConfig?.logo;
+  const hasContact = !!tenant?.websiteConfig?.whatsapp || !!tenant?.websiteConfig?.instagram;
+  const hasShared    = !!localStorage.getItem(`artspace_shared_${slug}`);
+  const has1Product  = productCount >= 1;
+  const has5Products = productCount >= 5;
+
+  const steps = [
+    {
+      label:    'Upload your logo',
+      done:     hasLogo,
+      action:   () => navigate(`/s/${slug}/admin/dashboard/settings`),
+      cta:      'Go to Settings',
+    },
+    {
+  label:  'Add WhatsApp or Instagram',
+  done:   hasContact,
+  action: () => navigate(`/s/${slug}/admin/dashboard/settings`),
+  cta:    'Go to Settings',
+},
+    {
+      label:    'Add your first product',
+      done:     has1Product,
+      action:   () => navigate(`/s/${slug}/admin/dashboard/products`),
+      cta:      'Add Product',
+    },
+    {
+      label:    'Add 5 products',
+      done:     has5Products,
+      action:   () => navigate(`/s/${slug}/admin/dashboard/products`),
+      cta:      'Add Products',
+    },
+    {
+      label:    'Share your website link',
+      done:     hasShared,
+      action:   () => {
+        const url = `${PROD_BASE}/s/${slug}`;
+        navigator.clipboard.writeText(url).then(() => {
+          localStorage.setItem(`artspace_shared_${slug}`, '1');
+          toast.success('Link copied! Share it with your customers.');
+        });
+      },
+      cta:      'Copy Link',
+    },
+  ];
+
+  const doneCount = steps.filter(s => s.done).length;
+  const pct       = Math.round((doneCount / steps.length) * 100);
+  const allDone   = doneCount === steps.length;
+
+  // If all done, show install nudge instead (only if logo exists — gate)
+  if (allDone) {
+    if (!canInstall || !hasLogo) return null;
+    return (
+      <div className="mb-5 p-4 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 rounded-xl">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <Smartphone className="w-4 h-4 text-violet-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-violet-900">Install the Admin App</p>
+            <p className="text-xs text-violet-600 mt-0.5">
+              Manage your shop from your home screen — no browser needed.
+            </p>
+          </div>
+          <button
+            onClick={onInstall}
+            className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition-all hover:opacity-90"
+            style={{ background: '#7c3aed' }}
+          >
+            Install
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setCollapsed(v => !v)}
+        className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-sm font-semibold text-gray-900">
+              Complete Your Shop
+            </p>
+            <span className="text-xs font-semibold text-violet-600">{pct}%</span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width:      `${pct}%`,
+                background: 'linear-gradient(90deg, #7c3aed, #a78bfa)',
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex-shrink-0 text-gray-400">
+          {collapsed
+            ? <ChevronDown className="w-4 h-4" />
+            : <ChevronUp   className="w-4 h-4" />
+          }
+        </div>
+      </button>
+
+      {/* Steps */}
+      {!collapsed && (
+        <div className="border-t border-gray-50 divide-y divide-gray-50">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3">
+              {/* Checkbox */}
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                  step.done
+                    ? 'bg-green-500 border-green-500'
+                    : 'border-gray-300'
+                }`}
+              >
+                {step.done && <Check className="w-3 h-3 text-white" />}
+              </div>
+
+              {/* Label */}
+              <span
+                className={`flex-1 text-sm ${
+                  step.done ? 'text-gray-400 line-through' : 'text-gray-700'
+                }`}
+              >
+                {step.label}
+              </span>
+
+              {/* CTA */}
+              {!step.done && (
+                <button
+                  onClick={step.action}
+                  className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-all whitespace-nowrap"
+                >
+                  {step.cta}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount, canInstall, onInstall }) => {
+const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unreadCount, canInstall, onInstall, hasLogo }) => {
   const NAV_ITEMS = [
     { label: 'Dashboard',        icon: LayoutDashboard, to: `/s/${slug}/admin/dashboard/home` },
-    { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,      badge: unreadCount },
+    { label: 'Inbox',            icon: Inbox,           to: `/s/${slug}/admin/dashboard/inbox`,    badge: unreadCount },
     { label: 'Tasks',            icon: CalendarCheck,   to: `/s/${slug}/admin/dashboard/calendar` },
     { label: 'Analytics',        icon: BarChart2,       to: `/s/${slug}/admin/dashboard/analytics` },
     { label: 'Products',         icon: Package,         to: `/s/${slug}/admin/dashboard/products` },
     { label: 'Categories',       icon: Tag,             to: `/s/${slug}/admin/dashboard/categories` },
     { label: 'Style Quiz',       icon: HelpCircle,      to: `/s/${slug}/admin/dashboard/quiz` },
-    { label: 'FAQ', icon: MessageSquare, to: `/s/${slug}/admin/dashboard/faq` },
+    { label: 'FAQ',              icon: MessageSquare,   to: `/s/${slug}/admin/dashboard/faq` },
     { label: 'Blog',             icon: BookOpen,        to: `/s/${slug}/admin/dashboard/blog` },
     { label: 'Subscription',     icon: CreditCard,      to: `/s/${slug}/admin/dashboard/subscription` },
     { label: 'Website Settings', icon: Settings,        to: `/s/${slug}/admin/dashboard/settings` },
   ];
+
+  // Gate: only show install if logo exists
+  const showInstall = canInstall && hasLogo;
 
   return (
     <>
@@ -155,7 +459,7 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
 
         {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-white/5 space-y-1">
-          {canInstall && (
+          {showInstall && (
             <button
               onClick={onInstall}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium w-full transition-all duration-200 hover:bg-white/5"
@@ -189,10 +493,15 @@ const AdminSidebar = ({ slug, businessName, onLogout, mobileOpen, onClose, unrea
 };
 
 // ─── Dashboard Home ───────────────────────────────────────────────────────────
-const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading }) => {
-  const { tenant } = useTenant();
-  const { slug }   = useParams();
-  const navigate   = useNavigate();
+const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading, canInstall, onInstall }) => {
+  const { tenant }  = useTenant();
+  const { slug }    = useParams();
+  const navigate    = useNavigate();
+  const { user }    = useAuth();
+
+  const [productCount,   setProductCount]   = useState(0);
+  const [productLoading, setProductLoading] = useState(true);
+  const [showWelcome,    setShowWelcome]    = useState(false);
 
   useEffect(() => {
     if (tenant?.businessName) {
@@ -200,62 +509,120 @@ const DashboardHome = ({ unreadCount, unreadLoading, taskSummary, taskLoading })
     }
   }, [tenant]);
 
-  const showSetupBanner = tenant && !tenant.websiteConfig?.logo;
+  // Fetch product count
+  useEffect(() => {
+    api.get('/tenant/products')
+      .then(res => setProductCount((res.data.data || []).length))
+      .catch(() => {})
+      .finally(() => setProductLoading(false));
+  }, []);
+
+  // Welcome modal: show once per slug
+  useEffect(() => {
+    if (!slug) return;
+    const key = `artspace_welcomed_${slug}`;
+    if (!localStorage.getItem(key)) {
+      setShowWelcome(true);
+      localStorage.setItem(key, '1');
+    }
+  }, [slug]);
+
+  const handleCloseWelcome = () => setShowWelcome(false);
+  const handleWelcomeAddProduct = () => {
+    setShowWelcome(false);
+    navigate(`/s/${slug}/admin/dashboard/products`);
+  };
+
+  // Show stat cards only when there's meaningful data
+  const hasActivity =
+    unreadCount > 0 ||
+    (taskSummary.todayAppointments ?? 0) > 0 ||
+    (taskSummary.todayDeliveries ?? 0) > 0;
 
   return (
     <div className="p-6">
-      {showSetupBanner && (
-        <div className="mb-5 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-900">Complete your shop setup</p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              Upload a logo and fill in your shop details to give customers a great first impression.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate(`/s/${slug}/admin/dashboard/settings`)}
-            className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white rounded-lg bg-amber-500 hover:bg-amber-600 transition-colors"
-          >
-            Complete Setup
-          </button>
-        </div>
+      {/* Welcome modal */}
+      {showWelcome && (
+        <WelcomeModal
+          slug={slug}
+          onClose={handleCloseWelcome}
+          onAddProduct={handleWelcomeAddProduct}
+        />
       )}
+
+      {/* Always-visible shop URL card */}
+      <ShopUrlCard slug={slug} />
+
+      {/* Setup checklist */}
+      {!productLoading && (
+        <SetupChecklist
+          slug={slug}
+          tenant={tenant}
+          productCount={productCount}
+          canInstall={canInstall}
+          onInstall={onInstall}
+        />
+      )}
+
+      {/* Page heading */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Welcome back.</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Welcome back{user?.businessName ? `, ${user.businessName}` : ''}.
+        </p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div
-          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
-          onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
-        >
-          <p className="text-xs text-gray-500 mb-1">Unread Queries</p>
-          {unreadLoading
-            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-            : <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>}
+
+      {/* Stat cards — only shown when there's something to show */}
+      {hasActivity && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div
+            className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+            onClick={() => navigate(`/s/${slug}/admin/dashboard/inbox`)}
+          >
+            <p className="text-xs text-gray-500 mb-1">Unread Queries</p>
+            {unreadLoading
+              ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+              : <p className="text-2xl font-semibold text-gray-900">{unreadCount}</p>}
+          </div>
+          <div
+            className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+            onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
+          >
+            <p className="text-xs text-gray-500 mb-1">Today's Appointments</p>
+            {taskLoading
+              ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+              : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayAppointments ?? 0}</p>}
+          </div>
+          <div
+            className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
+            onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
+          >
+            <p className="text-xs text-gray-500 mb-1">Today's Deliveries</p>
+            {taskLoading
+              ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+              : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayDeliveries ?? 0}</p>}
+          </div>
         </div>
+      )}
+
+      {/* Empty state nudge — shown instead of zeroed-out cards */}
+      {!hasActivity && !unreadLoading && !taskLoading && (
         <div
-          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
-          onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
+          className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl cursor-pointer hover:bg-violet-50 hover:border-violet-100 transition-all"
+          onClick={() => navigate(`/s/${slug}/admin/dashboard/products`)}
         >
-          <p className="text-xs text-gray-500 mb-1">Today's Appointments</p>
-          {taskLoading
-            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-            : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayAppointments ?? 0}</p>}
+          <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <Package className="w-4 h-4 text-violet-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">Add products to get started</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Queries and bookings will appear here once customers find your shop.
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-violet-600 flex-shrink-0">Add →</span>
         </div>
-        <div
-          className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-violet-50 transition-colors"
-          onClick={() => navigate(`/s/${slug}/admin/dashboard/calendar`)}
-        >
-          <p className="text-xs text-gray-500 mb-1">Today's Deliveries</p>
-          {taskLoading
-            ? <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
-            : <p className="text-2xl font-semibold text-gray-900">{taskSummary.todayDeliveries ?? 0}</p>}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -278,6 +645,7 @@ const BlockedScreen = ({ icon: Icon, iconBg, iconColor, title, message, action }
 export default function AdminDashboardPage() {
   const { slug }         = useParams();
   const { user, logout } = useAuth();
+  const { tenant }       = useTenant();
   const navigate         = useNavigate();
   const { canInstall, install } = usePWAInstall();
 
@@ -287,7 +655,10 @@ export default function AdminDashboardPage() {
   const [unreadLoading, setUnreadLoading] = useState(true);
   const [taskSummary,   setTaskSummary]   = useState({});
   const [taskLoading,   setTaskLoading]   = useState(true);
-  const [trialInfo,     setTrialInfo]     = useState(null); // { daysRemaining } — only set for trial plan
+  const [trialInfo,     setTrialInfo]     = useState(null);
+
+  // Logo gate for PWA install
+  const hasLogo = !!tenant?.websiteConfig?.logo;
 
   useEffect(() => {
     if (user && user.slug !== slug)
@@ -328,14 +699,11 @@ export default function AdminDashboardPage() {
     if (accountStatus === 'ok') {
       fetchUnreadCount();
       fetchTaskSummary();
-
-      // Fetch trial info for the banner — reuses the same status endpoint
       api.get('/subscription/status').then((res) => {
-        if (res.data.plan === 'trial') {
-          setTrialInfo({ daysRemaining: res.data.daysRemaining });
-        }
-      }).catch(() => {});
-
+  if (res.data.plan === 'trial' && res.data.daysRemaining <= 3) {
+    setTrialInfo({ daysRemaining: res.data.daysRemaining });
+  }
+}).catch(() => {});
       const interval = setInterval(() => {
         if (!document.hidden) fetchUnreadCount();
       }, 30_000);
@@ -451,10 +819,10 @@ export default function AdminDashboardPage() {
         unreadCount={unreadCount}
         canInstall={canInstall}
         onInstall={install}
+        hasLogo={hasLogo}
       />
-
       <div className="lg:ml-60 min-h-screen flex flex-col">
-        {/* Trial warning banner — shown across all pages for trial users */}
+        {/* Trial warning banner */}
         {trialInfo && (
           <TrialBanner daysRemaining={trialInfo.daysRemaining} slug={slug} />
         )}
@@ -467,7 +835,7 @@ export default function AdminDashboardPage() {
           <span className="text-sm font-semibold text-gray-900 truncate flex-1">
             {user?.businessName || 'Admin'}
           </span>
-          {canInstall && (
+          {canInstall && hasLogo && (
             <button
               onClick={install}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-50 transition-colors"
@@ -481,7 +849,19 @@ export default function AdminDashboardPage() {
         <main className="flex-1">
           <Routes>
             <Route index element={<Navigate to="home" replace />} />
-            <Route path="home"              element={<DashboardHome unreadCount={unreadCount} unreadLoading={unreadLoading} taskSummary={taskSummary} taskLoading={taskLoading} />} />
+            <Route
+              path="home"
+              element={
+                <DashboardHome
+                  unreadCount={unreadCount}
+                  unreadLoading={unreadLoading}
+                  taskSummary={taskSummary}
+                  taskLoading={taskLoading}
+                  canInstall={canInstall}
+                  onInstall={install}
+                />
+              }
+            />
             <Route path="inbox"             element={<InboxPage />} />
             <Route path="calendar"          element={<TodoCalendarPage />} />
             <Route path="products"          element={<ProductsPage />} />
