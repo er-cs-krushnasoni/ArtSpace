@@ -76,9 +76,21 @@ const ProductCard = ({ product, onClick }) => {
   const { tenant } = useTenant();
   const config = tenant?.websiteConfig || {};
   const prices = getEffectivePrices(product);
-  const showDelivery = prices.offersDelivery; 
+
+  const productSalesEnabled = config.productSalesEnabled !== false;
+  const showDelivery    = productSalesEnabled && prices.offersDelivery;
   const showAppointment = !!config.appointmentEnabled && prices.offersAppointment;
+
+  const buttonLabel = showDelivery && showAppointment
+    ? 'Order / Book Now'
+    : showDelivery
+    ? 'Order Now'
+    : showAppointment
+    ? 'Book Appointment'
+    : 'View Details';
+
   const coverPhoto = product.photos?.[0]?.url;
+
   return (
     <div
       className="rounded-2xl overflow-hidden cursor-pointer group
@@ -115,7 +127,7 @@ const ProductCard = ({ product, onClick }) => {
             {prices.discountLabel}
           </span>
         )}
-        {/* Desktop hover overlay — Order Now */}
+        {/* Desktop hover overlay */}
         <div className="absolute bottom-0 inset-x-0 p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-200 hidden sm:block">
           <button
             className="w-full py-2.5 rounded-xl text-xs font-bold shadow-lg transition-opacity hover:opacity-90"
@@ -125,7 +137,7 @@ const ProductCard = ({ product, onClick }) => {
             }}
             onClick={(e) => { e.stopPropagation(); onClick(); }}
           >
-            Order Now
+            {buttonLabel}
           </button>
         </div>
       </div>
@@ -149,7 +161,7 @@ const ProductCard = ({ product, onClick }) => {
             label="Price"
             original={prices.originalDelivery}
             effective={prices.delivery}
-            hasDiscount={prices.hasDiscount}
+            hasDiscount={prices.hasDiscount && prices.applyTo !== 'appointment'}
             show={showDelivery}
           />
           {prices.hasDiscount && showDelivery && prices.applyTo !== 'appointment' && (
@@ -158,10 +170,10 @@ const ProductCard = ({ product, onClick }) => {
             </p>
           )}
           <PriceRow
-            label={showDelivery ? 'Appointment Price' : ''}
+            label={showDelivery ? 'Appointment Price' : 'Appointment Price'}
             original={prices.originalAppointment}
             effective={prices.appointment}
-            hasDiscount={prices.hasDiscount}
+            hasDiscount={prices.hasDiscount && prices.applyTo !== 'delivery'}
             show={showAppointment}
           />
           {prices.hasDiscount && showAppointment && prices.applyTo !== 'delivery' && (
@@ -170,7 +182,7 @@ const ProductCard = ({ product, onClick }) => {
             </p>
           )}
         </div>
-        {/* Mobile Order Now */}
+        {/* Mobile button */}
         <button
           className="sm:hidden w-full py-2.5 rounded-xl text-xs font-bold mt-1 transition-opacity hover:opacity-90"
           style={{
@@ -179,7 +191,7 @@ const ProductCard = ({ product, onClick }) => {
           }}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
         >
-          Order Now
+          {buttonLabel}
         </button>
       </div>
     </div>

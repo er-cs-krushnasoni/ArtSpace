@@ -36,8 +36,8 @@ export default function DiscountModal({
 
   // Derive the actual applyTo to send — state only matters when both are enabled
   const effectiveApplyTo = !bothEnabled
-    ? deliveryEnabled ? 'delivery' : 'appointment'
-    : applyTo;
+  ? product.deliveryEnabled ? 'delivery' : 'appointment'
+  : applyTo;
 
   // Original prices (before discount)
   const origDelivery = hasDiscount

@@ -90,16 +90,9 @@ const { businessName, address, whatsapp, instagram, primaryColor, accentColor, b
 // ─── PUT /api/tenant/settings/toggles ────────────────────────────────────────
 const updateToggles = async (req, res) => {
   const {
-    sliderEnabled,
-    quizEnabled,
-    blogEnabled,
-    deliveryEnabled,
-    appointmentEnabled,
-    appointmentAtHome,
-    shopVisible,
-    publicTheme,
-    faqEnabled,
-    productSalesEnabled,
+    sliderEnabled, quizEnabled, blogEnabled,
+    deliveryEnabled, appointmentEnabled, appointmentAtHome,
+    shopVisible, publicTheme, faqEnabled, productSalesEnabled,
   } = req.body;
 
   const update = {};
@@ -112,9 +105,7 @@ const updateToggles = async (req, res) => {
   if (typeof shopVisible === 'boolean') update['websiteConfig.shopVisible'] = shopVisible;
   if (typeof faqEnabled === 'boolean') update['websiteConfig.faqEnabled'] = faqEnabled;
   if (typeof productSalesEnabled === 'boolean') update['websiteConfig.productSalesEnabled'] = productSalesEnabled;
-  if (publicTheme === 'light' || publicTheme === 'dark') {
-    update['websiteConfig.publicTheme'] = publicTheme;
-  }
+  if (publicTheme === 'light' || publicTheme === 'dark') update['websiteConfig.publicTheme'] = publicTheme;
 
   await Tenant.findByIdAndUpdate(req.user.tenantId, { $set: update });
   res.json({ success: true, message: 'Toggles updated' });

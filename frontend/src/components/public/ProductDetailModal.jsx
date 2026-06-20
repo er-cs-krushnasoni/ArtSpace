@@ -733,7 +733,8 @@ const ProductDetailModal = ({ product, onClose }) => {
   const prices = getEffectivePrices(product);
   const photos = product.photos || [];
 
-  const canPickup      = product.deliveryEnabled && prices.offersDelivery; // always available
+  const productSalesEnabled = config.productSalesEnabled !== false;
+const canPickup      = productSalesEnabled && product.deliveryEnabled && prices.offersDelivery;
   const canDelivery    = !!config.deliveryEnabled && product.deliveryEnabled && prices.offersDelivery;
   const canAppointment = !!config.appointmentEnabled && product.appointmentEnabled && prices.offersAppointment;
 

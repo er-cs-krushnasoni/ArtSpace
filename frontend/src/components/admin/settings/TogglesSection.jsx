@@ -23,30 +23,41 @@ function Toggle({ checked, onChange, disabled }) {
 }
 
 const BASE_TOGGLES = [
-  { key: 'shopVisible', label: 'Public Shop Visible', desc: 'When off, your shop shows "temporarily unavailable" to customers' },
-  { key: 'sliderEnabled', label: 'Hero Slider', desc: 'Show image slideshow at top of public site' },
-  { key: 'quizEnabled', label: 'Style Quiz', desc: 'Let customers take a quiz to find products' },
-  { key: 'faqEnabled', label: 'FAQ Section', desc: 'Show a FAQ section on your public site' },
-  { key: 'blogEnabled', label: 'Blog', desc: 'Publish articles visible on your public site' },
-  { key: 'deliveryEnabled', label: 'Home Delivery', desc: 'Allow delivery to customer\'s address. Pickup is always available.' },
-  { key: 'appointmentEnabled', label: 'Appointment Booking', desc: 'Allow customers to book appointments' },
+  { key: 'shopVisible',        label: 'Public Shop Visible',   desc: 'When off, your shop shows "temporarily unavailable" to customers' },
+  { key: 'sliderEnabled',      label: 'Hero Slider',           desc: 'Show image slideshow at top of public site' },
+  { key: 'quizEnabled',        label: 'Style Quiz',            desc: 'Let customers take a quiz to find products' },
+  { key: 'faqEnabled',         label: 'FAQ Section',           desc: 'Show a FAQ section on your public site' },
+  { key: 'blogEnabled',        label: 'Blog',                  desc: 'Publish articles visible on your public site' },
+  { key: 'productSalesEnabled',label: 'Product Sales',         desc: 'Sell pre-made or custom products. Customers can still browse when off.' },
+  { key: 'appointmentEnabled', label: 'Appointment Booking',   desc: 'Allow customers to book appointments' },
 ];
 
 export default function TogglesSection({ initialData, onSaved }) {
   const cfg = initialData?.websiteConfig || {};
   const [toggles, setToggles] = useState({
-  shopVisible:        cfg.shopVisible !== false,
-  sliderEnabled:      cfg.sliderEnabled ?? false,
-  quizEnabled:        cfg.quizEnabled ?? false,
-  faqEnabled:         cfg.faqEnabled ?? false,
-  blogEnabled:        cfg.blogEnabled ?? false,
-  deliveryEnabled:    cfg.deliveryEnabled ?? false,
-  appointmentEnabled: cfg.appointmentEnabled ?? true,
-  appointmentAtHome:  cfg.appointmentAtHome ?? true,
-});
+    shopVisible:         cfg.shopVisible !== false,
+    sliderEnabled:       cfg.sliderEnabled ?? false,
+    quizEnabled:         cfg.quizEnabled ?? false,
+    faqEnabled:          cfg.faqEnabled ?? false,
+    blogEnabled:         cfg.blogEnabled ?? false,
+    productSalesEnabled: cfg.productSalesEnabled !== false,
+    deliveryEnabled:     cfg.deliveryEnabled ?? false,
+    appointmentEnabled:  cfg.appointmentEnabled ?? true,
+    appointmentAtHome:   cfg.appointmentAtHome ?? true,
+  });
   const [saving, setSaving] = useState(null);
 
   const handleToggle = async (key, value) => {
+    // At-least-one guard
+    if (key === 'productSalesEnabled' && !value && !toggles.appointmentEnabled) {
+      toast.error('At least one service (Product Sales or Appointment) must be enabled');
+      return;
+    }
+    if (key === 'appointmentEnabled' && !value && !toggles.productSalesEnabled) {
+      toast.error('At least one service (Product Sales or Appointment) must be enabled');
+      return;
+    }
+
     const optimistic = { ...toggles, [key]: value };
     setToggles(optimistic);
     setSaving(key);
@@ -68,7 +79,6 @@ export default function TogglesSection({ initialData, onSaved }) {
       <div className="space-y-4">
         {BASE_TOGGLES.map(({ key, label, desc }) => (
           <div key={key}>
-            {/* Main toggle row */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-800">{label}</p>
@@ -83,6 +93,28 @@ export default function TogglesSection({ initialData, onSaved }) {
               </div>
             </div>
 
+            {/* Home Delivery sub-toggle under Product Sales */}
+            {key === 'productSalesEnabled' && toggles.productSalesEnabled && (
+              <div className="mt-3 ml-2 pl-3 border-l-2 border-gray-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-700 leading-snug">Home Delivery</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Allow delivery to customer's address via courier or parcel. Pickup is always available.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-0.5">
+                    <Toggle
+                      checked={toggles.deliveryEnabled}
+                      onChange={(val) => handleToggle('deliveryEnabled', val)}
+                      disabled={saving === 'deliveryEnabled'}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Home Service sub-toggle under Appointment Booking */}
             {key === 'appointmentEnabled' && toggles.appointmentEnabled && (
               <div className="mt-3 ml-2 pl-3 border-l-2 border-gray-100">
                 <div className="flex items-start justify-between gap-3">

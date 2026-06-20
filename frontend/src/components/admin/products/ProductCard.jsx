@@ -90,11 +90,11 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
             </p>
           )}
         </div>
-        {/* Prices */}
+{/* Prices */}
 <div className="flex flex-col gap-1 text-xs text-gray-500">
   {product.deliveryEnabled && (
     <div className="flex items-center gap-1.5">
-      {discountActive ? (
+      {discountActive && discount.applyTo !== 'appointment' ? (
         <>
           <span className="line-through text-gray-400">₹{discount.originalDeliveryPrice}</span>
           <span className="font-semibold text-gray-900">₹{deliveryPrice}</span>
@@ -108,18 +108,18 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
       )}
     </div>
   )}
-  {appointmentEnabled && product.appointmentEnabled && (
+  {product.appointmentEnabled && (
     <div className="flex items-center gap-1.5">
-      {discountActive ? (
+      {discountActive && discount.applyTo !== 'delivery' ? (
         <>
           <span className="line-through text-gray-400">₹{discount.originalAppointmentPrice}</span>
           <span className="font-semibold text-gray-900">₹{appointmentPrice}</span>
-          <span className="text-green-600 font-medium">appt</span>
+          <span className="text-green-600 font-medium">appt. price</span>
         </>
       ) : (
         <>
           <span className="font-medium text-gray-800">₹{appointmentPrice}</span>
-          <span>appt</span>
+          <span>appt. price</span>
         </>
       )}
     </div>
@@ -130,9 +130,9 @@ export default function ProductCard({ product, deliveryEnabled = true, appointme
         {product.deliveryEnabled && discount.applyTo !== 'appointment' && (
           <div>Save ₹{discount.originalDeliveryPrice - deliveryPrice} on price</div>
         )}
-        {appointmentEnabled && product.appointmentEnabled && discount.applyTo !== 'delivery' && (
-  <div>Save ₹{discount.originalAppointmentPrice - appointmentPrice} on appt</div>
-)}
+        {product.appointmentEnabled && discount.applyTo !== 'delivery' && (
+          <div>Save ₹{discount.originalAppointmentPrice - appointmentPrice} on appt</div>
+        )}
       </div>
       {discount.endDate && (
         <div className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">

@@ -65,8 +65,8 @@ export default function WebsiteSettingsPage() {
     }));
   };
 
-  const sliderEnabled = settings?.websiteConfig?.sliderEnabled ?? false;
-  const deliveryEnabled = settings?.websiteConfig?.deliveryEnabled ?? true;
+const sliderEnabled = settings?.websiteConfig?.sliderEnabled ?? false;
+const productSalesEnabled = settings?.websiteConfig?.productSalesEnabled !== false;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -119,9 +119,9 @@ export default function WebsiteSettingsPage() {
             <SliderSection sliderEnabled={sliderEnabled} />
           )}
 
-          {deliveryEnabled && (
-            <TutorialVideoSection initialData={settings} />
-          )}
+          {productSalesEnabled && (
+  <TutorialVideoSection initialData={settings} />
+)}
 
           <SlugSection currentSlug={settings.slug} />
           <CredentialsSection initialData={settings} />
