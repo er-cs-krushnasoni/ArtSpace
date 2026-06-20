@@ -8,9 +8,10 @@ export default function UpdateTenantCredentialsModal({ tenant, onClose, onSucces
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newMobile, setNewMobile] = useState('');
 
   const handle = async () => {
-    if (!newEmail.trim() && !newPassword.trim()) {
+    if (!newEmail.trim() && !newPassword.trim() && !newMobile.trim()) {
       setError('Provide at least a new email or new password.');
       return;
     }
@@ -18,8 +19,9 @@ export default function UpdateTenantCredentialsModal({ tenant, onClose, onSucces
     setError('');
     try {
       await api.patch(`/superadmin/tenants/${tenant._id}/credentials`, {
-        newEmail: newEmail.trim() || undefined,
+        newEmail:    newEmail.trim()    || undefined,
         newPassword: newPassword.trim() || undefined,
+        newMobile:   newMobile.trim()   || undefined,
       });
       onSuccess('Tenant credentials updated and notified by email');
     } catch (err) {
@@ -64,6 +66,22 @@ export default function UpdateTenantCredentialsModal({ tenant, onClose, onSucces
               placeholder={tenant.email}
               value={newEmail}
               onChange={e => setNewEmail(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            />
+          </div>
+
+          {/* New Mobile */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5"
+              style={{ fontFamily: "'Inter', sans-serif" }}>
+              New Mobile <span className="text-gray-400 font-normal">(leave blank to keep current)</span>
+            </label>
+            <input
+              type="tel"
+              placeholder={tenant.mobile || 'e.g. +919876543210'}
+              value={newMobile}
+              onChange={e => setNewMobile(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300"
               style={{ fontFamily: "'Inter', sans-serif" }}
             />

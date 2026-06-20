@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Check, X, Loader2, ChevronDown, Mail, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
+import {
+  Eye, EyeOff, Check, X, Loader2, ChevronDown,
+  Mail, ArrowRight, ArrowLeft, Sparkles, Shield, Zap,
+  Globe, MessageCircle, Smartphone, CreditCard, RefreshCw,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 import { tokenStore } from '../../api/tokenStore';
 import { BUSINESS_TYPE_OPTIONS } from '../../config/businessTypeLabels';
 
+/* ─── Constants ─── */
 const COUNTRY_CODES = [
   { code: '+91',  label: '🇮🇳 +91' },
   { code: '+1',   label: '🇺🇸 +1' },
@@ -15,40 +20,68 @@ const COUNTRY_CODES = [
   { code: '+65',  label: '🇸🇬 +65' },
   { code: '+61',  label: '🇦🇺 +61' },
 ];
-
 const PLAN_ORDER = ['trial', '1m', '3m', '6m', '12m', 'custom'];
 const PLAN_META = {
-  trial:  { label: 'Free Trial',  duration: '7 days',   highlight: true,  desc: 'No card needed' },
-  '1m':   { label: '1 Month',     duration: '30 days',  desc: 'Billed once' },
-  '3m':   { label: '3 Months',    duration: '90 days',  desc: 'Billed once' },
-  '6m':   { label: '6 Months',    duration: '180 days', desc: 'Billed once' },
-  '12m':  { label: '12 Months',   duration: '365 days', desc: 'Best value' },
-  custom: { label: 'Custom Days', duration: 'You pick', desc: 'Flexible' },
+  trial:  { label: '🎁 Start Free', duration: '7 days',   highlight: true,  desc: 'Website goes live instantly. Upgrade only if you like it.' },
+  '1m':   { label: '1 Month',       duration: '30 days',  desc: 'Billed once' },
+  '3m':   { label: '3 Months',      duration: '90 days',  desc: 'Billed once' },
+  '6m':   { label: '6 Months',      duration: '180 days', desc: 'Billed once' },
+  '12m':  { label: '12 Months',     duration: '365 days', desc: 'Best value' },
+  custom: { label: 'Custom Days',   duration: 'You pick', desc: 'Flexible' },
 };
 
+const BENEFITS = [
+  { icon: Globe,         text: 'Live website instantly' },
+  { icon: Sparkles,      text: 'No coding required' },
+  { icon: Smartphone,    text: 'Mobile friendly' },
+  { icon: CreditCard,    text: 'No card required' },
+];
+
+const NEXT_STEPS = [
+  { n: '1', label: 'Create your shop' },
+  { n: '2', label: 'Get your live website instantly' },
+  { n: '3', label: 'Add your products & services' },
+  { n: '4', label: 'Share your link' },
+];
+
+/* ─── Razorpay loader ─── */
 const loadRazorpay = () =>
   new Promise((resolve) => {
     if (window.Razorpay) return resolve(true);
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
+    script.onload  = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
 
+/* ─── Slug helpers ─── */
 const SlugStatus = ({ status }) => {
   if (status === 'checking')  return <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />;
   if (status === 'available') return <Check className="w-4 h-4 text-green-500" />;
   if (['taken', 'reserved', 'invalid'].includes(status)) return <X className="w-4 h-4 text-red-500" />;
   return null;
 };
-
 const slugStatusText = (status) => {
   if (status === 'available') return { text: 'Available ✓',                                     cls: 'text-green-600' };
   if (status === 'taken')     return { text: 'Already taken — try another',                     cls: 'text-red-500' };
   if (status === 'reserved')  return { text: 'Reserved word — choose another',                  cls: 'text-red-500' };
   if (status === 'invalid')   return { text: 'Lowercase letters, numbers, hyphens only (3–30)', cls: 'text-red-500' };
   return null;
+};
+
+/* generate slug suggestions from business name */
+const generateSlugSuggestions = (businessName) => {
+  if (!businessName || businessName.trim().length < 2) return [];
+  const base = businessName.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '');
+  const withHyphen = businessName.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+  const suggestions = [base, withHyphen];
+  const words = businessName.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    suggestions.push(words[0]);
+    suggestions.push(words.map(w => w[0]).join('') + words[words.length - 1]);
+  }
+  return [...new Set(suggestions)].filter(s => s.length >= 3 && s.length <= 30 && /^[a-z0-9-]+$/.test(s)).slice(0, 4);
 };
 
 /* ─── Searchable Business Type Dropdown ─── */
@@ -67,13 +100,11 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
   useEffect(() => { if (open && searchRef.current) searchRef.current.focus(); }, [open]);
 
   const filtered = query.trim()
     ? options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
-
   const selectedLabel = options.find(o => o.value === value)?.label || '';
 
   const handleSelect = (val) => {
@@ -143,7 +174,27 @@ function BusinessTypeSelect({ value, onChange, options, error }) {
   );
 }
 
-/* ─── Left Panel — benefits sidebar ─── */
+/* ─── Progress Bar (shown on steps 2 & 3 only) ─── */
+function ProgressBar({ step }) {
+  const pct = step === 2 ? 50 : 100;
+  const label = step === 2 ? 'Step 1 of 2' : 'Step 2 of 2';
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-violet-600">{label}</span>
+        <span className="text-xs text-gray-400">{pct}% done</span>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-violet-500 to-violet-600 rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Left Panel ─── */
 function LeftPanel() {
   const perks = [
     { icon: Zap,      text: 'Live in under a minute' },
@@ -175,7 +226,6 @@ function LeftPanel() {
           ))}
         </div>
       </div>
-
       {/* Mini shop preview */}
       <div className="mt-10">
         <p className="text-xs text-violet-400 uppercase tracking-widest mb-3 font-semibold">What your shop looks like</p>
@@ -188,11 +238,7 @@ function LeftPanel() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-1.5 mb-2">
-            {[
-              'from-pink-200 to-rose-300',
-              'from-violet-200 to-purple-300',
-              'from-amber-200 to-orange-300',
-            ].map((c, i) => (
+            {['from-pink-200 to-rose-300','from-violet-200 to-purple-300','from-amber-200 to-orange-300'].map((c, i) => (
               <div key={i} className={`h-12 rounded-lg bg-gradient-to-br ${c}`} />
             ))}
           </div>
@@ -205,11 +251,14 @@ function LeftPanel() {
   );
 }
 
-/* ─── Main ─── */
+/* ════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════ */
 export default function SignupPage() {
   const navigate  = useNavigate();
   const { login } = useAuth();
 
+  /* ── form state (never reset between steps) ── */
   const [form, setForm] = useState({
     businessName: '',
     slug:         '',
@@ -223,19 +272,34 @@ export default function SignupPage() {
     customDays:   '',
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [slugStatus,   setSlugStatus]   = useState(null);
-  const [isLoading,    setIsLoading]    = useState(false);
-  const [errors,       setErrors]       = useState({});
-  const [pricing,      setPricing]      = useState({});
-  const [planEnabled,  setPlanEnabled]  = useState({});
+  const [step,          setStep]          = useState(1);   // 1 | 2 | 3
+  const [slideDir,      setSlideDir]      = useState('forward'); // 'forward' | 'back'
+  const [animating,     setAnimating]     = useState(false);
+  const [showPassword,  setShowPassword]  = useState(false);
+  const [slugStatus,    setSlugStatus]    = useState(null);
+  const [isLoading,     setIsLoading]     = useState(false);
+  const [errors,        setErrors]        = useState({});
+  const [pricing,       setPricing]       = useState({});
+  const [planEnabled,   setPlanEnabled]   = useState({});
   const [pricingLoaded, setPricingLoaded] = useState(false);
+  const [suggestions,   setSuggestions]   = useState([]);
 
   const debounceRef = useRef(null);
   const APP_URL     = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
 
-  useEffect(() => { document.title = 'Create Your Shop — ArtSpace'; }, []);
+  useEffect(() => { document.title = 'Create Your Free Website — ArtSpace'; }, []);
 
+  /* ── pricing ── */
+  useEffect(() => {
+    api.get('/subscription/pricing')
+      .then(res => { setPricing(res.data.pricing || {}); setPlanEnabled(res.data.enabled || {}); })
+      .catch(() => {})
+      .finally(() => setPricingLoaded(true));
+  }, []);
+
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
+
+  /* ── slug check ── */
   const checkSlug = useCallback(async (value) => {
     if (!value || value.length < 3) { setSlugStatus(null); return; }
     if (!/^[a-z0-9-]+$/.test(value) || value.length > 30) { setSlugStatus('invalid'); return; }
@@ -246,27 +310,23 @@ export default function SignupPage() {
     } catch { setSlugStatus(null); }
   }, []);
 
-  useEffect(() => {
-    api.get('/subscription/pricing')
-      .then(res => { setPricing(res.data.pricing || {}); setPlanEnabled(res.data.enabled || {}); })
-      .catch(() => {})
-      .finally(() => setPricingLoaded(true));
-  }, []);
-
-  useEffect(() => () => clearTimeout(debounceRef.current), []);
-
+  /* ── plan options ── */
   const PLAN_OPTIONS = PLAN_ORDER.filter(p => {
     if (p === 'trial') return true;
     const key = p === 'custom' ? 'custom_daily' : p;
     return planEnabled[key] !== false;
   });
 
+  /* ── handle field changes ── */
   const handleChange = (e) => {
     const { name, value } = e.target;
     let sanitized = value;
     if (name === 'slug')         sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (name === 'mobile')       sanitized = value.replace(/\D/g, '');
-    if (name === 'businessName') sanitized = value.slice(0, 30);
+    if (name === 'businessName') {
+      sanitized = value.slice(0, 30);
+      setSuggestions(generateSlugSuggestions(sanitized));
+    }
     setForm(prev => ({ ...prev, [name]: sanitized }));
     if (errors[name]) setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     if (name === 'slug') {
@@ -277,21 +337,43 @@ export default function SignupPage() {
   };
 
   const handleMobileKeyDown = (e) => {
-    const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'];
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Enter'];
     if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
     if (!/^\d$/.test(e.key)) e.preventDefault();
   };
 
-  const validate = () => {
+  /* ── pick a slug suggestion ── */
+  const pickSuggestion = (s) => {
+    setForm(prev => ({ ...prev, slug: s }));
+    if (errors.slug) setErrors(prev => { const n = { ...prev }; delete n.slug; return n; });
+    setSlugStatus(null);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => checkSlug(s), 300);
+  };
+
+  /* ── step navigation ── */
+  const goTo = (target, dir = 'forward') => {
+    if (animating) return;
+    setSlideDir(dir);
+    setAnimating(true);
+    setTimeout(() => {
+      setStep(target);
+      setAnimating(false);
+    }, 180);
+  };
+
+  /* ── per-step validation ── */
+  const validateStep1 = () => {
     const e = {};
     if (!form.businessName.trim() || form.businessName.trim().length < 2)
       e.businessName = 'At least 2 characters.';
-    if (!form.slug || form.slug.length < 3)
-      e.slug = 'At least 3 characters.';
-    if (slugStatus !== 'available')
-      e.slug = 'Choose a valid, available shop URL.';
     if (!form.businessType)
       e.businessType = 'Please select a business type.';
+    return e;
+  };
+
+  const validateStep2 = () => {
+    const e = {};
     if (!form.ownerName.trim() || form.ownerName.trim().length < 2)
       e.ownerName = 'At least 2 characters.';
     if (!form.email || !/\S+@\S+\.\S+/.test(form.email))
@@ -300,11 +382,37 @@ export default function SignupPage() {
       e.mobile = '10–15 digits.';
     if (!form.password || form.password.length < 8)
       e.password = 'At least 8 characters.';
+    return e;
+  };
+
+  const validateStep3 = () => {
+    const e = {};
+    if (!form.slug || form.slug.length < 3)
+      e.slug = 'At least 3 characters.';
+    if (slugStatus !== 'available')
+      e.slug = 'Choose a valid, available shop URL.';
     if (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1))
       e.customDays = 'Enter a valid number of days.';
     return e;
   };
 
+  const handleStep1Next = () => {
+    const e = validateStep1();
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    goTo(2, 'forward');
+  };
+
+  const handleStep2Next = () => {
+    const e = validateStep2();
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    // generate suggestions on first visit to step 3
+    setSuggestions(generateSlugSuggestions(form.businessName));
+    goTo(3, 'forward');
+  };
+
+  /* ── backend ── */
   const handleTrialSignup = async () => {
     const res = await api.post('/tenantauth/signup', {
       businessName: form.businessName.trim(),
@@ -342,7 +450,7 @@ export default function SignupPage() {
       orderData = res.data;
     } catch (err) {
       const msg = err?.response?.data?.message || 'Failed to initiate payment.';
-      if (msg.toLowerCase().includes('slug')) setErrors({ slug: msg });
+      if (msg.toLowerCase().includes('slug'))  setErrors({ slug: msg });
       else if (msg.toLowerCase().includes('email')) setErrors({ email: msg });
       else toast.error(msg);
       return;
@@ -375,7 +483,7 @@ export default function SignupPage() {
             toast.error(err?.response?.data?.message || 'Payment verification failed. Contact support.');
           } finally { setIsLoading(false); resolve(); }
         },
-        modal:  { ondismiss: () => { setIsLoading(false); resolve(); } },
+        modal:   { ondismiss: () => { setIsLoading(false); resolve(); } },
         prefill: { email: form.email, contact: form.mobile },
         theme:   { color: '#8b5cf6' },
       };
@@ -386,16 +494,16 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return; }
+    const e3 = validateStep3();
+    if (Object.keys(e3).length) { setErrors(e3); return; }
     setIsLoading(true);
     try {
       if (form.plan === 'trial') await handleTrialSignup();
       else await handlePaidSignup();
     } catch (err) {
       const msg = err?.response?.data?.message || 'Something went wrong. Please try again.';
-      if (msg.toLowerCase().includes('slug')) setErrors({ slug: msg });
-      else if (msg.toLowerCase().includes('email')) setErrors({ email: msg });
+      if (msg.toLowerCase().includes('slug'))   setErrors({ slug: msg });
+      else if (msg.toLowerCase().includes('email'))  setErrors({ email: msg });
       else if (msg.toLowerCase().includes('mobile')) setErrors({ mobile: msg });
       else toast.error(msg);
     } finally {
@@ -403,15 +511,14 @@ export default function SignupPage() {
     }
   };
 
+  /* ── helpers ── */
   const inputClass = (field) =>
     `w-full px-3.5 py-2.5 rounded-lg border text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all ${
-      errors[field] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+      errors[field] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300 bg-white'
     }`;
 
-  const slugInfo = slugStatusText(slugStatus);
-
   const priceLabel = (plan) => {
-    if (plan === 'trial') return <span className="text-green-600 font-bold text-base">Free</span>;
+    if (plan === 'trial')  return <span className="text-green-600 font-bold text-base">Free</span>;
     if (plan === 'custom') {
       const r = pricing['custom_daily'];
       return <span className="text-violet-600 font-bold text-base">{r ? `₹${r}/day` : '—'}</span>;
@@ -420,6 +527,16 @@ export default function SignupPage() {
     return <span className="text-gray-900 font-bold text-base">{p ? `₹${p}` : '—'}</span>;
   };
 
+  const slugInfo = slugStatusText(slugStatus);
+
+  /* slide animation classes */
+  const slideClass = animating
+    ? (slideDir === 'forward' ? 'opacity-0 translate-x-4' : 'opacity-0 -translate-x-4')
+    : 'opacity-100 translate-x-0';
+
+  /* ════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════ */
   return (
     <div className="min-h-screen flex" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif" }}>
 
@@ -428,234 +545,426 @@ export default function SignupPage() {
         <LeftPanel />
       </div>
 
-      {/* Right — form */}
-            <div className="flex-1 min-w-0 bg-gray-50 flex flex-col">
+      {/* Right — main content */}
+      <div className="flex-1 min-w-0 bg-gray-50 flex flex-col">
+
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
+        <div className="lg:hidden flex items-center justify-between px-5 py-3 bg-white border-b border-gray-100">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/artspace-logo.png" alt="ArtSpace" className="h-14 object-contain" />
+            <img src="/artspace-logo.png" alt="ArtSpace" className="h-10 object-contain" />
             <span className="font-bold text-gray-900 text-sm">ArtSpace</span>
           </Link>
-          <Link to="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">← Back</Link>
+          <Link to="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Back
+          </Link>
         </div>
 
-        <div className="flex-1 flex items-start justify-center py-10 px-6">
+        <div className="flex-1 flex items-start justify-center py-8 px-5">
           <div className="w-full max-w-md">
-            {/* Header */}
-            <div className="mb-7">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Create your shop</h1>
-              <p className="text-sm text-gray-500">Get online in minutes. No tech skills needed.</p>
-            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* ── STEP 1 ── */}
+            {step === 1 && (
+              <div className={`transition-all duration-200 ease-out ${slideClass}`}>
 
-              {/* ── Section: Your Business ── */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Business</p>
-
-                {/* Business Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Name</label>
-                  <input name="businessName" value={form.businessName} onChange={handleChange}
-                    placeholder="e.g. Glamour Nails" maxLength={30} className={inputClass('businessName')} />
-                  <div className="flex items-start justify-between mt-1">
-                    {errors.businessName ? <p className="text-xs text-red-500">{errors.businessName}</p> : <span />}
-                    <p className="text-xs text-gray-400 flex-shrink-0">{form.businessName.length}/30</p>
+                {/* Hero */}
+                <div className="text-center mb-7">
+                  <div className="inline-flex items-center gap-1.5 bg-violet-50 border border-violet-100 text-violet-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                    <Sparkles className="w-3 h-3" /> Free to start · No card required
                   </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">
+                    Create your website<br />
+                    <span className="text-violet-600">in under 2 minutes</span>
+                  </h1>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Show your products, receive enquiries, and get online instantly.
+                  </p>
                 </div>
 
-                {/* Shop URL */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop URL</label>
-                  <div className="relative">
-                    <input name="slug" value={form.slug} onChange={handleChange}
-                      placeholder="glamournails" className={`${inputClass('slug')} pr-10`} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <SlugStatus status={slugStatus} />
-                    </span>
-                  </div>
-                  {form.slug && (
-                    <p className="mt-1 text-xs text-gray-400 font-mono">
-                      {APP_URL}/s/<span className="text-violet-600 font-semibold">{form.slug}</span>
-                    </p>
-                  )}
-                  {slugInfo && <p className={`mt-0.5 text-xs font-medium ${slugInfo.cls}`}>{slugInfo.text}</p>}
-                  {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
-                </div>
-
-                {/* Business Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
-                  <BusinessTypeSelect
-                    value={form.businessType} onChange={handleChange}
-                    options={BUSINESS_TYPE_OPTIONS} error={errors.businessType}
-                  />
-                  {errors.businessType && <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>}
-                </div>
-              </div>
-
-              {/* ── Section: Your Account ── */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Account</p>
-
-                {/* Owner Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
-                  <input name="ownerName" value={form.ownerName} onChange={handleChange}
-                    placeholder="Your full name" className={inputClass('ownerName')} />
-                  {errors.ownerName && <p className="mt-1 text-xs text-red-500">{errors.ownerName}</p>}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange}
-                    placeholder="you@example.com" autoComplete="email" className={inputClass('email')} />
-                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-                </div>
-
-                {/* Mobile */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Mobile Number</label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-shrink-0">
-                      <select name="countryCode" value={form.countryCode} onChange={handleChange}
-                        className="appearance-none pl-3 pr-7 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white hover:border-gray-300">
-                        {COUNTRY_CODES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                {/* Benefits strip */}
+                <div className="flex flex-wrap justify-center gap-2 mb-7">
+                  {BENEFITS.map(b => (
+                    <div key={b.text} className="flex items-center gap-1.5 bg-white border border-gray-100 shadow-sm text-xs text-gray-600 font-medium px-3 py-1.5 rounded-full">
+                      <b.icon className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+                      {b.text}
                     </div>
-                    <input name="mobile" value={form.mobile} onChange={handleChange}
-                      onKeyDown={handleMobileKeyDown} placeholder="9876543210"
-                      inputMode="numeric" className={`flex-1 ${inputClass('mobile')}`} />
-                  </div>
-                  {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile}</p>}
+                  ))}
                 </div>
 
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                  <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} name="password"
-                      value={form.password} onChange={handleChange}
-                      placeholder="Min. 8 characters" autoComplete="new-password"
-                      className={`${inputClass('password')} pr-10`} />
-                    <button type="button" onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                {/* Step 1 form card */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 mb-4">
+                  {/* Business Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Business Name
+                    </label>
+                    <input
+                      name="businessName"
+                      value={form.businessName}
+                      onChange={handleChange}
+                      placeholder="e.g. Glamour Nails"
+                      maxLength={30}
+                      className={inputClass('businessName')}
+                      autoFocus
+                    />
+                    <div className="flex items-start justify-between mt-1">
+                      {errors.businessName
+                        ? <p className="text-xs text-red-500">{errors.businessName}</p>
+                        : <span />}
+                      <p className="text-xs text-gray-400 flex-shrink-0">{form.businessName.length}/30</p>
+                    </div>
                   </div>
-                  {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+
+                  {/* Business Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Business Type
+                    </label>
+                    <BusinessTypeSelect
+                      value={form.businessType}
+                      onChange={handleChange}
+                      options={BUSINESS_TYPE_OPTIONS}
+                      error={errors.businessType}
+                    />
+                    {errors.businessType && (
+                      <p className="mt-1 text-xs text-red-500">{errors.businessType}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* ── Section: Plan ── */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Choose a Plan</p>
+                {/* CTA */}
+                <button
+                  type="button"
+                  onClick={handleStep1Next}
+                  className="w-full py-3.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition-all shadow-sm hover:-translate-y-0.5 flex items-center justify-center gap-2 mb-4"
+                >
+                  🚀 Create My Free Website
+                  <ArrowRight className="w-4 h-4" />
+                </button>
 
-                {!pricingLoaded ? (
-                  <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />
+                {/* What happens next */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">What happens next?</p>
+                  <div className="space-y-3">
+                    {NEXT_STEPS.map((s, i) => (
+                      <div key={s.n} className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {s.n}
+                        </div>
+                        <span className="text-sm text-gray-700">{s.label}</span>
+                        {i < NEXT_STEPS.length - 1 && (
+                          <div className="ml-auto">
+                            <ArrowRight className="w-3.5 h-3.5 text-gray-200" />
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {PLAN_OPTIONS.map(plan => {
-                      const meta = PLAN_META[plan];
-                      const isSelected = form.plan === plan;
-                      return (
-                        <button
-                          key={plan}
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, plan, customDays: '' }))}
-                          className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all duration-150 ${
-                            isSelected
-                              ? 'border-violet-500 bg-violet-50/60 ring-2 ring-violet-200'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
-                        >
-                          {/* Radio dot */}
-                          <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                            isSelected ? 'border-violet-600' : 'border-gray-300'
-                          }`}>
-                            {isSelected && <div className="w-2 h-2 rounded-full bg-violet-600" />}
-                          </div>
-                          {/* Label */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900">{meta.label}</span>
-                              {meta.highlight && (
-                                <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-400 mt-0.5">{meta.duration} · {meta.desc}</p>
-                          </div>
-                          {/* Price */}
-                          <div className="flex-shrink-0 text-right">
-                            {priceLabel(plan)}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                </div>
 
-                {/* Custom days input */}
-                {form.plan === 'custom' && (
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <input type="number" min="1" name="customDays" value={form.customDays}
-                        onChange={e => setForm(p => ({ ...p, customDays: e.target.value.replace(/[^0-9]/g, '') }))}
-                        placeholder="Number of days"
-                        className="flex-1 px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 hover:border-gray-300" />
-                      <span className="text-sm text-gray-400 whitespace-nowrap">days</span>
+                <p className="text-center text-xs text-gray-400">
+                  Already have a shop?{' '}
+                  <span className="font-mono text-violet-600">/s/yourshopslug/admin/login</span>
+                </p>
+              </div>
+            )}
+
+            {/* ── STEP 2 ── */}
+            {step === 2 && (
+              <div className={`transition-all duration-200 ease-out ${slideClass}`}>
+                <ProgressBar step={2} />
+
+                {/* Back */}
+                <button
+                  type="button"
+                  onClick={() => { setErrors({}); goTo(1, 'back'); }}
+                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-5"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Set up your login</h2>
+                  <p className="text-sm text-gray-500">These are your admin dashboard credentials.</p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4 mb-4">
+                  {/* Owner Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
+                    <input
+                      name="ownerName"
+                      value={form.ownerName}
+                      onChange={handleChange}
+                      placeholder="Your full name"
+                      className={inputClass('ownerName')}
+                      autoFocus
+                    />
+                    {errors.ownerName && <p className="mt-1 text-xs text-red-500">{errors.ownerName}</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className={inputClass('email')}
+                    />
+                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                  </div>
+
+                  {/* Mobile */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Mobile Number</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-shrink-0">
+                        <select
+                          name="countryCode"
+                          value={form.countryCode}
+                          onChange={handleChange}
+                          className="appearance-none pl-3 pr-7 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white hover:border-gray-300"
+                        >
+                          {COUNTRY_CODES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                      </div>
+                      <input
+                        name="mobile"
+                        value={form.mobile}
+                        onChange={handleChange}
+                        onKeyDown={handleMobileKeyDown}
+                        placeholder="9876543210"
+                        inputMode="numeric"
+                        className={`flex-1 ${inputClass('mobile')}`}
+                      />
                     </div>
-                    {form.customDays && parseInt(form.customDays, 10) > 0 && pricing['custom_daily'] && (
-                      <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">
-                        <p className="text-sm font-semibold text-violet-700">
-                          {form.customDays} days × ₹{pricing['custom_daily']}/day = ₹{parseInt(form.customDays, 10) * pricing['custom_daily']}
+                    {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile}</p>}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        placeholder="Min. 8 characters"
+                        autoComplete="new-password"
+                        className={`${inputClass('password')} pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleStep2Next}
+                  className="w-full py-3.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition-all shadow-sm hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                >
+                  Next — Choose your link
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* ── STEP 3 ── */}
+            {step === 3 && (
+              <div className={`transition-all duration-200 ease-out ${slideClass}`}>
+                <ProgressBar step={3} />
+
+                {/* Back */}
+                <button
+                  type="button"
+                  onClick={() => { setErrors({}); goTo(2, 'back'); }}
+                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-5"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Choose your shop link</h2>
+                  <p className="text-sm text-gray-500">This is the URL you'll share with your customers.</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Slug card */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">Your shop link</label>
+
+                    {/* Suggestions */}
+                    {suggestions.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                          <RefreshCw className="w-3 h-3" /> Suggestions based on your business name
                         </p>
+                        <div className="flex flex-wrap gap-2">
+                          {suggestions.map(s => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => pickSuggestion(s)}
+                              className={`text-xs px-3 py-1.5 rounded-lg border font-mono transition-all ${
+                                form.slug === s
+                                  ? 'bg-violet-50 border-violet-300 text-violet-700 font-semibold'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600'
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    {errors.customDays && <p className="text-xs text-red-500">{errors.customDays}</p>}
+
+                    {/* Slug input */}
+                    <div className="relative">
+                      <input
+                        name="slug"
+                        value={form.slug}
+                        onChange={handleChange}
+                        placeholder="yourshopname"
+                        className={`${inputClass('slug')} pr-10 font-mono`}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <SlugStatus status={slugStatus} />
+                      </span>
+                    </div>
+
+                    {form.slug && (
+                      <p className="text-xs text-gray-400 font-mono bg-gray-50 px-3 py-2 rounded-lg">
+                        {APP_URL}/s/<span className="text-violet-600 font-semibold">{form.slug}</span>
+                      </p>
+                    )}
+                    {slugInfo && <p className={`text-xs font-medium ${slugInfo.cls}`}>{slugInfo.text}</p>}
+                    {errors.slug  && <p className="text-xs text-red-500">{errors.slug}</p>}
                   </div>
-                )}
 
-                {form.plan !== 'trial' && (
-                  <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2.5 rounded-xl">
-                    You'll complete payment via Razorpay after clicking "Create My Shop". Account is created only after payment is confirmed.
-                  </p>
-                )}
+                  {/* Plan card */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Choose a Plan</p>
+                    {!pricingLoaded ? (
+                      <div className="space-y-2">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {PLAN_OPTIONS.map(plan => {
+                          const meta = PLAN_META[plan];
+                          const isSelected = form.plan === plan;
+                          return (
+                            <button
+                              key={plan}
+                              type="button"
+                              onClick={() => setForm(p => ({ ...p, plan, customDays: '' }))}
+                              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all duration-150 ${
+                                isSelected
+                                  ? 'border-violet-500 bg-violet-50/60 ring-2 ring-violet-200'
+                                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                                isSelected ? 'border-violet-600' : 'border-gray-300'
+                              }`}>
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-violet-600" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-semibold text-gray-900">{meta.label}</span>
+                                  {meta.highlight && (
+                                    <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Recommended</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-400 mt-0.5">{meta.duration} · {meta.desc}</p>
+                              </div>
+                              <div className="flex-shrink-0 text-right">
+                                {priceLabel(plan)}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Custom days */}
+                    {form.plan === 'custom' && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="1"
+                            name="customDays"
+                            value={form.customDays}
+                            onChange={e => setForm(p => ({ ...p, customDays: e.target.value.replace(/[^0-9]/g, '') }))}
+                            placeholder="Number of days"
+                            className="flex-1 px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 hover:border-gray-300"
+                          />
+                          <span className="text-sm text-gray-400 whitespace-nowrap">days</span>
+                        </div>
+                        {form.customDays && parseInt(form.customDays, 10) > 0 && pricing['custom_daily'] && (
+                          <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">
+                            <p className="text-sm font-semibold text-violet-700">
+                              {form.customDays} days × ₹{pricing['custom_daily']}/day = ₹{parseInt(form.customDays, 10) * pricing['custom_daily']}
+                            </p>
+                          </div>
+                        )}
+                        {errors.customDays && <p className="text-xs text-red-500">{errors.customDays}</p>}
+                      </div>
+                    )}
+
+                    {form.plan !== 'trial' && (
+                      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2.5 rounded-xl">
+                        You'll complete payment via Razorpay after clicking the button below. Account is created only after payment is confirmed.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Trust text */}
+                  {form.plan === 'trial' && (
+                    <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-green-500" />
+                      Your website will be created instantly after signup.
+                    </p>
+                  )}
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={
+                      isLoading ||
+                      (form.slug.length >= 3 && slugStatus !== 'available') ||
+                      (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1))
+                    }
+                    className="w-full py-3.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-all shadow-sm hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />{form.plan === 'trial' ? 'Creating your website…' : 'Opening payment…'}</>
+                    ) : (
+                      <>{form.plan === 'trial' ? '🚀 Create My Free Website' : 'Continue to Payment'}<ArrowRight className="w-4 h-4" /></>
+                    )}
+                  </button>
+                </form>
               </div>
+            )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={
-                  isLoading ||
-                  (form.slug.length >= 3 && slugStatus !== 'available') ||
-                  (form.plan === 'custom' && (!form.customDays || parseInt(form.customDays, 10) < 1))
-                }
-                className="w-full py-3.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-all shadow-sm hover:-translate-y-0.5 flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />{form.plan === 'trial' ? 'Creating your shop…' : 'Opening payment…'}</>
-                ) : (
-                  <>{form.plan === 'trial' ? 'Create My Shop' : 'Continue to Payment'}<ArrowRight className="w-4 h-4" /></>
-                )}
-              </button>
-
-              <p className="text-center text-xs text-gray-400">
-                Already have a shop?{' '}
-                <span className="text-gray-500">
-                  Log in at{' '}
-                  <span className="font-mono text-violet-600">/s/yourshopslug/admin/login</span>
-                </span>
-              </p>
-            </form>
-
-            <p className="text-center text-xs text-gray-400 mt-6 flex items-center justify-center gap-1.5">
+            {/* Footer */}
+            <p className="text-center text-xs text-gray-400 mt-8 flex items-center justify-center gap-1.5">
               Built by{' '}
               <a href="mailto:er.cs.krushnasoni@gmail.com"
                 className="inline-flex items-center gap-1 text-gray-400 hover:text-violet-600 transition-colors font-medium"
@@ -664,6 +973,7 @@ export default function SignupPage() {
                 Krushna Soni
               </a>
             </p>
+
           </div>
         </div>
       </div>
