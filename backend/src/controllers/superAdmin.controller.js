@@ -549,14 +549,14 @@ const getPayments = async (req, res) => {
 
 // ─── PATCH /api/superadmin/tenants/:tenantId/credentials ─────────────────────
 const updateTenantCredentials = async (req, res) => {
-  const { newEmail, newPassword, reason } = req.body;
+  const { newEmail, newPassword, newMobile, reason } = req.body;
 
-  // Normalise — treat empty string same as not provided
-  const emailToSet = newEmail && newEmail.trim() ? newEmail.trim().toLowerCase() : null;
-  const passwordToSet = newPassword && newPassword.trim() ? newPassword.trim() : null;
+  const emailToSet   = newEmail  && newEmail.trim()   ? newEmail.trim().toLowerCase() : null;
+  const passwordToSet = newPassword && newPassword.trim() ? newPassword.trim()          : null;
+  const mobileToSet  = newMobile && newMobile.trim()  ? newMobile.trim()              : null;
 
-  if (!emailToSet && !passwordToSet)
-    return res.status(400).json({ success: false, message: 'Provide at least a new email or new password' });
+  if (!emailToSet && !passwordToSet && !mobileToSet)
+    return res.status(400).json({ success: false, message: 'Provide at least a new email, password, or mobile' });
 
   if (emailToSet && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToSet))
     return res.status(400).json({ success: false, message: 'Invalid email format' });
@@ -564,10 +564,14 @@ const updateTenantCredentials = async (req, res) => {
   if (passwordToSet && passwordToSet.length < 6)
     return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
 
+  if (mobileToSet && !/^\+?[0-9]{7,15}$/.test(mobileToSet))
+    return res.status(400).json({ success: false, message: 'Invalid mobile number format' });
+
   const tenant = await Tenant.findById(req.params.tenantId).select('+passwordHash');
   if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
 
-  const oldEmail = tenant.email;
+  const oldEmail  = tenant.email;
+  const oldMobile = tenant.mobile;
 
   if (emailToSet) {
     const taken = await Tenant.findOne({ email: emailToSet, _id: { $ne: tenant._id } });
@@ -579,12 +583,35 @@ const updateTenantCredentials = async (req, res) => {
     tenant.passwordHash = passwordToSet; // pre-save hook re-hashes
   }
 
+  if (mobileToSet) {
+    const mobileTaken = await Tenant.findOne({ mobile: mobileToSet, _id: { $ne: tenant._id } });
+    if (mobileTaken)
+      return res.status(409).json({ success: false, message: 'Mobile already in use by another tenant' });
+    tenant.mobile = mobileToSet;
+    // Blacklist new mobile (old one is already blacklisted from trial signup)
+    await TrialBlacklist.updateOne(
+      { mobile: mobileToSet },
+      { $setOnInsert: { mobile: mobileToSet, usedAt: new Date() } },
+      { upsert: true }
+    );
+  }
+
   await tenant.save();
 
+  // Build audit fields
+  const changedFields = [emailToSet && 'email', passwordToSet && 'password', mobileToSet && 'mobile'].filter(Boolean);
   await audit('CREDENTIALS_CHANGE', req.user.id, tenant._id, {
-    targetField: emailToSet && passwordToSet ? 'email + password' : emailToSet ? 'email' : 'password',
-    oldValue: emailToSet ? oldEmail : '(password)',
-    newValue: emailToSet ? tenant.email : '(new password set)',
+    targetField: changedFields.join(' + '),
+    oldValue: [
+      emailToSet  && `email: ${oldEmail}`,
+      mobileToSet && `mobile: ${oldMobile}`,
+      passwordToSet && 'password: (previous)',
+    ].filter(Boolean).join(', '),
+    newValue: [
+      emailToSet  && `email: ${tenant.email}`,
+      mobileToSet && `mobile: ${mobileToSet}`,
+      passwordToSet && 'password: (new password set)',
+    ].filter(Boolean).join(', '),
     reason: reason || null,
   });
 
@@ -603,7 +630,7 @@ const updateTenantCredentials = async (req, res) => {
   }
 
   return res.json({ success: true, message: 'Tenant credentials updated', tenant: {
-    _id: tenant._id, email: tenant.email, businessName: tenant.businessName,
+    _id: tenant._id, email: tenant.email, mobile: tenant.mobile, businessName: tenant.businessName,
   }});
 };
 
