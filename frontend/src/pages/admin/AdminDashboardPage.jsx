@@ -5,7 +5,7 @@ import {
   Package, Tag, Inbox, CalendarCheck, HelpCircle, BookOpen,
   BarChart2, Download, AlertTriangle, Mail, MessageSquare,
   Globe, Copy, Check, ExternalLink, ChevronDown, ChevronUp,
-  Smartphone,
+  Smartphone,  ToggleRight,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useAuth }   from '../../context/AuthContext';
@@ -225,52 +225,204 @@ const ShopUrlCard = ({ slug }) => {
   );
 };
 
+// ─── Service Toggle (inline in checklist) ────────────────────────────────────
+const ServiceToggle = ({ checked, onChange, disabled }) => (
+  <button
+    role="switch"
+    aria-checked={checked}
+    onClick={() => !disabled && onChange(!checked)}
+    disabled={disabled}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50 flex-shrink-0 ${
+      checked ? 'bg-violet-600' : 'bg-gray-200'
+    }`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+        checked ? 'translate-x-6' : 'translate-x-1'
+      }`}
+    />
+  </button>
+);
+
+// ─── Services Setup Step (expanded inline panel) ──────────────────────────────
+const ServicesSetupPanel = ({ slug, tenant, onDone }) => {
+  const cfg = tenant?.websiteConfig || {};
+  const [services, setServices] = useState({
+    productSalesEnabled: cfg.productSalesEnabled !== false,
+    deliveryEnabled:     cfg.deliveryEnabled ?? false,
+    appointmentEnabled:  cfg.appointmentEnabled ?? true,
+    appointmentAtHome:   cfg.appointmentAtHome ?? true,
+  });
+  const [saving, setSaving] = useState(null);
+
+  const handleToggle = async (key, value) => {
+    if (key === 'productSalesEnabled' && !value && !services.appointmentEnabled) {
+      toast.error('At least one of Product Sales or Appointment must be enabled');
+      return;
+    }
+    if (key === 'appointmentEnabled' && !value && !services.productSalesEnabled) {
+      toast.error('At least one of Product Sales or Appointment must be enabled');
+      return;
+    }
+    const next = { ...services, [key]: value };
+    setServices(next);
+    setSaving(key);
+    try {
+      await api.put('/tenant/settings/toggles', { [key]: value });
+    } catch (err) {
+      setServices(services);
+      toast.error(err.response?.data?.message || 'Failed to update');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleConfirm = () => {
+    localStorage.setItem(`artspace_services_set_${slug}`, '1');
+    toast.success('Services saved!');
+    onDone();
+  };
+
+  const rows = [
+  {
+    key:   'productSalesEnabled',
+    label: '🛍️ Product Sales',
+    desc:  'You have items ready to sell — like jewellery, cakes, nail kits, or any finished product. Customers can browse and place orders.',
+    sub: services.productSalesEnabled ? {
+      key:   'deliveryEnabled',
+      label: '🚚 Home Delivery',
+      desc:  'You can ship or courier products to the customer\'s address. If off, customers can only pick up from your location.',
+    } : null,
+  },
+  {
+    key:   'appointmentEnabled',
+    label: '📅 Appointment Booking',
+    desc:  'Customers can book a time slot with you — for a session, consultation, fitting, or any service that needs scheduling.',
+    sub: services.appointmentEnabled ? {
+      key:   'appointmentAtHome',
+      label: '🏠 You Visit the Customer (Home Service)',
+      desc:  'You travel to the customer\'s location to provide the service. If off, customers come to your shop or studio only.',
+    } : null,
+  },
+];
+
+  return (
+    <div className="border-t border-gray-50 px-4 py-4 space-y-4 bg-gray-50/50">
+      <p className="text-xs text-gray-500 leading-relaxed">
+  Tell us how you sell. Turn on what applies to your business — your shop will show only the relevant options to customers. You can change this anytime.
+</p>
+
+      {rows.map(({ key, label, desc, sub }) => (
+        <div key={key}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-800">{label}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+            </div>
+            <ServiceToggle
+              checked={services[key]}
+              onChange={(val) => handleToggle(key, val)}
+              disabled={saving === key}
+            />
+          </div>
+          {sub && (
+            <div className="mt-3 ml-2 pl-3 border-l-2 border-gray-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-700">{sub.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{sub.desc}</p>
+                </div>
+                <ServiceToggle
+                  checked={services[sub.key]}
+                  onChange={(val) => handleToggle(sub.key, val)}
+                  disabled={saving === sub.key}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <button
+        onClick={handleConfirm}
+        className="w-full py-2 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90"
+        style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+      >
+        Confirm Services →
+      </button>
+    </div>
+  );
+};
 // ─── Setup Checklist ──────────────────────────────────────────────────────────
 const SetupChecklist = ({ slug, tenant, productCount, canInstall, onInstall }) => {
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
-  const hasLogo      = !!tenant?.websiteConfig?.logo;
-  const hasContact = !!tenant?.websiteConfig?.whatsapp || !!tenant?.websiteConfig?.instagram;
-  const hasShared    = !!localStorage.getItem(`artspace_shared_${slug}`);
-  const has1Product  = productCount >= 1;
-  const has5Products = productCount >= 5;
+  const [collapsed, setCollapsed]           = useState(false);
+  const [servicesExpanded, setServicesExpanded] = useState(false);
+
+  const hasLogo        = !!tenant?.websiteConfig?.logo;
+  const hasContact     = !!tenant?.websiteConfig?.whatsapp || !!tenant?.websiteConfig?.instagram;
+  const hasServicesSet = !!localStorage.getItem(`artspace_services_set_${slug}`);
+  const hasShared      = !!localStorage.getItem(`artspace_shared_${slug}`);
+  const has1Product    = productCount >= 1;
+  const has5Products   = productCount >= 5;
+
+  // Re-render trigger when services confirmed
+  const [, forceUpdate] = useState(0);
 
   const steps = [
     {
-      label:    'Upload your logo',
-      done:     hasLogo,
-      action:   () => navigate(`/s/${slug}/admin/dashboard/settings`),
-      cta:      'Go to Settings',
+      key:    'logo',
+      label:  'Upload your logo',
+      done:   hasLogo,
+      action: () => navigate(`/s/${slug}/admin/dashboard/settings`),
+      cta:    'Go to Settings',
+      expandable: false,
     },
     {
-  label:  'Add WhatsApp or Instagram',
-  done:   hasContact,
-  action: () => navigate(`/s/${slug}/admin/dashboard/settings`),
-  cta:    'Go to Settings',
-},
-    {
-      label:    'Add your first product',
-      done:     has1Product,
-      action:   () => navigate(`/s/${slug}/admin/dashboard/products`),
-      cta:      'Add Product',
+      key:    'services',
+      label:  'Set up your services',
+      done:   hasServicesSet,
+      action: () => setServicesExpanded(v => !v),
+      cta:    servicesExpanded ? 'Collapse' : 'Set Up',
+      expandable: true,
     },
     {
-      label:    'Add 5 products',
-      done:     has5Products,
-      action:   () => navigate(`/s/${slug}/admin/dashboard/products`),
-      cta:      'Add Products',
+      key:    'contact',
+      label:  'Add WhatsApp or Instagram',
+      done:   hasContact,
+      action: () => navigate(`/s/${slug}/admin/dashboard/settings`),
+      cta:    'Go to Settings',
+      expandable: false,
     },
     {
-      label:    'Share your website link',
-      done:     hasShared,
-      action:   () => {
-        const url = `${PROD_BASE}/s/${slug}`;
-        navigator.clipboard.writeText(url).then(() => {
+      key:    'product1',
+      label:  'Add your first product',
+      done:   has1Product,
+      action: () => navigate(`/s/${slug}/admin/dashboard/products`),
+      cta:    'Add Product',
+      expandable: false,
+    },
+    {
+      key:    'product5',
+      label:  'Add 5 products',
+      done:   has5Products,
+      action: () => navigate(`/s/${slug}/admin/dashboard/products`),
+      cta:    'Add Products',
+      expandable: false,
+    },
+    {
+      key:    'share',
+      label:  'Share your website link',
+      done:   hasShared,
+      action: () => {
+        navigator.clipboard.writeText(`${PROD_BASE}/s/${slug}`).then(() => {
           localStorage.setItem(`artspace_shared_${slug}`, '1');
           toast.success('Link copied! Share it with your customers.');
+          forceUpdate(n => n + 1);
         });
       },
-      cta:      'Copy Link',
+      cta:    'Copy Link',
+      expandable: false,
     },
   ];
 
@@ -278,7 +430,6 @@ const SetupChecklist = ({ slug, tenant, productCount, canInstall, onInstall }) =
   const pct       = Math.round((doneCount / steps.length) * 100);
   const allDone   = doneCount === steps.length;
 
-  // If all done, show install nudge instead (only if logo exists — gate)
   if (allDone) {
     if (!canInstall || !hasLogo) return null;
     return (
@@ -314,63 +465,57 @@ const SetupChecklist = ({ slug, tenant, productCount, canInstall, onInstall }) =
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-sm font-semibold text-gray-900">
-              Complete Your Shop
-            </p>
+            <p className="text-sm font-semibold text-gray-900">Complete Your Shop</p>
             <span className="text-xs font-semibold text-violet-600">{pct}%</span>
           </div>
-          {/* Progress bar */}
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{
-                width:      `${pct}%`,
-                background: 'linear-gradient(90deg, #7c3aed, #a78bfa)',
-              }}
+              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #7c3aed, #a78bfa)' }}
             />
           </div>
         </div>
         <div className="flex-shrink-0 text-gray-400">
-          {collapsed
-            ? <ChevronDown className="w-4 h-4" />
-            : <ChevronUp   className="w-4 h-4" />
-          }
+          {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
         </div>
       </button>
 
       {/* Steps */}
       {!collapsed && (
         <div className="border-t border-gray-50 divide-y divide-gray-50">
-          {steps.map((step, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              {/* Checkbox */}
-              <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                  step.done
-                    ? 'bg-green-500 border-green-500'
-                    : 'border-gray-300'
-                }`}
-              >
-                {step.done && <Check className="w-3 h-3 text-white" />}
+          {steps.map((step) => (
+            <div key={step.key}>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    step.done ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                  }`}
+                >
+                  {step.done && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className={`flex-1 text-sm ${step.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                  {step.label}
+                </span>
+                {!step.done && (
+                  <button
+                    onClick={step.action}
+                    className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-all whitespace-nowrap"
+                  >
+                    {step.cta}
+                  </button>
+                )}
               </div>
 
-              {/* Label */}
-              <span
-                className={`flex-1 text-sm ${
-                  step.done ? 'text-gray-400 line-through' : 'text-gray-700'
-                }`}
-              >
-                {step.label}
-              </span>
-
-              {/* CTA */}
-              {!step.done && (
-                <button
-                  onClick={step.action}
-                  className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-violet-600 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-all whitespace-nowrap"
-                >
-                  {step.cta}
-                </button>
+              {/* Inline services panel */}
+              {step.key === 'services' && servicesExpanded && !step.done && (
+                <ServicesSetupPanel
+                  slug={slug}
+                  tenant={tenant}
+                  onDone={() => {
+                    setServicesExpanded(false);
+                    forceUpdate(n => n + 1);
+                  }}
+                />
               )}
             </div>
           ))}
