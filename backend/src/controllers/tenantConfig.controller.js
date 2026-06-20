@@ -98,7 +98,8 @@ const updateToggles = async (req, res) => {
     appointmentAtHome,
     shopVisible,
     publicTheme,
-    faqEnabled
+    faqEnabled,
+    productSalesEnabled,
   } = req.body;
 
   const update = {};
@@ -110,6 +111,7 @@ const updateToggles = async (req, res) => {
   if (typeof appointmentAtHome === 'boolean') update['websiteConfig.appointmentAtHome'] = appointmentAtHome;
   if (typeof shopVisible === 'boolean') update['websiteConfig.shopVisible'] = shopVisible;
   if (typeof faqEnabled === 'boolean') update['websiteConfig.faqEnabled'] = faqEnabled;
+  if (typeof productSalesEnabled === 'boolean') update['websiteConfig.productSalesEnabled'] = productSalesEnabled;
   if (publicTheme === 'light' || publicTheme === 'dark') {
     update['websiteConfig.publicTheme'] = publicTheme;
   }

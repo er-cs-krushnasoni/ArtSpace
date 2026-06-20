@@ -29,6 +29,7 @@ const sanitizeTenant = (tenant) => ({
     shopVisible: tenant.websiteConfig?.shopVisible !== false,
     tutorialVideoUrl: tenant.websiteConfig?.tutorialVideoUrl || null,
     faqEnabled: tenant.websiteConfig?.faqEnabled || false,
+    productSalesEnabled: tenant.websiteConfig?.productSalesEnabled !== false,
   },
   status: tenant.status,
 });

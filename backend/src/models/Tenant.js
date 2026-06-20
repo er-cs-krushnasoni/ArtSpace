@@ -37,6 +37,7 @@ const websiteConfigSchema = new mongoose.Schema({
   appointmentAtHome: { type: Boolean, default: true },
   shopVisible: { type: Boolean, default: true },
   faqEnabled: { type: Boolean, default: false },
+  productSalesEnabled: { type: Boolean, default: true },
   tutorialVideoUrl: { type: String, default: null },
   tutorialVideoPublicId: { type: String, default: null },
   appName: { type: String, default: '' },
