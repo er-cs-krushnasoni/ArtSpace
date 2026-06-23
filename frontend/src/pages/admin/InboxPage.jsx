@@ -43,6 +43,48 @@ const EmptyState = ({ tab }) => {
   );
 };
 
+const InboxGuide = ({ slug }) => {
+  const key = `artspace_inbox_guide_${slug}`;
+  const [dismissed, setDismissed] = useState(!!localStorage.getItem(key));
+  const [expanded,  setExpanded]  = useState(false);
+  if (dismissed) return null;
+  return (
+    <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-100/50 transition-colors"
+      >
+        <span className="text-base">💡</span>
+        <span className="flex-1 text-sm font-semibold text-blue-800">How orders work</span>
+        <span className="text-xs text-blue-500">{expanded ? '▲ Hide' : '▼ Show'}</span>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 space-y-2">
+          {[
+            { icon: '📩', text: 'Customer enquires → appears here in Inbox as Unread' },
+            { icon: '✅', text: 'You confirm the order → it moves to Tasks' },
+            { icon: '📋', text: 'In Tasks: set a date, track progress (Pending → Processing → Ready → Completed), and record payment' },
+          ].map(({ icon, text }) => (
+            <div key={text} className="flex items-start gap-2">
+              <span className="text-sm mt-0.5">{icon}</span>
+              <p className="text-xs text-blue-700 leading-relaxed">{text}</p>
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              localStorage.setItem(key, '1');
+              setDismissed(true);
+            }}
+            className="mt-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TABS = [
   { key: 'all',         label: 'All' },
   { key: 'unread',      label: 'Unread' },
@@ -128,9 +170,8 @@ export default function InboxPage() {
   };
 
   const handleConfirmDone = (queryId) => {
-    removeQuery(queryId);
-    setConfirmTarget(null);
-  };
+  removeQuery(queryId);
+};
 
   const handleManualCreated = () => {
     setManualOpen(false);
@@ -149,6 +190,7 @@ export default function InboxPage() {
 
   return (
     <div className="p-6">
+      <InboxGuide slug={slug} />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
