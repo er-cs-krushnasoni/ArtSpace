@@ -27,6 +27,7 @@ import PostEditorPage      from './PostEditorPage';
 import FAQManagerPage      from './FAQManagerPage';
 
 const PROD_BASE = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ─── Trial Warning Banner ─────────────────────────────────────────────────────
 const TRIAL_PRODUCT_LIMIT = 10;
@@ -90,14 +91,13 @@ function useCopyUrl(url) {
 // ─── Welcome Modal ────────────────────────────────────────────────────────────
 // Shows once per slug on first dashboard visit (localStorage flag).
 const WelcomeModal = ({ slug, onClose, onAddProduct }) => {
-  const shopUrl = `${PROD_BASE}/s/${slug}`;
-  const [copied, copy] = useCopyUrl(shopUrl);
-
-  const handleCopy = () => {
-    copy();
-    // Mark link as shared
-    localStorage.setItem(`artspace_shared_${slug}`, '1');
-  };
+  const shopUrl  = `${PROD_BASE}/s/${slug}`;
+const shareUrl = `${PROD_BASE}/og/${slug}`;
+const [copied, copy] = useCopyUrl(shareUrl);
+const handleCopy = () => {
+  copy();
+  localStorage.setItem(`artspace_shared_${slug}`, '1');
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -184,8 +184,9 @@ const WelcomeModal = ({ slug, onClose, onAddProduct }) => {
 // ─── Shop URL Card ────────────────────────────────────────────────────────────
 // Always pinned at top of dashboard home.
 const ShopUrlCard = ({ slug }) => {
-  const shopUrl = `${PROD_BASE}/s/${slug}`;
-  const [copied, copy] = useCopyUrl(shopUrl);
+  const shopUrl   = `${PROD_BASE}/s/${slug}`;
+  const shareUrl  = `${API_BASE}/public/${slug}/og`;
+  const [copied, copy] = useCopyUrl(shareUrl);
 
   const handleCopy = () => {
     copy();
@@ -204,7 +205,7 @@ const ShopUrlCard = ({ slug }) => {
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <button
           onClick={handleCopy}
-          title="Copy link"
+          title="Copy shareable link"
           className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-violet-700 bg-white border border-violet-200 rounded-lg hover:bg-violet-50 transition-all"
         >
           {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}

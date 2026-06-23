@@ -133,4 +133,59 @@ const getTenantPWAManifest = async (req, res) => {
   }
 };
 
-module.exports = { getPublicConfig, getPublicProducts, getPublicSliders, getTenantPWAManifest };
+const getShopOGPage = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const tenant = await Tenant.findOne({ slug: slug.toLowerCase() });
+    if (!tenant || tenant.status === 'inactive') {
+      return res.status(404).send('Shop not found');
+    }
+
+    const businessName = tenant.businessName || 'Shop';
+    const logo         = tenant.websiteConfig?.logo || '';
+    const address      = tenant.websiteConfig?.address || '';
+    const shopUrl      = `${process.env.FRONTEND_URL || 'https://artspace-online.netlify.app'}/s/${slug}`;
+    const desc         = address
+      ? `${businessName} — ${address}`
+      : `Visit ${businessName}'s online shop on ArtSpace.`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${businessName}</title>
+  <meta name="description" content="${desc}" />
+
+  <!-- Open Graph (WhatsApp, Facebook, Instagram DM) -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="${shopUrl}" />
+  <meta property="og:title"       content="${businessName}" />
+  <meta property="og:description" content="${desc}" />
+  ${logo ? `<meta property="og:image" content="${logo}" />` : ''}
+  <meta property="og:image:width"  content="512" />
+  <meta property="og:image:height" content="512" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="${businessName}" />
+  <meta name="twitter:description" content="${desc}" />
+  ${logo ? `<meta name="twitter:image" content="${logo}" />` : ''}
+
+  <!-- Instant redirect — real humans land on the actual shop -->
+  <meta http-equiv="refresh" content="0;url=${shopUrl}" />
+  <script>window.location.replace("${shopUrl}");</script>
+</head>
+<body>
+  <p>Redirecting to <a href="${shopUrl}">${businessName}</a>…</p>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min cache
+    return res.send(html);
+  } catch (err) {
+    return res.status(500).send('Error generating page');
+  }
+};
+
+module.exports = { getPublicConfig, getPublicProducts, getPublicSliders, getTenantPWAManifest, getShopOGPage };

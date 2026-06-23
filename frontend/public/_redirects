@@ -1,6 +1,11 @@
 # Service worker and manifest — must be served as real files, not caught by SPA redirect
-/sw.js        /sw.js        200
-/manifest.webmanifest  /manifest.webmanifest  200
+/sw.js                /sw.js                200
+/manifest.webmanifest /manifest.webmanifest 200
 
-# SPA fallback — everything else
+# OG meta tag proxy — clean shareable URLs for WhatsApp/Instagram previews
+# /og/shopslug → backend OG page with shop name, logo, description
+# Netlify proxies this transparently so the URL stays on artspace-online.netlify.app
+/og/:slug  https://artspace-k.up.railway.app/api/public/:slug/og  200
+
+# SPA fallback — everything else goes to React app
 /*    /index.html    200
