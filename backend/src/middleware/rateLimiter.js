@@ -9,6 +9,11 @@ const authLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const email = (req.body?.email || '').toLowerCase().trim();
+    return `login:${ip}:${email}`;
+  },
   message: {
     success: false,
     message: 'Too many login attempts. Please try again in 15 minutes.',
@@ -52,6 +57,11 @@ const forgotPasswordLimiter = rateLimit({
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const email = (req.body?.email || '').toLowerCase().trim();
+    return `forgot:${ip}:${email}`;
+  },
   message: {
     success: false,
     message: 'Too many password reset requests. Please try again in an hour.',
