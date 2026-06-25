@@ -185,7 +185,7 @@ const handleCopy = () => {
 // Always pinned at top of dashboard home.
 const ShopUrlCard = ({ slug }) => {
   const shopUrl   = `${PROD_BASE}/s/${slug}`;
-  const shareUrl  = `${API_BASE}/public/${slug}/og`;
+  const shareUrl  = `${PROD_BASE}/og/${slug}`;
   const [copied, copy] = useCopyUrl(shareUrl);
 
   const handleCopy = () => {
