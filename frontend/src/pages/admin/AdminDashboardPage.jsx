@@ -92,7 +92,7 @@ function useCopyUrl(url) {
 // Shows once per slug on first dashboard visit (localStorage flag).
 const WelcomeModal = ({ slug, onClose, onAddProduct }) => {
   const shopUrl  = `${PROD_BASE}/s/${slug}`;
-const shareUrl = `${PROD_BASE}/og/${slug}`;
+const shareUrl  = `${API_BASE}/public/${slug}/og`;
 const [copied, copy] = useCopyUrl(shareUrl);
 const handleCopy = () => {
   copy();
@@ -185,7 +185,7 @@ const handleCopy = () => {
 // Always pinned at top of dashboard home.
 const ShopUrlCard = ({ slug }) => {
   const shopUrl   = `${PROD_BASE}/s/${slug}`;
-  const shareUrl  = `${PROD_BASE}/og/${slug}`;
+  const shareUrl  = `${API_BASE}/public/${slug}/og`;
   const [copied, copy] = useCopyUrl(shareUrl);
 
   const handleCopy = () => {
